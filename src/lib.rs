@@ -1,5 +1,4 @@
 pub mod domain;
-pub mod infra;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

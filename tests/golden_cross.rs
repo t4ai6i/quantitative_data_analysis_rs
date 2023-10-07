@@ -1,15 +1,10 @@
 use anyhow::Result;
-use itertools::Itertools;
-use quantitative_data_analysis_rs::{
-    domain::{
-        entity::cross::Cross,
-        repo::{sma_repo::SMARepo, stock_repo::StockRepo},
-    },
-    infra::{sma_repo_impl::SMARepoImpl, stock_repo_impl::StockRepoImpl},
-};
+use quantitative_data_analysis_rs::domain::entity::cross::{PairSMA, VecCross};
+use quantitative_data_analysis_rs::domain::entity::sma::VecSMA;
+use quantitative_data_analysis_rs::domain::entity::stock::VecStock;
 use simple_moving_average::{SumTreeSMA, SMA};
 
-static CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
+const CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
 
 #[test]
 fn golden_cross_sandbox() -> Result<()> {
@@ -28,30 +23,14 @@ fn golden_cross_sandbox() -> Result<()> {
 fn golden_cross_test() -> Result<()> {
     const FIVE_DAY: usize = 5;
     const TWENTY_FIVE_DAY: usize = 25;
-    let stock_repo = StockRepoImpl::new();
-    let stocks = stock_repo.vec_from_csv(CSV_8473, true);
-    let sma_repo = SMARepoImpl::new();
-    let five_days = sma_repo.collect_vec::<FIVE_DAY>(&stocks);
-    let twenty_five_days = sma_repo.collect_vec::<TWENTY_FIVE_DAY>(&stocks);
-    // TODO: last_dateをキーにCross構造体を構築する。キーが見つからない場合Noneとする。
-    let _list_cross = five_days
-        .iter()
-        .map(|five_day| {
-            let twenty_five_day_found = twenty_five_days
-                .iter()
-                .find(|twenty_five_day| five_day.date.eq(&twenty_five_day.date));
-            Cross {
-                date: five_day.date,
-                five_day: Some(five_day.value),
-                twenty_five_day: twenty_five_day_found.map(|twenty_five_day| twenty_five_day.value),
-                ..Default::default()
-            }
-        })
-        .inspect(|cross| {
-            dbg!(cross);
-        })
-        .collect_vec();
-    // TODO: five_day_sma_aveとtwenty_five_day_aveの値の大小関係が前日と逆転しているかどうかを判定していく。
-    // TODO: GoldenCross発生当日の調整後終値と比べ、3営業日後の値が上昇したか判定していく。
+    let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
+    let VecSMA(five_days) = VecSMA::<FIVE_DAY>::from(stocks.as_slice());
+    let VecSMA(twenty_five_days) = VecSMA::<TWENTY_FIVE_DAY>::from(stocks.as_slice());
+    let pair_sma = PairSMA {
+        pair1: five_days.as_slice(),
+        pair2: twenty_five_days.as_slice(),
+    };
+    let VecCross(crosses) = VecCross::from(pair_sma);
+    assert_eq!(crosses.len(), 242);
     Ok(())
 }
