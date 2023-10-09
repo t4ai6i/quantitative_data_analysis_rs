@@ -54,7 +54,7 @@ mod tests {
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
     #[test]
-    fn vecstock_test() {
+    fn vec_stock_test() {
         let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
         assert_eq!(stocks.len(), 246);
         let VecStock::<true>(stocks) = CSV_8473.into();

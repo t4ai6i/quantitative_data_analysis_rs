@@ -57,7 +57,7 @@ mod tests {
     const TWENTY_FIVE_DAY: usize = 25;
 
     #[test]
-    fn vecsma_test() {
+    fn vec_sma_test() {
         let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
         let VecSMA(five_days) = VecSMA::<FIVE_DAY>::from(stocks.as_slice());
         assert_eq!(five_days.len(), 242);
