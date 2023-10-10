@@ -3,6 +3,31 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 use std::cmp::Ordering as Ord;
 
+/// 単純移動平均値の大小関係
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+pub struct Ordering<const N: usize, const O: usize> {
+    /// 対象日が片方なかったなど比較出来なかった場合は、None
+    pub ordering: Option<Ord>,
+}
+
+struct SMAPair<'a, const N: usize, const O: usize> {
+    sma_n: &'a SMA<N>,
+    sma_o: Option<&'a SMA<O>>,
+}
+
+impl<'a, const N: usize, const O: usize> From<SMAPair<'a, N, O>> for Ordering<N, O> {
+    fn from(value: SMAPair<'a, N, O>) -> Self {
+        let SMAPair { sma_n, sma_o } = value;
+        match (sma_n, sma_o) {
+            (sma_n, Some(sma_o)) => {
+                let ordering = sma_n.ave.partial_cmp(&sma_o.ave);
+                Ordering::<N, O> { ordering }
+            }
+            (_, _) => Ordering::<N, O>::default(),
+        }
+    }
+}
+
 /// クロスの向き
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum CrossDirectionType {
@@ -11,20 +36,18 @@ pub enum CrossDirectionType {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct CrossDirection<const N_DAY: usize, const O_DAY: usize> {
+pub struct CrossDirection<const N: usize, const O: usize> {
     /// ゴールデンクロス・デッドクロスになっていない場合は、None
     pub cross_direction: Option<CrossDirectionType>,
 }
 
-struct OrderingPair<const N_DAY: usize, const O_DAY: usize> {
-    yesterday: Ordering<N_DAY, O_DAY>,
-    today: Ordering<N_DAY, O_DAY>,
+struct OrderingPair<const N: usize, const O: usize> {
+    yesterday: Ordering<N, O>,
+    today: Ordering<N, O>,
 }
 
-impl<const N_DAY: usize, const O_DAY: usize> From<OrderingPair<N_DAY, O_DAY>>
-    for CrossDirection<N_DAY, O_DAY>
-{
-    fn from(value: OrderingPair<N_DAY, O_DAY>) -> Self {
+impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection<N, O> {
+    fn from(value: OrderingPair<N, O>) -> Self {
         // 前日の大小関係と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
         // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
         let OrderingPair { yesterday, today } = value;
@@ -42,90 +65,58 @@ impl<const N_DAY: usize, const O_DAY: usize> From<OrderingPair<N_DAY, O_DAY>>
     }
 }
 
-/// 単純移動平均値の大小関係
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct Ordering<const N_DAY: usize, const O_DAY: usize> {
-    /// 対象日が片方なかったなど比較出来なかった場合は、None
-    pub ordering: Option<Ord>,
-}
-
-struct SMAPair<'a, const N_DAY: usize, const O_DAY: usize> {
-    n_day: &'a SMA<N_DAY>,
-    o_day: Option<&'a SMA<O_DAY>>,
-}
-
-impl<'a, const N_DAY: usize, const O_DAY: usize> From<SMAPair<'a, N_DAY, O_DAY>>
-    for Ordering<N_DAY, O_DAY>
-{
-    fn from(value: SMAPair<'a, N_DAY, O_DAY>) -> Self {
-        let SMAPair { n_day, o_day } = value;
-        match (n_day, o_day) {
-            (n_day, Some(o_day)) => {
-                let ordering = n_day.value.partial_cmp(&o_day.value);
-                Ordering::<N_DAY, O_DAY> { ordering }
-            }
-            (_, _) => Ordering::<N_DAY, O_DAY>::default(),
-        }
-    }
-}
-
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct Cross {
     pub date: NaiveDate,
-    pub five_day: Option<f64>,
-    pub twenty_five_day: Option<f64>,
+    pub sma_5_ave: Option<f64>,
+    pub sma_25_ave: Option<f64>,
     pub ordering_5_25: Ordering<5, 25>,
-    pub cross_direction: CrossDirection<5, 25>,
+    pub cross_direction_5_25: CrossDirection<5, 25>,
 }
 
-pub struct SMAPairList<'a, const N_DAY: usize, const O_DAY: usize> {
-    pub n_days: &'a [SMA<N_DAY>],
-    pub o_days: &'a [SMA<O_DAY>],
+pub struct SMAListPair<'a, const N: usize, const O: usize> {
+    pub smas_n: &'a [SMA<N>],
+    pub smas_o: &'a [SMA<O>],
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct VecCross(pub Vec<Cross>);
 
-impl<'a> From<SMAPairList<'a, 5, 25>> for VecCross {
+impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
     ///
     /// # Examples
     /// ```ignore
     /// let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
-    /// let VecSMA(five_days) = VecSMA::<FIVE_DAY>::from(stocks.as_slice());
-    /// let VecSMA(twenty_five_days) = VecSMA::<TWENTY_FIVE_DAY>::from(stocks.as_slice());
-    /// let pair_sma = PairSMA {
-    ///     n_days: five_days.as_slice(),
-    ///     o_days: twenty_five_days.as_slice(),
+    /// let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
+    /// let VecSMA(smas_25) = VecSMA::<25>::from(stocks.as_slice());
+    /// let sma_list_pair = SMAListPair {
+    ///     smas_n: smas_5.as_slice(),
+    ///     smas_o: smas_25.as_slice(),
     /// };
-    /// let VecCross(crosses) = VecCross::from(pair_sma);
+    /// let VecCross(crosses) = VecCross::from(sma_list_pair);
     /// assert_eq!(crosses.len(), 241);
     /// ```
-    fn from(value: SMAPairList<'a, 5, 25>) -> Self {
-        let SMAPairList {
-            n_days: five_days,
-            o_days: twenty_five_days,
+    fn from(value: SMAListPair<'a, 5, 25>) -> Self {
+        let SMAListPair {
+            smas_n: smas_5,
+            smas_o: smas_25,
         } = value;
-        let crosses = five_days
+        let crosses = smas_5
             .iter()
-            .map(|five_day| {
-                let twenty_five_day = twenty_five_days
-                    .iter()
-                    .find(|twenty_five_day| five_day.date.eq(&twenty_five_day.date));
+            .map(|sma_5| {
+                let sma_25 = smas_25.iter().find(|sma_25| sma_5.date.eq(&sma_25.date));
                 let sma_pair = SMAPair {
-                    n_day: five_day,
-                    o_day: twenty_five_day,
+                    sma_n: sma_5,
+                    sma_o: sma_25,
                 };
                 let ordering_5_25 = Ordering::from(sma_pair);
                 Cross {
-                    date: five_day.date,
-                    five_day: Some(five_day.value),
-                    twenty_five_day: twenty_five_day.map(|twenty_five_day| twenty_five_day.value),
+                    date: sma_5.date,
+                    sma_5_ave: Some(sma_5.ave),
+                    sma_25_ave: sma_25.map(|sma_25| sma_25.ave),
                     ordering_5_25,
                     ..Default::default()
                 }
-            })
-            .inspect(|cross| {
-                dbg!(cross);
             })
             .collect_vec()
             .windows(2)
@@ -133,13 +124,13 @@ impl<'a> From<SMAPairList<'a, 5, 25>> for VecCross {
                 let yesterday = x[0].ordering_5_25;
                 let today = x[1].ordering_5_25;
                 let ordering_pair = OrderingPair { yesterday, today };
-                let cross_direction = CrossDirection::from(ordering_pair);
+                let cross_direction_5_25 = CrossDirection::from(ordering_pair);
                 Cross {
                     date: x[1].date,
-                    five_day: x[1].five_day,
-                    twenty_five_day: x[1].twenty_five_day,
+                    sma_5_ave: x[1].sma_5_ave,
+                    sma_25_ave: x[1].sma_25_ave,
                     ordering_5_25: x[1].ordering_5_25,
-                    cross_direction,
+                    cross_direction_5_25,
                 }
             })
             .collect_vec();
@@ -152,20 +143,19 @@ mod tests {
     use super::*;
     use crate::domain::entity::sma::VecSMA;
     use crate::domain::entity::stock::VecStock;
+
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
-    const FIVE_DAY: usize = 5;
-    const TWENTY_FIVE_DAY: usize = 25;
 
     #[test]
     fn vec_cross_test() {
         let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
-        let VecSMA(five_days) = VecSMA::<FIVE_DAY>::from(stocks.as_slice());
-        let VecSMA(twenty_five_days) = VecSMA::<TWENTY_FIVE_DAY>::from(stocks.as_slice());
-        let pair_sma = SMAPairList {
-            n_days: five_days.as_slice(),
-            o_days: twenty_five_days.as_slice(),
+        let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
+        let VecSMA(smas_25) = VecSMA::<25>::from(stocks.as_slice());
+        let sma_list_pair = SMAListPair {
+            smas_n: smas_5.as_slice(),
+            smas_o: smas_25.as_slice(),
         };
-        let VecCross(crosses) = VecCross::from(pair_sma);
+        let VecCross(crosses) = VecCross::from(sma_list_pair);
         assert_eq!(crosses.len(), 241);
     }
 }
