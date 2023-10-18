@@ -3,7 +3,7 @@ use csv::ReaderBuilder;
 use indoc::indoc;
 use quantitative_data_analysis_rs::domain::entity::stock::Stock;
 
-static CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
+const CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
 
 #[test]
 fn csv_sandbox() -> Result<()> {

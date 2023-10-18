@@ -31,7 +31,7 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
             .map(|stocks| {
                 let mut ma = SumTreeSMA::<_, f64, { N }>::new();
                 for stock in stocks {
-                    ma.add_sample(stock.adj_close);
+                    ma.add_sample(stock.close);
                 }
                 let ave = ma.get_average();
                 let date = stocks.last().unwrap().date;
@@ -39,6 +39,16 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
             })
             .collect_vec();
         Self(smas)
+    }
+}
+
+pub trait VecSMAExt {
+    fn collect_vec_ave(&self) -> Vec<f32>;
+}
+
+impl<const N: usize> VecSMAExt for VecSMA<N> {
+    fn collect_vec_ave(&self) -> Vec<f32> {
+        self.0.iter().map(|sma| sma.ave as f32).collect_vec()
     }
 }
 

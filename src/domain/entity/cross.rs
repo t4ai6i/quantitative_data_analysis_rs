@@ -1,4 +1,5 @@
 use crate::domain::entity::sma::SMA;
+use charts_rs::NIL_VALUE;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use std::cmp::Ordering as Ord;
@@ -135,6 +136,26 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
             })
             .collect_vec();
         Self(crosses)
+    }
+}
+
+pub trait VecCrossExt {
+    fn collect_vec_cross(&self, r#type: CrossDirectionType) -> Vec<f32>;
+}
+
+impl VecCrossExt for VecCross {
+    fn collect_vec_cross(&self, r#type: CrossDirectionType) -> Vec<f32> {
+        self.0
+            .iter()
+            .map(|cross| match cross.cross_direction_5_25 {
+                CrossDirection { cross_direction }
+                    if cross_direction.filter(|x| x.eq(&r#type)).is_some() =>
+                {
+                    cross.sma_25_ave.unwrap() as _
+                }
+                _ => NIL_VALUE,
+            })
+            .collect_vec()
     }
 }
 
