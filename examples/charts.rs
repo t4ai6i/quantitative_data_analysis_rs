@@ -5,12 +5,17 @@ use quantitative_data_analysis_rs::domain::entity::cross::{
 };
 use quantitative_data_analysis_rs::domain::entity::sma::{VecSMA, VecSMAExt};
 use quantitative_data_analysis_rs::domain::entity::stock::{VecStock, VecStockExt};
+use quantitative_data_analysis_rs::utils::float;
 use std::fs::write;
 
 const CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
 
 fn main() -> Result<()> {
     // TODO: GoldenCross発生当日の調整後終値と比べ、3営業日後の値が上昇したか判定していく。
+    // TODO: Create SMA from zero-based data, like download via yahoo_finance2_api with term.
+    // TODO: Create SMA from a day of end, like get daily stock data.
+    // TODO: Consider DB schema
+    // TODO: Register data
     let vec_stock = VecStock::<true>::from(CSV_8473);
     let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());
     let vec_sma_25 = VecSMA::<25>::from(vec_stock.0.as_slice());
@@ -25,13 +30,8 @@ fn main() -> Result<()> {
     let candlesticks = vec_stock.collect_vec_candlestick();
     let dead_crosses = vec_cross.collect_vec_cross(CrossDirectionType::Dead);
     let golden_crosses = vec_cross.collect_vec_cross(CrossDirectionType::Golden);
-    let min = candlesticks.iter().copied().fold(f32::INFINITY, f32::min);
-    let max = candlesticks
-        .iter()
-        .copied()
-        .fold(f32::NEG_INFINITY, f32::max);
-    let min = min - 10.0;
-    let max = max + 10.0;
+    let min = float::min(&candlesticks) - 10.0;
+    let max = float::max(&candlesticks) + 10.0;
 
     let x_axis_data = vec_stock.collect_vec_day();
 
