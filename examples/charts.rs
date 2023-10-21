@@ -28,8 +28,8 @@ fn main() -> Result<()> {
     let vec_sma_5_ave = vec_sma_5.collect_vec_ave();
     let vec_sma_25_ave = vec_sma_25.collect_vec_ave();
     let candlesticks = vec_stock.collect_vec_candlestick();
-    let dead_crosses = vec_cross.collect_vec_cross(CrossDirectionType::Dead);
-    let golden_crosses = vec_cross.collect_vec_cross(CrossDirectionType::Golden);
+    let dead_crosses = vec_cross.collect_vec_sma_25_ave(CrossDirectionType::Dead);
+    let golden_crosses = vec_cross.collect_vec_sma_25_ave(CrossDirectionType::Golden);
     let min = float::min(&candlesticks) - 10.0;
     let max = float::max(&candlesticks) + 10.0;
 
@@ -61,6 +61,7 @@ fn main() -> Result<()> {
     candlestick_chart.y_axis_configs[0].axis_max = Some(max);
     candlestick_chart.y_axis_configs[0].axis_formatter = Some("{t}".to_string());
     let svg = candlestick_chart.svg()?;
+    assert_eq!(include_str!("../assets/8473.T.svg"), &svg);
     write("./examples/charts.svg", svg)?;
     Ok(())
 }

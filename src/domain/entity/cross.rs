@@ -30,17 +30,17 @@ impl<'a, const N: usize, const O: usize> From<SMAPair<'a, N, O>> for Ordering<N,
 }
 
 /// クロスの向き
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub enum CrossDirectionType {
+    #[default]
+    /// ゴールデンクロス・デッドクロスになっていない場合は、None
+    None,
     Golden,
     Dead,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct CrossDirection<const N: usize, const O: usize> {
-    /// ゴールデンクロス・デッドクロスになっていない場合は、None
-    pub cross_direction: Option<CrossDirectionType>,
-}
+pub struct CrossDirection<const N: usize, const O: usize>(pub CrossDirectionType);
 
 struct OrderingPair<const N: usize, const O: usize> {
     yesterday: Ordering<N, O>,
@@ -49,19 +49,13 @@ struct OrderingPair<const N: usize, const O: usize> {
 
 impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection<N, O> {
     fn from(value: OrderingPair<N, O>) -> Self {
-        // 前日の大小関係と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
+        // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
         // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
         let OrderingPair { yesterday, today } = value;
         match (yesterday.ordering, today.ordering) {
-            (Some(Ord::Less), Some(Ord::Greater)) => CrossDirection {
-                cross_direction: Some(CrossDirectionType::Golden),
-            },
-            (Some(Ord::Greater), Some(Ord::Less)) => CrossDirection {
-                cross_direction: Some(CrossDirectionType::Dead),
-            },
-            _ => CrossDirection {
-                cross_direction: None,
-            },
+            (Some(Ord::Less), Some(Ord::Greater)) => CrossDirection(CrossDirectionType::Golden),
+            (Some(Ord::Greater), Some(Ord::Less)) => CrossDirection(CrossDirectionType::Dead),
+            _ => CrossDirection(CrossDirectionType::None),
         }
     }
 }
@@ -140,22 +134,26 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
 }
 
 pub trait VecCrossExt {
-    fn collect_vec_cross(&self, r#type: CrossDirectionType) -> Vec<f32>;
+    fn collect_vec_sma_25_ave(&self, r#type: CrossDirectionType) -> Vec<f32>;
+    fn collect_vec_cross_dir_type(&self, any: bool) -> Vec<CrossDirectionType>;
 }
 
 impl VecCrossExt for VecCross {
-    fn collect_vec_cross(&self, r#type: CrossDirectionType) -> Vec<f32> {
+    fn collect_vec_sma_25_ave(&self, r#type: CrossDirectionType) -> Vec<f32> {
         self.0
             .iter()
-            .map(|cross| match cross.cross_direction_5_25 {
-                CrossDirection { cross_direction }
-                    if cross_direction.filter(|x| x.eq(&r#type)).is_some() =>
-                {
+            .map(|cross| {
+                if cross.cross_direction_5_25.0.eq(&r#type) {
                     cross.sma_25_ave.unwrap() as _
+                } else {
+                    NIL_VALUE
                 }
-                _ => NIL_VALUE,
             })
             .collect_vec()
+    }
+
+    fn collect_vec_cross_dir_type(&self, any: bool) -> Vec<CrossDirectionType> {
+        todo!()
     }
 }
 
