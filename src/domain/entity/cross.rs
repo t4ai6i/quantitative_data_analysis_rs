@@ -1,33 +1,8 @@
-use crate::domain::entity::sma::SMA;
-use charts_rs::NIL_VALUE;
+use crate::domain::entity::ordering::{Ordering, OrderingPair};
+use crate::domain::entity::sma::{SMAListPair, SMAPair};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use std::cmp::Ordering as Ord;
-
-/// 単純移動平均値の大小関係
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct Ordering<const N: usize, const O: usize> {
-    /// 対象日が片方なかったなど比較出来なかった場合は、None
-    pub ordering: Option<Ord>,
-}
-
-struct SMAPair<'a, const N: usize, const O: usize> {
-    sma_n: &'a SMA<N>,
-    sma_o: Option<&'a SMA<O>>,
-}
-
-impl<'a, const N: usize, const O: usize> From<SMAPair<'a, N, O>> for Ordering<N, O> {
-    fn from(value: SMAPair<'a, N, O>) -> Self {
-        let SMAPair { sma_n, sma_o } = value;
-        match (sma_n, sma_o) {
-            (sma_n, Some(sma_o)) => {
-                let ordering = sma_n.ave.partial_cmp(&sma_o.ave);
-                Ordering::<N, O> { ordering }
-            }
-            (_, _) => Ordering::<N, O>::default(),
-        }
-    }
-}
 
 /// クロスの向き
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -42,17 +17,12 @@ pub enum CrossDirectionType {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct CrossDirection<const N: usize, const O: usize>(pub CrossDirectionType);
 
-struct OrderingPair<const N: usize, const O: usize> {
-    yesterday: Ordering<N, O>,
-    today: Ordering<N, O>,
-}
-
 impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection<N, O> {
     fn from(value: OrderingPair<N, O>) -> Self {
         // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
         // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
-        let OrderingPair { yesterday, today } = value;
-        match (yesterday.ordering, today.ordering) {
+        let OrderingPair { past, future } = value;
+        match (past.0, future.0) {
             (Some(Ord::Less), Some(Ord::Greater)) => CrossDirection(CrossDirectionType::Golden),
             (Some(Ord::Greater), Some(Ord::Less)) => CrossDirection(CrossDirectionType::Dead),
             _ => CrossDirection(CrossDirectionType::None),
@@ -69,11 +39,6 @@ pub struct Cross {
     pub cross_direction_5_25: CrossDirection<5, 25>,
 }
 
-pub struct SMAListPair<'a, const N: usize, const O: usize> {
-    pub smas_n: &'a [SMA<N>],
-    pub smas_o: &'a [SMA<O>],
-}
-
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct VecCross(pub Vec<Cross>);
 
@@ -81,7 +46,8 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
     ///
     /// # Examples
     /// ```ignore
-    /// let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
+    /// let vec_csv_format = VecCSVFormat::<true>::from(CSV_8473);
+    /// let VecStock(stocks) = VecStock::from(vec_csv_format);
     /// let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
     /// let VecSMA(smas_25) = VecSMA::<25>::from(stocks.as_slice());
     /// let sma_list_pair = SMAListPair {
@@ -118,7 +84,10 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
             .map(|x| {
                 let yesterday = x[0].ordering_5_25;
                 let today = x[1].ordering_5_25;
-                let ordering_pair = OrderingPair { yesterday, today };
+                let ordering_pair = OrderingPair {
+                    past: yesterday,
+                    future: today,
+                };
                 let cross_direction_5_25 = CrossDirection::from(ordering_pair);
                 Cross {
                     date: x[1].date,
@@ -133,41 +102,19 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
     }
 }
 
-pub trait VecCrossExt {
-    fn collect_vec_sma_25_ave(&self, r#type: CrossDirectionType) -> Vec<f32>;
-    fn collect_vec_cross_dir_type(&self, any: bool) -> Vec<CrossDirectionType>;
-}
-
-impl VecCrossExt for VecCross {
-    fn collect_vec_sma_25_ave(&self, r#type: CrossDirectionType) -> Vec<f32> {
-        self.0
-            .iter()
-            .map(|cross| {
-                if cross.cross_direction_5_25.0.eq(&r#type) {
-                    cross.sma_25_ave.unwrap() as _
-                } else {
-                    NIL_VALUE
-                }
-            })
-            .collect_vec()
-    }
-
-    fn collect_vec_cross_dir_type(&self, any: bool) -> Vec<CrossDirectionType> {
-        todo!()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::domain::entity::sma::VecSMA;
     use crate::domain::entity::stock::VecStock;
+    use crate::infrastructure::vec_stock_repository::data_format::csv::VecCSVFormat;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
     #[test]
     fn vec_cross_test() {
-        let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
+        let vec_csv_format = VecCSVFormat::<true>::from(CSV_8473);
+        let VecStock(stocks) = VecStock::from(vec_csv_format);
         let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
         let VecSMA(smas_25) = VecSMA::<25>::from(stocks.as_slice());
         let sma_list_pair = SMAListPair {

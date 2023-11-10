@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use csv::ReaderBuilder;
 use indoc::indoc;
-use quantitative_data_analysis_rs::domain::entity::stock::Stock;
+use quantitative_data_analysis_rs::infrastructure::vec_stock_repository::data_format::csv::CSVFormat;
 
 const CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
 
@@ -22,7 +22,7 @@ fn csv_sandbox() -> Result<()> {
     );
     let record = reader.deserialize().next();
     let record = record.context("cannot read first line.")?;
-    let actual: Stock = record?;
+    let actual: CSVFormat = record?;
     let expected = indoc! {r#"{
         "Date":"2022-09-09",
         "Open":2662.0,
@@ -32,7 +32,7 @@ fn csv_sandbox() -> Result<()> {
         "Adj Close":2535.687744,
         "Volume":1482200
     }"#};
-    let expected: Stock = serde_json::from_str(expected)?;
+    let expected: CSVFormat = serde_json::from_str(expected)?;
     assert_eq!(actual, expected);
     Ok(())
 }

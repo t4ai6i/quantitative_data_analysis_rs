@@ -42,31 +42,33 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
     }
 }
 
-pub trait VecSMAExt {
-    fn collect_vec_ave(&self) -> Vec<f32>;
+pub struct SMAPair<'a, const N: usize, const O: usize> {
+    pub sma_n: &'a SMA<N>,
+    pub sma_o: Option<&'a SMA<O>>,
 }
 
-impl<const N: usize> VecSMAExt for VecSMA<N> {
-    fn collect_vec_ave(&self) -> Vec<f32> {
-        self.0.iter().map(|sma| sma.ave as f32).collect_vec()
-    }
+pub struct SMAListPair<'a, const N: usize, const O: usize> {
+    pub smas_n: &'a [SMA<N>],
+    pub smas_o: &'a [SMA<O>],
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::domain::entity::stock::VecStock;
+    use crate::infrastructure::vec_stock_repository::data_format::csv::VecCSVFormat;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
     #[test]
     fn vec_sma_test() {
-        let VecStock(stocks) = VecStock::<true>::from(CSV_8473);
+        let vec_csv_format = VecCSVFormat::<true>::from(CSV_8473);
+        let VecStock(stocks) = VecStock::from(vec_csv_format);
         let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
         assert_eq!(smas_5.len(), 242);
         let VecSMA(smas_25) = VecSMA::<25>::from(stocks.as_slice());
         assert_eq!(smas_25.len(), 222);
-        let VecStock(stocks) = VecStock::<true>(vec![]);
+        let VecStock(stocks) = VecStock(vec![]);
         let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
         assert_eq!(smas_5.len(), 0);
     }
