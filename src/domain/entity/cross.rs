@@ -3,9 +3,10 @@ use crate::domain::entity::sma::{SMAListPair, SMAPair};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use std::cmp::Ordering as Ord;
+use strum::Display;
 
 /// クロスの向き
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display)]
 pub enum CrossDirectionType {
     #[default]
     /// ゴールデンクロス・デッドクロスになっていない場合は、None

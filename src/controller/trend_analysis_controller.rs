@@ -24,7 +24,7 @@ where
         }
     }
 
-    pub fn analyze(
+    pub fn analyze<const N: usize>(
         &self,
         code: impl Into<String>,
         start_date: NaiveDate,
@@ -32,7 +32,7 @@ where
         data_format_type: DataFormatType,
     ) -> Result<TrendAnalysisResponse> {
         let input = TrendAnalysisInput::new(code, start_date, end_date, data_format_type);
-        let output = self.interactor.handle::<3>(input)?;
+        let output = self.interactor.handle::<N>(input)?;
         let response = self.presenter.handle(output)?;
         Ok(response)
     }

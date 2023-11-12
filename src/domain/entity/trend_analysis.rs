@@ -1,3 +1,4 @@
+use crate::domain::entity::chance_loss::{ChanceLoss, CrossDirectionChangePair};
 use crate::domain::entity::cross::{Cross, CrossDirection, CrossDirectionType};
 use crate::domain::entity::stock::Stock;
 use chrono::NaiveDate;
@@ -11,11 +12,12 @@ pub struct StockCrossPair<'a> {
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct TrendAnalysis<const N: usize> {
-    cross_date: NaiveDate,
-    close_on_cross: f64,
-    close_after_n_days: f64,
-    cross_direction_5_25: CrossDirection<5, 25>,
-    per_inc_dec: f64,
+    pub cross_date: NaiveDate,
+    pub close_on_cross: f64,
+    pub close_after_n_days: f64,
+    pub cross_direction_5_25: CrossDirection<5, 25>,
+    pub change: f64,
+    pub chance_loss: ChanceLoss,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -47,13 +49,19 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             })
             .map(|(stock, cross, stock_after_n_days)| {
                 // 増減率を取得
-                let per_inc_dec = stock_after_n_days.close.sub(stock.close) / stock.close;
+                let change = stock_after_n_days.close.sub(stock.close) / stock.close;
+                let cross_direction_chance_pair = CrossDirectionChangePair {
+                    cross_direction: cross.cross_direction_5_25.0,
+                    change,
+                };
+                let chance_loss = ChanceLoss::from(cross_direction_chance_pair);
                 TrendAnalysis {
                     cross_date: cross.date,
                     close_on_cross: stock.close,
                     close_after_n_days: stock_after_n_days.close,
                     cross_direction_5_25: cross.cross_direction_5_25,
-                    per_inc_dec,
+                    change,
+                    chance_loss,
                 }
             })
             .collect_vec();

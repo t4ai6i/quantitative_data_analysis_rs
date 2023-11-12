@@ -30,8 +30,8 @@ fn main() -> Result<()> {
     let end_date = NaiveDate::default();
     let data_format_type = DataFormatType::CSVFormat { has_headers: true };
     let TrendAnalysisResponse::Chart { body } =
-        controller.analyze(code, start_date, end_date, data_format_type)?;
+        controller.analyze::<5>(code, start_date, end_date, data_format_type)?;
+    write("./examples/trend_analysis.svg", &body)?;
     assert_eq!(include_str!("../assets/8473.T.svg"), &body);
-    write("./examples/trend_analysis.svg", body)?;
     Ok(())
 }

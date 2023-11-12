@@ -6,8 +6,11 @@ use crate::utils::float;
 use crate::view_model::vec_cross::VecCrossExt;
 use crate::view_model::vec_sma::VecSMAExt;
 use crate::view_model::vec_stock::VecStockExt;
+use crate::view_model::vec_trend_analysis::VecTrendAnalysisExt;
 use anyhow::Result;
-use charts_rs::{CandlestickChart, LegendCategory, Series, SeriesCategory};
+use charts_rs::{
+    CandlestickChart, ChildChart, LegendCategory, MultiChart, Series, SeriesCategory, TableChart,
+};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Chart {
@@ -43,6 +46,10 @@ impl TrendAnalysisPresenter for Chart {
             .collect_vec_sma_25_ave(CrossDirectionType::Golden);
         let min = float::min(&candlesticks) - 10.0;
         let max = float::max(&candlesticks) + 10.0;
+
+        let mut charts = MultiChart::new();
+        charts.margin = (10.0).into();
+
         let mut candlestick_chart = CandlestickChart::new_with_theme(
             vec![
                 Series::from(("SMA5", vec_sma_5_ave)),
@@ -52,10 +59,10 @@ impl TrendAnalysisPresenter for Chart {
                 Series::from(("Daily", candlesticks)),
             ],
             x_axis_data,
-            "chalk",
+            self.theme.as_str(),
         );
-        candlestick_chart.width = 1280.0;
-        candlestick_chart.height = 720.0;
+        candlestick_chart.width = self.width;
+        candlestick_chart.height = self.height;
         candlestick_chart.legend_category = LegendCategory::RoundRect;
         candlestick_chart.series_list[0].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[0].start_index = 5;
@@ -68,10 +75,25 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.y_axis_configs[0].axis_min = Some(min);
         candlestick_chart.y_axis_configs[0].axis_max = Some(max);
         candlestick_chart.y_axis_configs[0].axis_formatter = Some("{t}".to_string());
-        let body = candlestick_chart.svg()?;
-        Ok(TrendAnalysisResponse::Chart { body })
-        // // 3日後トレンドを取得
-        // let vec_trend_analysis = VecTrendAnalysis::<3>::from(stock_cross_pair);
-        // let mut table_chart = TableChart::new(vec![]);
+        charts.add(ChildChart::Candlestick(candlestick_chart, None));
+
+        let mut rows = vec![vec![
+            "date".to_string(),
+            "chance loss".to_string(),
+            "direction".to_string(),
+            "per inc/dec".to_string(),
+            "close at cross".to_string(),
+            format!("close after {} days", N),
+        ]];
+        let mut body = output.vec_trend.table_chart_rows();
+        rows.append(&mut body);
+
+        let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
+        table_chart.width = self.width;
+        charts.add(ChildChart::Table(table_chart, None));
+
+        Ok(TrendAnalysisResponse::Chart {
+            body: charts.svg()?,
+        })
     }
 }

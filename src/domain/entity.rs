@@ -1,3 +1,4 @@
+pub mod chance_loss;
 pub mod cross;
 mod ordering;
 pub mod sma;

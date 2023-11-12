@@ -1,4 +1,5 @@
-<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+<svg width="1300" height="1236" viewBox="0 0 1300 1236" xmlns="http://www.w3.org/2000/svg">
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" x="10" y="10">
 <rect x="0" y="0" width="1280" height="720" fill="#293441"/>
 <g>
 <rect x="454.5" y="10" width="25" height="10" rx="2" ry="2" stroke="#FC97AF" fill="#FC97AF"/>
@@ -1128,4 +1129,247 @@ Daily
 <path d="M 1242.5 254.2" stroke-width="2" fill="none" stroke="#72CCFF"/>
 <circle cx="1242.5" cy="254.2" r="2" stroke-width="2" stroke="#72CCFF" fill="#293441"/>
 </g>
+</svg>
+<svg width="1280" height="486" viewBox="0 0 1280 486" xmlns="http://www.w3.org/2000/svg" x="10" y="740">
+<rect x="0" y="0" width="1280" height="46" fill="#293441"/>
+<line stroke-width="1" x1="0" y1="0" x2="1280" y2="0" stroke="#646464"/>
+<text font-size="14" x="10" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+date
+</text>
+<text font-size="14" x="223.3" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+chance loss
+</text>
+<text font-size="14" x="436.7" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+direction
+</text>
+<text font-size="14" x="650" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+per inc/dec
+</text>
+<text font-size="14" x="863.3" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+close at cross
+</text>
+<text font-size="14" x="1076.7" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+close after 5 days
+</text>
+<rect x="0" y="46" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="46" x2="1280" y2="46" stroke="#646464"/>
+<text font-size="14" x="10" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2022/10/26
+</text>
+<text font-size="14" x="223.3" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+✅
+</text>
+<text font-size="14" x="436.7" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Golden
+</text>
+<text font-size="14" x="650" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
++0.262%
+</text>
+<text font-size="14" x="863.3" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2668
+</text>
+<text font-size="14" x="1076.7" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2675
+</text>
+<rect x="0" y="86" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="86" x2="1280" y2="86" stroke="#646464"/>
+<text font-size="14" x="10" y="91" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2022/11/16
+</text>
+<text font-size="14" x="223.3" y="91" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="91" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Dead
+</text>
+<text font-size="14" x="650" y="91" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
++1.304%
+</text>
+<text font-size="14" x="863.3" y="91" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2608
+</text>
+<text font-size="14" x="1076.7" y="91" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2642
+</text>
+<rect x="0" y="126" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="126" x2="1280" y2="126" stroke="#646464"/>
+<text font-size="14" x="10" y="131" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2022/12/28
+</text>
+<text font-size="14" x="223.3" y="131" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="131" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Golden
+</text>
+<text font-size="14" x="650" y="131" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+-2.654%
+</text>
+<text font-size="14" x="863.3" y="131" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2600
+</text>
+<text font-size="14" x="1076.7" y="131" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2531
+</text>
+<rect x="0" y="166" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="166" x2="1280" y2="166" stroke="#646464"/>
+<text font-size="14" x="10" y="171" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2022/12/29
+</text>
+<text font-size="14" x="223.3" y="171" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="171" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Dead
+</text>
+<text font-size="14" x="650" y="171" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
++1.226%
+</text>
+<text font-size="14" x="863.3" y="171" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2528
+</text>
+<text font-size="14" x="1076.7" y="171" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2559
+</text>
+<rect x="0" y="206" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="206" x2="1280" y2="206" stroke="#646464"/>
+<text font-size="14" x="10" y="211" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023/01/13
+</text>
+<text font-size="14" x="223.3" y="211" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="211" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Golden
+</text>
+<text font-size="14" x="650" y="211" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+-0.484%
+</text>
+<text font-size="14" x="863.3" y="211" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2688
+</text>
+<text font-size="14" x="1076.7" y="211" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2675
+</text>
+<rect x="0" y="246" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="246" x2="1280" y2="246" stroke="#646464"/>
+<text font-size="14" x="10" y="251" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023/03/14
+</text>
+<text font-size="14" x="223.3" y="251" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+✅
+</text>
+<text font-size="14" x="436.7" y="251" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Dead
+</text>
+<text font-size="14" x="650" y="251" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+-0.559%
+</text>
+<text font-size="14" x="863.3" y="251" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2682
+</text>
+<text font-size="14" x="1076.7" y="251" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2667
+</text>
+<rect x="0" y="286" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="286" x2="1280" y2="286" stroke="#646464"/>
+<text font-size="14" x="10" y="291" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023/04/17
+</text>
+<text font-size="14" x="223.3" y="291" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="291" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Golden
+</text>
+<text font-size="14" x="650" y="291" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+-0.525%
+</text>
+<text font-size="14" x="863.3" y="291" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2668
+</text>
+<text font-size="14" x="1076.7" y="291" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2654
+</text>
+<rect x="0" y="326" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="326" x2="1280" y2="326" stroke="#646464"/>
+<text font-size="14" x="10" y="331" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023/05/31
+</text>
+<text font-size="14" x="223.3" y="331" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="331" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Dead
+</text>
+<text font-size="14" x="650" y="331" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
++2.261%
+</text>
+<text font-size="14" x="863.3" y="331" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2610
+</text>
+<text font-size="14" x="1076.7" y="331" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2669
+</text>
+<rect x="0" y="366" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="366" x2="1280" y2="366" stroke="#646464"/>
+<text font-size="14" x="10" y="371" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023/06/15
+</text>
+<text font-size="14" x="223.3" y="371" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="371" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Golden
+</text>
+<text font-size="14" x="650" y="371" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+-1.623%
+</text>
+<text font-size="14" x="863.3" y="371" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2835
+</text>
+<text font-size="14" x="1076.7" y="371" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2789
+</text>
+<rect x="0" y="406" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="406" x2="1280" y2="406" stroke="#646464"/>
+<text font-size="14" x="10" y="411" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023/08/17
+</text>
+<text font-size="14" x="223.3" y="411" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+❌
+</text>
+<text font-size="14" x="436.7" y="411" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Dead
+</text>
+<text font-size="14" x="650" y="411" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
++1.388%
+</text>
+<text font-size="14" x="863.3" y="411" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2881
+</text>
+<text font-size="14" x="1076.7" y="411" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2921
+</text>
+<rect x="0" y="446" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="446" x2="1280" y2="446" stroke="#646464"/>
+<text font-size="14" x="10" y="451" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023/08/30
+</text>
+<text font-size="14" x="223.3" y="451" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+✅
+</text>
+<text font-size="14" x="436.7" y="451" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Golden
+</text>
+<text font-size="14" x="650" y="451" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
++5.666%
+</text>
+<text font-size="14" x="863.3" y="451" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2965
+</text>
+<text font-size="14" x="1076.7" y="451" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+3133
+</text>
+</svg>
 </svg>
