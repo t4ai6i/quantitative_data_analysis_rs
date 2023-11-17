@@ -8,7 +8,7 @@ pub struct Stock {
     pub low: f64,
     pub close: f64,
     pub adj_close: f64,
-    pub volume: u32,
+    pub volume: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]

@@ -75,7 +75,7 @@ mod tests {
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
     use crate::domain::entity::stock::VecStock;
     use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
-    use crate::infrastructure::vec_stock_repository::data_format::csv::VecCSVFormat;
+    use crate::infrastructure::stock_repository::data_format::csv::VecCSVFormat;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 

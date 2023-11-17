@@ -1,6 +1,7 @@
-use crate::infrastructure::vec_stock_repository::data_format::DataFormatType;
+use crate::infrastructure::stock_repository::data_format::DataFormatType;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use anyhow::Result;
+use async_trait::async_trait;
 use chrono::NaiveDate;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
@@ -27,6 +28,10 @@ impl TrendAnalysisInput {
     }
 }
 
+#[async_trait]
 pub trait TrendAnalysisUseCase {
-    fn handle<const N: usize>(&self, input: TrendAnalysisInput) -> Result<TrendAnalysisOutput<N>>;
+    async fn handle<const N: usize>(
+        &self,
+        input: TrendAnalysisInput,
+    ) -> Result<TrendAnalysisOutput<N>>;
 }

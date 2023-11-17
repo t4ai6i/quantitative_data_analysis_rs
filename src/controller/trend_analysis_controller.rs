@@ -1,4 +1,4 @@
-use crate::infrastructure::vec_stock_repository::data_format::DataFormatType;
+use crate::infrastructure::stock_repository::data_format::DataFormatType;
 use crate::presenter::trend_analysis_presenter::{TrendAnalysisPresenter, TrendAnalysisResponse};
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
@@ -24,7 +24,7 @@ where
         }
     }
 
-    pub fn analyze<const N: usize>(
+    pub async fn analyze<const N: usize>(
         &self,
         code: impl Into<String>,
         start_date: NaiveDate,
@@ -32,7 +32,7 @@ where
         data_format_type: DataFormatType,
     ) -> Result<TrendAnalysisResponse> {
         let input = TrendAnalysisInput::new(code, start_date, end_date, data_format_type);
-        let output = self.interactor.handle::<N>(input)?;
+        let output = self.interactor.handle::<N>(input).await?;
         let response = self.presenter.handle(output)?;
         Ok(response)
     }

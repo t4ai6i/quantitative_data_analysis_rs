@@ -1,1 +1,1 @@
-pub mod vec_stock_repository;
+pub mod stock_repository;

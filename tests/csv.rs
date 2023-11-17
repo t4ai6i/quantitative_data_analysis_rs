@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use csv::ReaderBuilder;
 use indoc::indoc;
-use quantitative_data_analysis_rs::infrastructure::vec_stock_repository::data_format::csv::CSVFormat;
+use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::CSVFormat;
 
 const CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
 

@@ -108,7 +108,7 @@ mod tests {
     use super::*;
     use crate::domain::entity::sma::VecSMA;
     use crate::domain::entity::stock::VecStock;
-    use crate::infrastructure::vec_stock_repository::data_format::csv::VecCSVFormat;
+    use crate::infrastructure::stock_repository::data_format::csv::VecCSVFormat;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 

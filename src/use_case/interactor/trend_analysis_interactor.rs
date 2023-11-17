@@ -7,6 +7,7 @@ use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
 };
 use anyhow::Result;
+use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysisInteractor<'a, R> {
@@ -19,17 +20,24 @@ impl<'a, R> TrendAnalysisInteractor<'a, R> {
     }
 }
 
+#[async_trait]
 impl<'a, R> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, R>
 where
-    R: StockRepository,
+    R: StockRepository + Sync,
 {
-    fn handle<const N: usize>(&self, input: TrendAnalysisInput) -> Result<TrendAnalysisOutput<N>> {
-        let vec_stock = self.repository.get_vec_stock(
-            input.code,
-            input.start_date,
-            input.end_date,
-            input.data_format_type,
-        )?;
+    async fn handle<const N: usize>(
+        &self,
+        input: TrendAnalysisInput,
+    ) -> Result<TrendAnalysisOutput<N>> {
+        let vec_stock = self
+            .repository
+            .get_vec_stock(
+                input.code,
+                input.start_date,
+                input.end_date,
+                input.data_format_type,
+            )
+            .await?;
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());
         let vec_sma_25 = VecSMA::<25>::from(vec_stock.0.as_slice());
         let sma_list_pair = SMAListPair {

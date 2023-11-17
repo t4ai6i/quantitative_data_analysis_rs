@@ -19,7 +19,7 @@ pub struct CSVFormat {
     #[serde(rename = "Adj Close")]
     pub adj_close: f64,
     #[serde(rename = "Volume")]
-    pub volume: u32,
+    pub volume: u64,
 }
 
 pub struct VecCSVFormat<const B: bool>(pub Vec<CSVFormat>);
