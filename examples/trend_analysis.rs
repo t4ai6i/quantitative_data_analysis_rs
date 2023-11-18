@@ -38,8 +38,8 @@ async fn main() -> Result<()> {
     let repository = YahooFinanceAPI::new();
     let interactor = TrendAnalysisInteractor::new(&repository);
     let controller = TrendAnalysisController::new(&interactor, &presenter);
-    let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
-    let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
+    let start_date = NaiveDate::from_ymd_opt(2022, 9, 9).unwrap();
+    let end_date = NaiveDate::from_ymd_opt(2023, 9, 8).unwrap();
     let data_format_type = DataFormatType::YFAPIQuote;
     let TrendAnalysisResponse::Chart { body } = controller
         .analyze::<5>(code, start_date, end_date, data_format_type)
