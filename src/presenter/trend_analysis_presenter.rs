@@ -1,3 +1,4 @@
+use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
@@ -7,6 +8,7 @@ use anyhow::Result;
 pub mod chart;
 
 pub struct TrendAnalysisOutput<const N: usize> {
+    company: Company,
     vec_stock: VecStock,
     vec_sma_5: VecSMA<5>,
     vec_sma_25: VecSMA<25>,
@@ -16,6 +18,7 @@ pub struct TrendAnalysisOutput<const N: usize> {
 
 impl<const N: usize> TrendAnalysisOutput<N> {
     pub fn new(
+        company: Company,
         vec_stock: VecStock,
         vec_sma_5: VecSMA<5>,
         vec_sma_25: VecSMA<25>,
@@ -23,6 +26,7 @@ impl<const N: usize> TrendAnalysisOutput<N> {
         vec_trend: VecTrendAnalysis<N>,
     ) -> Self {
         Self {
+            company,
             vec_stock,
             vec_sma_5,
             vec_sma_25,

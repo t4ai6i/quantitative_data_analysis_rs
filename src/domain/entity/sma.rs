@@ -55,21 +55,20 @@ pub struct SMAListPair<'a, const N: usize, const O: usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::entity::stock::VecStock;
-    use crate::infrastructure::stock_repository::data_format::csv::VecCSVFormat;
+    use crate::infrastructure::csv_ext::CsvExt;
+    use crate::infrastructure::stock_repository::data_format::csv::StockCsvRow;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
     #[test]
     fn vec_sma_test() {
-        let vec_csv_format = VecCSVFormat::<true>::from(CSV_8473);
-        let VecStock(stocks) = VecStock::from(vec_csv_format);
-        let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
+        let vec_stock = StockCsvRow::from_slice::<true>(CSV_8473);
+        let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
         assert_eq!(smas_5.len(), 242);
-        let VecSMA(smas_25) = VecSMA::<25>::from(stocks.as_slice());
+        let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
         assert_eq!(smas_25.len(), 222);
-        let VecStock(stocks) = VecStock(vec![]);
-        let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
+        let vec_stock: Vec<Stock> = vec![];
+        let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
         assert_eq!(smas_5.len(), 0);
     }
 }

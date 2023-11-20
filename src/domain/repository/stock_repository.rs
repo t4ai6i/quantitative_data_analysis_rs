@@ -1,5 +1,5 @@
 use crate::domain::entity::stock::VecStock;
-use crate::infrastructure::stock_repository::data_format::DataFormatType;
+use crate::infrastructure::stock_repository::data_format::DataFormat;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::NaiveDate;
@@ -8,9 +8,9 @@ use chrono::NaiveDate;
 pub trait StockRepository {
     async fn get_vec_stock(
         &self,
-        code: String,
+        code: impl Into<String> + Send,
         start_date: NaiveDate,
         end_date: NaiveDate,
-        data_format_type: DataFormatType,
+        data_format: DataFormat,
     ) -> Result<VecStock>;
 }

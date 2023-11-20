@@ -1,11 +1,10 @@
-use crate::domain::entity::stock::{Stock, VecStock};
+use crate::domain::entity::stock::Stock;
+use crate::infrastructure::csv_ext::CsvExt;
 use chrono::NaiveDate;
-use csv::ReaderBuilder;
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct CSVFormat {
+pub struct StockCsvRow {
     #[serde(rename = "Date")]
     pub date: NaiveDate,
     #[serde(rename = "Open")]
@@ -22,65 +21,43 @@ pub struct CSVFormat {
     pub volume: u64,
 }
 
-pub struct VecCSVFormat<const B: bool>(pub Vec<CSVFormat>);
-
-impl<const B: bool> From<&[u8]> for VecCSVFormat<B> {
-    ///
-    /// # Examples
-    /// ```ignore
-    /// const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
-    /// let vec_csv_format = VecCSVFormat::<true>::from(CSV_8473);
-    /// let VecStock(stocks) = VecStock::from(vec_csv_format);
-    /// assert_eq!(stocks.len(), 246);
-    /// let vec_csv_format: VecCSVFormat<true> = CSV_8473.into();
-    /// let VecStock(stocks) = VecStock::from(vec_csv_format);
-    /// assert_eq!(stocks.len(), 246);
-    /// ```
-    fn from(value: &[u8]) -> Self {
-        let mut reader = if B {
-            ReaderBuilder::new().has_headers(true).from_reader(value)
-        } else {
-            ReaderBuilder::new().has_headers(false).from_reader(value)
-        };
-        let stocks = reader
-            .deserialize::<CSVFormat>()
-            .filter_map(Result::ok)
-            .collect_vec();
-        Self(stocks)
+impl From<StockCsvRow> for Stock {
+    fn from(value: StockCsvRow) -> Self {
+        let StockCsvRow {
+            date,
+            open,
+            high,
+            low,
+            close,
+            adj_close,
+            volume,
+        } = value;
+        Self {
+            date,
+            open,
+            high,
+            low,
+            close,
+            adj_close,
+            volume,
+        }
     }
 }
 
-impl<const B: bool> From<VecCSVFormat<B>> for VecStock {
-    fn from(value: VecCSVFormat<B>) -> Self {
-        let VecCSVFormat(csv_formats) = value;
-        let stocks = csv_formats
-            .iter()
-            .map(|csv_format| Stock {
-                date: csv_format.date,
-                open: csv_format.open,
-                high: csv_format.high,
-                low: csv_format.low,
-                close: csv_format.close,
-                adj_close: csv_format.adj_close,
-                volume: csv_format.volume,
-            })
-            .collect_vec();
-        VecStock(stocks)
-    }
+impl CsvExt for StockCsvRow {
+    type CSVFormat = StockCsvRow;
+    type Item = Stock;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::infrastructure::csv_ext::CsvExt;
     const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
 
     #[test]
     fn vec_stock_test() {
-        let vec_csv_format = VecCSVFormat::<true>::from(CSV_8473);
-        let VecStock(stocks) = VecStock::from(vec_csv_format);
-        assert_eq!(stocks.len(), 246);
-        let vec_csv_format: VecCSVFormat<true> = CSV_8473.into();
-        let VecStock(stocks) = VecStock::from(vec_csv_format);
-        assert_eq!(stocks.len(), 246);
+        let vec_stock = StockCsvRow::from_slice::<true>(CSV_8473);
+        assert_eq!(vec_stock.len(), 246);
     }
 }

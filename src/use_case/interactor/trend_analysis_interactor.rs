@@ -1,6 +1,7 @@
 use crate::domain::entity::cross::VecCross;
 use crate::domain::entity::sma::{SMAListPair, VecSMA};
 use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
+use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use crate::use_case::interface::trend_analysis_use_case::{
@@ -10,32 +11,41 @@ use anyhow::Result;
 use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct TrendAnalysisInteractor<'a, R> {
-    repository: &'a R,
+pub struct TrendAnalysisInteractor<'a, SR, CR> {
+    stock_repository: &'a SR,
+    company_repository: &'a CR,
 }
 
-impl<'a, R> TrendAnalysisInteractor<'a, R> {
-    pub fn new(repository: &'a R) -> Self {
-        Self { repository }
+impl<'a, SR, CR> TrendAnalysisInteractor<'a, SR, CR> {
+    pub fn new(stock_repository: &'a SR, company_repository: &'a CR) -> Self {
+        Self {
+            stock_repository,
+            company_repository,
+        }
     }
 }
 
 #[async_trait]
-impl<'a, R> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, R>
+impl<'a, SR, CR> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, SR, CR>
 where
-    R: StockRepository + Sync,
+    SR: StockRepository + Sync,
+    CR: CompanyRepository + Sync,
 {
     async fn handle<const N: usize>(
         &self,
         input: TrendAnalysisInput,
     ) -> Result<TrendAnalysisOutput<N>> {
+        let company = self
+            .company_repository
+            .get_company(input.code.as_str(), input.cp_data_format)
+            .await?;
         let vec_stock = self
-            .repository
+            .stock_repository
             .get_vec_stock(
-                input.code,
+                input.code.as_str(),
                 input.start_date,
                 input.end_date,
-                input.data_format_type,
+                input.sr_data_format,
             )
             .await?;
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());
@@ -52,6 +62,7 @@ where
         };
         let vec_trend_analysis = VecTrendAnalysis::<N>::from(stock_cross_pair);
         let output = TrendAnalysisOutput::new(
+            company,
             vec_stock,
             vec_sma_5,
             vec_sma_25,

@@ -9,7 +9,8 @@ use crate::view_model::vec_stock::VecStockExt;
 use crate::view_model::vec_trend_analysis::VecTrendAnalysisExt;
 use anyhow::Result;
 use charts_rs::{
-    CandlestickChart, ChildChart, LegendCategory, MultiChart, Series, SeriesCategory, TableChart,
+    Align, Box, CandlestickChart, ChildChart, LegendCategory, MultiChart, Series, SeriesCategory,
+    TableChart,
 };
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -34,6 +35,7 @@ impl TrendAnalysisPresenter for Chart {
         &self,
         output: TrendAnalysisOutput<N>,
     ) -> Result<TrendAnalysisResponse> {
+        let company = output.company;
         let vec_sma_5_ave = output.vec_sma_5.collect_vec_ave();
         let vec_sma_25_ave = output.vec_sma_25.collect_vec_ave();
         let candlesticks = output.vec_stock.collect_vec_candlestick();
@@ -61,9 +63,12 @@ impl TrendAnalysisPresenter for Chart {
             x_axis_data,
             self.theme.as_str(),
         );
+        candlestick_chart.title_text = format!("{}({})", company.name, company.code);
         candlestick_chart.width = self.width;
         candlestick_chart.height = self.height;
-        candlestick_chart.legend_category = LegendCategory::RoundRect;
+        candlestick_chart.legend_margin = Some(Box::from(30.0));
+        candlestick_chart.legend_align = Align::Center;
+        candlestick_chart.legend_category = LegendCategory::Normal;
         candlestick_chart.series_list[0].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[0].start_index = 5;
         candlestick_chart.series_list[1].category = Some(SeriesCategory::Line);

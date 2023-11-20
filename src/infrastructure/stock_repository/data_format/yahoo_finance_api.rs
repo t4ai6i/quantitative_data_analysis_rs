@@ -3,12 +3,9 @@ use chrono::NaiveDateTime;
 use itertools::Itertools;
 use yahoo_finance_api::Quote;
 
-pub struct VecQuote(pub Vec<Quote>);
-
-impl From<VecQuote> for VecStock {
-    fn from(value: VecQuote) -> Self {
-        let VecQuote(vec_quote) = value;
-        let vec_stock = vec_quote
+impl From<Vec<Quote>> for VecStock {
+    fn from(value: Vec<Quote>) -> Self {
+        let vec_stock = value
             .iter()
             .map(|quote| {
                 let date =

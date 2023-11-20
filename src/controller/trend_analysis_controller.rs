@@ -1,4 +1,5 @@
-use crate::infrastructure::stock_repository::data_format::DataFormatType;
+use crate::infrastructure::company_repository::data_format::DataFormat as CPDF;
+use crate::infrastructure::stock_repository::data_format::DataFormat as SRDF;
 use crate::presenter::trend_analysis_presenter::{TrendAnalysisPresenter, TrendAnalysisResponse};
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
@@ -29,9 +30,11 @@ where
         code: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
-        data_format_type: DataFormatType,
+        sr_data_format: SRDF,
+        cp_data_format: CPDF,
     ) -> Result<TrendAnalysisResponse> {
-        let input = TrendAnalysisInput::new(code, start_date, end_date, data_format_type);
+        let input =
+            TrendAnalysisInput::new(code, start_date, end_date, sr_data_format, cp_data_format);
         let output = self.interactor.handle::<N>(input).await?;
         let response = self.presenter.handle(output)?;
         Ok(response)

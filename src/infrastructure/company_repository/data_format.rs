@@ -1,12 +1,12 @@
 pub mod csv;
-pub mod yahoo_finance_api;
+pub mod json;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub enum DataFormat {
     #[default]
     Any,
+    Json,
     CSV {
         has_headers: bool,
     },
-    YahooFinanceAPI,
 }
