@@ -26,10 +26,10 @@ async fn main() -> Result<()> {
     });
     let file_path = PathBuf::from("./assets/companies.json");
     let company_repository = FileSystem::new(DataFormat::Json { file_path });
+    let interactor = TrendAnalysisInteractor::new(&stock_repository, &company_repository);
     let presenter = Chart::new("chalk", 1280.0, 720.0);
     // let presenter = trend_analysis_presenter::SummaryText::new();
     // let presenter = trend_analysis_presenter::DetailText::new();
-    let interactor = TrendAnalysisInteractor::new(&stock_repository, &company_repository);
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let start_date = NaiveDate::default();
     let end_date = NaiveDate::default();

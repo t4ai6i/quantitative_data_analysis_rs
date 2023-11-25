@@ -1,12 +1,14 @@
 use crate::domain::entity::cross::CrossDirectionType;
-use crate::presenter::trend_analysis_presenter::{
-    TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
+use crate::presenter::{
+    trend_analysis_presenter::{
+        TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
+    },
+    view_model::{
+        vec_cross::VecCrossExt, vec_sma::VecSMAExt, vec_stock::VecStockExt,
+        vec_trend_analysis::VecTrendAnalysisExt,
+    },
 };
 use crate::utils::float;
-use crate::view_model::vec_cross::VecCrossExt;
-use crate::view_model::vec_sma::VecSMAExt;
-use crate::view_model::vec_stock::VecStockExt;
-use crate::view_model::vec_trend_analysis::VecTrendAnalysisExt;
 use anyhow::{Context, Result};
 use charts_rs::{
     Align, Box, CandlestickChart, ChildChart, LegendCategory, MultiChart, Series, SeriesCategory,
@@ -93,6 +95,8 @@ impl TrendAnalysisPresenter for Chart {
         ]];
         let mut body = output.vec_trend.table_chart_rows();
         rows.append(&mut body);
+        let mut summary = output.vec_trend.table_chart_summary();
+        rows.append(&mut summary);
 
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.width = self.width;
