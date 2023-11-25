@@ -9,12 +9,8 @@ use yahoo_finance_api::YQuoteItem;
 
 #[async_trait]
 impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
-    async fn get_company(
-        &self,
-        code: impl Into<String> + Send,
-        data_format: DataFormat,
-    ) -> Result<Company> {
-        if let DataFormat::YahooFinanceAPI = data_format {
+    async fn get_company(&self, code: impl Into<String> + Send) -> Result<Company> {
+        if let DataFormat::YahooFinanceAPI = self.data_format {
             let code = code.into();
             let y_search_result = self.provider.search_ticker(&code).await.with_context(|| {
                 format!(
@@ -38,7 +34,7 @@ impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
         } else {
             bail!(format!(
                 "Unsupported data format: {:?}\n{}",
-                data_format,
+                self.data_format,
                 Backtrace::force_capture()
             ));
         }
@@ -68,9 +64,9 @@ mod tests {
     async fn get_company_test() -> Result<()> {
         let code = "8473.T";
         let provider = YahooConnector::new();
-        let repository = YahooFinanceAPI::new(&provider);
         let data_format = DataFormat::YahooFinanceAPI;
-        let company = repository.get_company(code, data_format).await?;
+        let repository = YahooFinanceAPI::new(&provider, data_format);
+        let company = repository.get_company(code).await?;
         assert_eq!(
             company,
             Company {
@@ -87,8 +83,8 @@ mod tests {
     async fn get_company_code_not_found_test() {
         let code = "";
         let provider = YahooConnector::new();
-        let repository = YahooFinanceAPI::new(&provider);
         let data_format = DataFormat::YahooFinanceAPI;
-        let _ = repository.get_company(code, data_format).await.unwrap();
+        let repository = YahooFinanceAPI::new(&provider, data_format);
+        let _ = repository.get_company(code).await.unwrap();
     }
 }

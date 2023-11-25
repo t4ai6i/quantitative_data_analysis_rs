@@ -1,4 +1,3 @@
-use crate::infrastructure::data_format::DataFormat;
 use crate::presenter::trend_analysis_presenter::{TrendAnalysisPresenter, TrendAnalysisResponse};
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
@@ -29,16 +28,8 @@ where
         code: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
-        stock_data_format: DataFormat,
-        company_data_format: DataFormat,
     ) -> Result<TrendAnalysisResponse> {
-        let input = TrendAnalysisInput::new(
-            code,
-            start_date,
-            end_date,
-            stock_data_format,
-            company_data_format,
-        );
+        let input = TrendAnalysisInput::new(code, start_date, end_date);
         let output = self.interactor.handle::<N>(input).await?;
         let response = self.presenter.handle(output)?;
         Ok(response)

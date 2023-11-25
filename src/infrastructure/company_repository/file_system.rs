@@ -12,19 +12,15 @@ use tokio::fs::read;
 
 #[async_trait]
 impl CompanyRepository for FileSystem {
-    async fn get_company(
-        &self,
-        code: impl Into<String> + Send + Copy,
-        data_format: DataFormat,
-    ) -> Result<Company> {
-        let file_path = if let DataFormat::Json { ref file_path } = data_format {
+    async fn get_company(&self, code: impl Into<String> + Send + Copy) -> Result<Company> {
+        let file_path = if let DataFormat::Json { ref file_path } = self.data_format {
             file_path
-        } else if let DataFormat::CSV { ref file_path, .. } = data_format {
+        } else if let DataFormat::CSV { ref file_path, .. } = self.data_format {
             file_path
         } else {
             bail!(format!(
                 "Unsupported data format: {:?}\n{}",
-                data_format,
+                self.data_format,
                 Backtrace::force_capture()
             ));
         };
@@ -35,7 +31,7 @@ impl CompanyRepository for FileSystem {
                 Backtrace::force_capture()
             )
         })?;
-        let companies = if let DataFormat::Json { .. } = data_format {
+        let companies = if let DataFormat::Json { .. } = self.data_format {
             serde_json::from_slice::<Vec<Company>>(&file).with_context(|| {
                 format!(
                     "Invalid JSON: {:?}). \n{}",
@@ -43,7 +39,7 @@ impl CompanyRepository for FileSystem {
                     Backtrace::force_capture()
                 )
             })?
-        } else if let DataFormat::CSV { has_headers, .. } = data_format {
+        } else if let DataFormat::CSV { has_headers, .. } = self.data_format {
             if has_headers {
                 CompanyCsvRow::from_slice::<true>(file.as_slice())
             } else {
@@ -78,11 +74,11 @@ mod tests {
 
     #[tokio::test]
     async fn get_vec_company_test() -> Result<()> {
-        let repository = FileSystem::new();
         let code = "8473.T";
-        let file_path = PathBuf::from("./assets/companies.json".to_string());
+        let file_path = PathBuf::from("./assets/companies.json");
         let data_format = DataFormat::Json { file_path };
-        let company = repository.get_company(code, data_format).await?;
+        let repository = FileSystem::new(data_format);
+        let company = repository.get_company(code).await?;
         assert_eq!(
             company,
             Company {
@@ -112,35 +108,35 @@ mod tests {
     #[tokio::test]
     #[should_panic]
     async fn get_vec_company_file_read_error_test() {
-        let repository = FileSystem::new();
         let code = "8473.T";
-        let file_path = PathBuf::from("./assets/not_exists.csv".to_string());
+        let file_path = PathBuf::from("./assets/not_exists.csv");
         let data_format = DataFormat::CSV {
             has_headers: true,
             file_path,
         };
-        let _ = repository.get_company(code, data_format).await.unwrap();
+        let repository = FileSystem::new(data_format);
+        let _ = repository.get_company(code).await.unwrap();
     }
 
     #[tokio::test]
     #[should_panic]
     async fn get_vec_company_not_found_company_error_test() {
-        let repository = FileSystem::new();
         let code = "8473.T";
-        let file_path = PathBuf::from("./assets/companies.csv".to_string());
+        let file_path = PathBuf::from("./assets/companies.csv");
         let data_format = DataFormat::CSV {
             has_headers: true,
             file_path,
         };
-        let _ = repository.get_company(code, data_format).await.unwrap();
+        let repository = FileSystem::new(data_format);
+        let _ = repository.get_company(code).await.unwrap();
     }
 
     #[tokio::test]
     #[should_panic]
     async fn get_vec_company_data_format_error_test() {
-        let repository = FileSystem::new();
         let code = "8473.T";
         let data_format = DataFormat::YahooFinanceAPI;
-        let _ = repository.get_company(code, data_format).await.unwrap();
+        let repository = FileSystem::new(data_format);
+        let _ = repository.get_company(code).await.unwrap();
     }
 }

@@ -15,28 +15,29 @@ impl StockRepository for FileSystem {
     ///
     /// # Examples
     /// ```ignore
-    /// let repository = FileSystem::new(PathBuf::from("./assets/"));
     /// let code = "8473.T";
     /// let start_date = NaiveDate::default();
     /// let end_date = NaiveDate::default();
-    /// let data_format = DataFormatType::CSV { has_headers: true };
-    /// let vec_stock = repository
-    ///     .get_vec_stock(code.to_string(), start_date, end_date, data_format)
-    ///     .await?;
+    /// let file_path = PathBuf::from(format!("./assets/{}.csv", code));
+    /// let data_format = DataFormat::CSV {
+    ///     has_headers: true,
+    ///     file_path,
+    /// };
+    /// let repository = FileSystem::new(data_format);
+    /// let vec_stock = repository.get_vec_stock(code, start_date, end_date).await?;
     /// assert_eq!(vec_stock.0.len(), 246);
     async fn get_vec_stock(
         &self,
         _: impl Into<String> + Send,
         _: NaiveDate,
         _: NaiveDate,
-        data_format: DataFormat,
     ) -> Result<VecStock> {
-        let file_path = if let DataFormat::CSV { ref file_path, .. } = data_format {
+        let file_path = if let DataFormat::CSV { ref file_path, .. } = self.data_format {
             file_path
         } else {
             bail!(format!(
                 "Unsupported data format: {:?}\n{}",
-                data_format,
+                self.data_format,
                 Backtrace::force_capture()
             ));
         };
@@ -47,7 +48,7 @@ impl StockRepository for FileSystem {
                 Backtrace::force_capture()
             )
         })?;
-        let vec_stock = if let DataFormat::CSV { has_headers, .. } = data_format {
+        let vec_stock = if let DataFormat::CSV { has_headers, .. } = self.data_format {
             if has_headers {
                 StockCsvRow::from_slice::<true>(file.as_slice())
             } else {
@@ -71,7 +72,6 @@ mod tests {
 
     #[tokio::test]
     async fn get_vec_stock_test() -> Result<()> {
-        let repository = FileSystem::new();
         let code = "8473.T";
         let start_date = NaiveDate::default();
         let end_date = NaiveDate::default();
@@ -80,9 +80,8 @@ mod tests {
             has_headers: true,
             file_path,
         };
-        let vec_stock = repository
-            .get_vec_stock(code, start_date, end_date, data_format)
-            .await?;
+        let repository = FileSystem::new(data_format);
+        let vec_stock = repository.get_vec_stock(code, start_date, end_date).await?;
         assert_eq!(vec_stock.0.len(), 246);
         Ok(())
     }

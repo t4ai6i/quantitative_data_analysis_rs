@@ -1,14 +1,19 @@
+use crate::infrastructure::data_format::DataFormat;
 use chrono::NaiveDate;
 use yahoo_finance_api::time::OffsetDateTime;
 use yahoo_finance_api::YahooConnector;
 
 pub struct YahooFinanceAPI<'a> {
     pub provider: &'a YahooConnector,
+    pub data_format: DataFormat,
 }
 
 impl<'a> YahooFinanceAPI<'a> {
-    pub fn new(provider: &'a YahooConnector) -> Self {
-        Self { provider }
+    pub fn new(provider: &'a YahooConnector, data_format: DataFormat) -> Self {
+        Self {
+            provider,
+            data_format,
+        }
     }
 }
 
