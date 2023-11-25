@@ -37,7 +37,7 @@ where
     ) -> Result<TrendAnalysisOutput<N>> {
         let company = self
             .company_repository
-            .get_company(input.code.as_str(), input.cp_data_format)
+            .get_company(input.code.as_str(), input.company_data_format)
             .await?;
         let vec_stock = self
             .stock_repository
@@ -45,7 +45,7 @@ where
                 input.code.as_str(),
                 input.start_date,
                 input.end_date,
-                input.sr_data_format,
+                input.stock_data_format,
             )
             .await?;
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());

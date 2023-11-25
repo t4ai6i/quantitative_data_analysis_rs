@@ -1,5 +1,5 @@
 use crate::domain::entity::stock::VecStock;
-use crate::infrastructure::stock_repository::data_format::DataFormat;
+use crate::infrastructure::data_format::DataFormat;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::NaiveDate;

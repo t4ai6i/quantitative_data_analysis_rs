@@ -7,11 +7,12 @@ use crate::view_model::vec_cross::VecCrossExt;
 use crate::view_model::vec_sma::VecSMAExt;
 use crate::view_model::vec_stock::VecStockExt;
 use crate::view_model::vec_trend_analysis::VecTrendAnalysisExt;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use charts_rs::{
     Align, Box, CandlestickChart, ChildChart, LegendCategory, MultiChart, Series, SeriesCategory,
     TableChart,
 };
+use std::backtrace::Backtrace;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Chart {
@@ -98,7 +99,9 @@ impl TrendAnalysisPresenter for Chart {
         charts.add(ChildChart::Table(table_chart, None));
 
         Ok(TrendAnalysisResponse::Chart {
-            body: charts.svg()?,
+            body: charts
+                .svg()
+                .with_context(|| format!("{}", Backtrace::force_capture()))?,
         })
     }
 }

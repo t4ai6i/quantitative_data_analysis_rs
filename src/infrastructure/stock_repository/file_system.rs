@@ -1,12 +1,14 @@
 use crate::domain::entity::stock::VecStock;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::csv_ext::CsvExt;
+use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
 use crate::infrastructure::stock_repository::data_format::csv::StockCsvRow;
-use crate::infrastructure::stock_repository::data_format::DataFormat;
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use chrono::NaiveDate;
+use std::backtrace::Backtrace;
+use tokio::fs::read;
 
 #[async_trait]
 impl StockRepository for FileSystem {
@@ -24,31 +26,44 @@ impl StockRepository for FileSystem {
     /// assert_eq!(vec_stock.0.len(), 246);
     async fn get_vec_stock(
         &self,
-        code: impl Into<String> + Send,
+        _: impl Into<String> + Send,
         _: NaiveDate,
         _: NaiveDate,
         data_format: DataFormat,
     ) -> Result<VecStock> {
-        if let DataFormat::CSV { has_headers } = data_format {
-            let filename = format!("{}.csv", code.into());
-            let path = self.root.join(filename);
-            let csv = tokio::fs::read(path).await?;
-            let vec_stock = if has_headers {
-                StockCsvRow::from_slice::<true>(csv.as_slice())
-            } else {
-                StockCsvRow::from_slice::<false>(csv.as_slice())
-            };
-            Ok(VecStock(vec_stock))
+        let file_path = if let DataFormat::CSV { ref file_path, .. } = data_format {
+            file_path
         } else {
-            bail!("Unsupported data format: {:?}", data_format);
-        }
+            bail!(format!(
+                "Unsupported data format: {:?}\n{}",
+                data_format,
+                Backtrace::force_capture()
+            ));
+        };
+        let file = read(file_path).await.with_context(|| {
+            format!(
+                "File not found: {:?}). \n{}",
+                file_path,
+                Backtrace::force_capture()
+            )
+        })?;
+        let vec_stock = if let DataFormat::CSV { has_headers, .. } = data_format {
+            if has_headers {
+                StockCsvRow::from_slice::<true>(file.as_slice())
+            } else {
+                StockCsvRow::from_slice::<false>(file.as_slice())
+            }
+        } else {
+            vec![]
+        };
+        Ok(VecStock(vec_stock))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::domain::repository::stock_repository::StockRepository;
-    use crate::infrastructure::stock_repository::data_format::DataFormat;
+    use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::stock_repository::file_system::FileSystem;
     use anyhow::Result;
     use chrono::NaiveDate;
@@ -56,11 +71,15 @@ mod tests {
 
     #[tokio::test]
     async fn get_vec_stock_test() -> Result<()> {
-        let repository = FileSystem::new(PathBuf::from("./assets/"));
+        let repository = FileSystem::new();
         let code = "8473.T";
         let start_date = NaiveDate::default();
         let end_date = NaiveDate::default();
-        let data_format = DataFormat::CSV { has_headers: true };
+        let file_path = PathBuf::from(format!("./assets/{}.csv", code));
+        let data_format = DataFormat::CSV {
+            has_headers: true,
+            file_path,
+        };
         let vec_stock = repository
             .get_vec_stock(code, start_date, end_date, data_format)
             .await?;

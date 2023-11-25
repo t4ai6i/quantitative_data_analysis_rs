@@ -2,20 +2,13 @@ use chrono::NaiveDate;
 use yahoo_finance_api::time::OffsetDateTime;
 use yahoo_finance_api::YahooConnector;
 
-pub struct YahooFinanceAPI {
-    pub provider: YahooConnector,
+pub struct YahooFinanceAPI<'a> {
+    pub provider: &'a YahooConnector,
 }
 
-impl YahooFinanceAPI {
-    pub fn new() -> Self {
-        let provider = YahooConnector::new();
+impl<'a> YahooFinanceAPI<'a> {
+    pub fn new(provider: &'a YahooConnector) -> Self {
         Self { provider }
-    }
-}
-
-impl Default for YahooFinanceAPI {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

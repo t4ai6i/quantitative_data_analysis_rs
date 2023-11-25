@@ -1,5 +1,4 @@
-use crate::infrastructure::company_repository::data_format::DataFormat as CPDF;
-use crate::infrastructure::stock_repository::data_format::DataFormat as SRDF;
+use crate::infrastructure::data_format::DataFormat;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use anyhow::Result;
 use async_trait::async_trait;
@@ -10,8 +9,8 @@ pub struct TrendAnalysisInput {
     pub code: String,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
-    pub sr_data_format: SRDF,
-    pub cp_data_format: CPDF,
+    pub stock_data_format: DataFormat,
+    pub company_data_format: DataFormat,
 }
 
 impl TrendAnalysisInput {
@@ -19,15 +18,15 @@ impl TrendAnalysisInput {
         code: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
-        sr_data_format: SRDF,
-        cp_data_format: CPDF,
+        stock_data_format: DataFormat,
+        company_data_format: DataFormat,
     ) -> Self {
         Self {
             code: code.into(),
             start_date,
             end_date,
-            sr_data_format,
-            cp_data_format,
+            stock_data_format,
+            company_data_format,
         }
     }
 }
