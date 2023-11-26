@@ -106,6 +106,7 @@ impl TrendAnalysisPresenter for Chart {
             body: charts
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
+            chance_rate: output.vec_trend.chance_rate,
         })
     }
 }

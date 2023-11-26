@@ -7,8 +7,8 @@ use quantitative_data_analysis_rs::infrastructure::yahoo_finance_api::YahooFinan
 use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::chart::Chart;
 use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use quantitative_data_analysis_rs::use_case::interactor::trend_analysis_interactor::TrendAnalysisInteractor;
-use std::fs::write;
 use std::path::PathBuf;
+use tokio::fs::write;
 use yahoo_finance_api::YahooConnector;
 
 #[tokio::main]
@@ -33,9 +33,9 @@ async fn main() -> Result<()> {
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let start_date = NaiveDate::default();
     let end_date = NaiveDate::default();
-    let TrendAnalysisResponse::Chart { body } =
+    let TrendAnalysisResponse::Chart { body, .. } =
         controller.analyze::<5>(code, start_date, end_date).await?;
-    write("./examples/8473.T.from_csv.svg", &body)?;
+    write("./examples/8473.T.from_csv.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_csv.svg"), &body);
 
     let provider = YahooConnector::new();
@@ -45,9 +45,9 @@ async fn main() -> Result<()> {
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let start_date = NaiveDate::from_ymd_opt(2022, 9, 9).unwrap();
     let end_date = NaiveDate::from_ymd_opt(2023, 9, 8).unwrap();
-    let TrendAnalysisResponse::Chart { body } =
+    let TrendAnalysisResponse::Chart { body, .. } =
         controller.analyze::<5>(code, start_date, end_date).await?;
-    write("./examples/8473.T.from_yfapi.svg", &body)?;
+    write("./examples/8473.T.from_yfapi.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_yfapi.svg"), &body);
 
     Ok(())
