@@ -1,7 +1,6 @@
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::trend_analysis::VecTrendAnalysis;
 use itertools::Itertools;
-use std::ops::Mul;
 
 pub trait VecTrendAnalysisExt {
     fn table_chart_rows(&self) -> Vec<Vec<String>>;
@@ -10,7 +9,7 @@ pub trait VecTrendAnalysisExt {
 
 impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
     fn table_chart_rows(&self) -> Vec<Vec<String>> {
-        self.0
+        self.vec_trend_analysis
             .iter()
             .map(|trend_analysis| {
                 let chance_loss = match trend_analysis.chance_loss {
@@ -22,7 +21,7 @@ impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
                 };
                 let cross_date = trend_analysis.cross_date.format("%Y/%m/%d").to_string();
                 let cross_direction_5_25 = trend_analysis.cross_direction_5_25.0.to_string();
-                let change = format!("{:+.3}%", trend_analysis.change.mul(100.0));
+                let change = format!("{:+.3}%", trend_analysis.change);
                 let close_on_cross = trend_analysis.close_on_cross.to_string();
                 let close_after_n_days = trend_analysis.close_after_n_days.to_string();
                 vec![
@@ -38,19 +37,7 @@ impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
     }
 
     fn table_chart_summary(&self) -> Vec<Vec<String>> {
-        let chance_count = self
-            .0
-            .iter()
-            .filter(|trend_analysis| match trend_analysis.chance_loss {
-                ChanceLoss::None => false,
-                ChanceLoss::GoldenChance => true,
-                ChanceLoss::DeadChance => true,
-                ChanceLoss::GoldenLoss => false,
-                ChanceLoss::DeadLoss => false,
-            })
-            .count();
-        let chance_rate = (chance_count as f64 / self.0.len() as f64).mul(100.0);
-        let chance_rate = format!("{:.0}%", chance_rate);
+        let chance_rate = format!("{:.0}%", self.chance_rate);
         vec![vec![
             "".to_string(),
             chance_rate,

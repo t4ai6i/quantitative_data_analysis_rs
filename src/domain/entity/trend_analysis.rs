@@ -3,7 +3,7 @@ use crate::domain::entity::cross::{Cross, CrossDirection, CrossDirectionType};
 use crate::domain::entity::stock::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
-use std::ops::Sub;
+use std::ops::{Mul, Sub};
 
 pub struct StockCrossPair<'a> {
     pub stocks: &'a [Stock],
@@ -21,12 +21,15 @@ pub struct TrendAnalysis<const N: usize> {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecTrendAnalysis<const N: usize>(pub Vec<TrendAnalysis<N>>);
+pub struct VecTrendAnalysis<const N: usize> {
+    pub vec_trend_analysis: Vec<TrendAnalysis<N>>,
+    pub chance_rate: f64,
+}
 
 impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
     fn from(value: StockCrossPair<'a>) -> Self {
         let StockCrossPair { stocks, crosses } = value;
-        let trends = crosses
+        let vec_trend_analysis = crosses
             .iter()
             .filter(|cross| cross.cross_direction_5_25.0.ne(&CrossDirectionType::None))
             .filter_map(|cross| {
@@ -50,6 +53,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             .map(|(stock, cross, stock_after_n_days)| {
                 // 増減率を取得
                 let change = stock_after_n_days.close.sub(stock.close) / stock.close;
+                let change = change.mul(100.0);
                 let cross_direction_chance_pair = CrossDirectionChangePair {
                     cross_direction: cross.cross_direction_5_25.0,
                     change,
@@ -65,7 +69,21 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
                 }
             })
             .collect_vec();
-        VecTrendAnalysis::<N>(trends)
+        let chance_count = vec_trend_analysis
+            .iter()
+            .filter(|trend_analysis| match trend_analysis.chance_loss {
+                ChanceLoss::None => false,
+                ChanceLoss::GoldenChance => true,
+                ChanceLoss::DeadChance => true,
+                ChanceLoss::GoldenLoss => false,
+                ChanceLoss::DeadLoss => false,
+            })
+            .count();
+        let chance_rate = (chance_count as f64 / vec_trend_analysis.len() as f64).mul(100.0);
+        VecTrendAnalysis::<N> {
+            vec_trend_analysis,
+            chance_rate,
+        }
     }
 }
 
@@ -94,8 +112,13 @@ mod tests {
             crosses: crosses.as_slice(),
         };
         // 3日後トレンドを取得
-        let VecTrendAnalysis(trends) = VecTrendAnalysis::<3>::from(stock_cross_pair);
+        let VecTrendAnalysis {
+            vec_trend_analysis,
+            chance_rate,
+        } = VecTrendAnalysis::<3>::from(stock_cross_pair);
         let actual = 11;
-        assert_eq!(actual, trends.len());
+        assert_eq!(actual, vec_trend_analysis.len());
+        let actual = 45.45454545454545;
+        assert_eq!(actual, chance_rate);
     }
 }
