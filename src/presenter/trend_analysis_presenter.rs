@@ -37,7 +37,11 @@ impl<const N: usize> TrendAnalysisOutput<N> {
 }
 
 pub enum TrendAnalysisResponse {
-    Chart { body: String, chance_rate: f64 },
+    Chart {
+        company: Company,
+        body: String,
+        chance_rate: f64,
+    },
 }
 
 pub trait TrendAnalysisPresenter {
