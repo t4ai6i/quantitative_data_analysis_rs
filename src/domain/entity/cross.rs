@@ -106,14 +106,14 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
 mod tests {
     use super::*;
     use crate::domain::entity::sma::VecSMA;
-    use crate::infrastructure::csv_ext::CsvExt;
-    use crate::infrastructure::stock_repository::data_format::csv::StockCsvRow;
+    use crate::infrastructure::from_slice::FromSlice;
+    use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
     #[test]
     fn vec_cross_test() {
-        let vec_stock = StockCsvRow::from_slice::<true>(CSV_8473);
+        let vec_stock = Csv::from_slice::<true>(CSV_8473);
         let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
         let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
         let sma_list_pair = SMAListPair {

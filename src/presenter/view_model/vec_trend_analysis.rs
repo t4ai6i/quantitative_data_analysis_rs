@@ -54,8 +54,8 @@ mod tests {
     use crate::domain::entity::cross::VecCross;
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
     use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
-    use crate::infrastructure::csv_ext::CsvExt;
-    use crate::infrastructure::stock_repository::data_format::csv::StockCsvRow;
+    use crate::infrastructure::from_slice::FromSlice;
+    use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use crate::presenter::view_model::vec_trend_analysis::VecTrendAnalysisExt;
     use anyhow::Result;
 
@@ -63,7 +63,7 @@ mod tests {
 
     #[test]
     fn table_chart_summary_test() -> Result<()> {
-        let vec_stock = StockCsvRow::from_slice::<true>(CSV_8473);
+        let vec_stock = Csv::from_slice::<true>(CSV_8473);
         let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
         let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
         let sma_list_pair = SMAListPair {

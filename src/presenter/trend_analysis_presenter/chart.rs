@@ -103,6 +103,7 @@ impl TrendAnalysisPresenter for Chart {
         charts.add(ChildChart::Table(table_chart, None));
 
         Ok(TrendAnalysisResponse::Chart {
+            company,
             body: charts
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,

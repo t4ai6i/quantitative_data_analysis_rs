@@ -1,9 +1,9 @@
 use crate::domain::entity::stock::VecStock;
 use crate::domain::repository::stock_repository::StockRepository;
-use crate::infrastructure::csv_ext::CsvExt;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
-use crate::infrastructure::stock_repository::data_format::csv::StockCsvRow;
+use crate::infrastructure::from_slice::FromSlice;
+use crate::infrastructure::stock_repository::data_format::csv::Csv;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use chrono::NaiveDate;
@@ -32,14 +32,15 @@ impl StockRepository for FileSystem {
         _: NaiveDate,
         _: NaiveDate,
     ) -> Result<VecStock> {
-        let file_path = if let DataFormat::CSV { ref file_path, .. } = self.data_format {
-            file_path
-        } else {
-            bail!(format!(
-                "Unsupported data format: {:?}\n{}",
-                self.data_format,
-                Backtrace::force_capture()
-            ));
+        let file_path = match self.data_format {
+            DataFormat::CSV { ref file_path, .. } => file_path,
+            _ => {
+                bail!(format!(
+                    "Unsupported data format: {:?}\n{}",
+                    self.data_format,
+                    Backtrace::force_capture()
+                ));
+            }
         };
         let file = read(file_path).await.with_context(|| {
             format!(
@@ -48,14 +49,15 @@ impl StockRepository for FileSystem {
                 Backtrace::force_capture()
             )
         })?;
-        let vec_stock = if let DataFormat::CSV { has_headers, .. } = self.data_format {
-            if has_headers {
-                StockCsvRow::from_slice::<true>(file.as_slice())
-            } else {
-                StockCsvRow::from_slice::<false>(file.as_slice())
+        let vec_stock = match self.data_format {
+            DataFormat::CSV { has_headers, .. } => {
+                if has_headers {
+                    Csv::from_slice::<true>(file.as_slice())
+                } else {
+                    Csv::from_slice::<false>(file.as_slice())
+                }
             }
-        } else {
-            vec![]
+            _ => vec![],
         };
         Ok(VecStock(vec_stock))
     }

@@ -55,14 +55,14 @@ pub struct SMAListPair<'a, const N: usize, const O: usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::csv_ext::CsvExt;
-    use crate::infrastructure::stock_repository::data_format::csv::StockCsvRow;
+    use crate::infrastructure::from_slice::FromSlice;
+    use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
     #[test]
     fn vec_sma_test() {
-        let vec_stock = StockCsvRow::from_slice::<true>(CSV_8473);
+        let vec_stock = Csv::from_slice::<true>(CSV_8473);
         let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
         assert_eq!(smas_5.len(), 242);
         let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());

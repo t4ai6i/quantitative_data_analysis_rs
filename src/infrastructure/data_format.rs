@@ -4,10 +4,14 @@ use std::path::PathBuf;
 pub enum DataFormat {
     #[default]
     Any,
-    Json {
+    JSON {
         file_path: PathBuf,
     },
     CSV {
+        has_headers: bool,
+        file_path: PathBuf,
+    },
+    TSV {
         has_headers: bool,
         file_path: PathBuf,
     },
