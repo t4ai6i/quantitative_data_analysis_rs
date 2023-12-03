@@ -1,9 +1,9 @@
 use crate::domain::entity::company::Company;
-use crate::infrastructure::csv_ext::CsvExt;
+use crate::infrastructure::from_slice::{DataFormat, FromSlice};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct CompanyCsvRow {
+pub struct Csv {
     #[serde(rename = "コード")]
     pub code: String,
     #[serde(rename = "銘柄名")]
@@ -16,29 +16,33 @@ pub struct CompanyCsvRow {
     pub day_before: String,
 }
 
-impl From<CompanyCsvRow> for Company {
-    fn from(value: CompanyCsvRow) -> Self {
-        let CompanyCsvRow {
+impl From<Csv> for Company {
+    fn from(value: Csv) -> Self {
+        let Csv {
             code, name, market, ..
         } = value;
         Self { code, name, market }
     }
 }
 
-impl CsvExt for CompanyCsvRow {
-    type CSVFormat = CompanyCsvRow;
+impl FromSlice for Csv {
+    type Deserialize = Csv;
     type Item = Company;
+
+    fn data_format() -> DataFormat {
+        DataFormat::CSV
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::csv_ext::CsvExt;
+    use crate::infrastructure::from_slice::FromSlice;
     const COMPANIES: &[u8] = include_bytes!("../../../../assets/companies.csv");
 
     #[test]
     fn vec_company_test() {
-        let vec_company = CompanyCsvRow::from_slice::<true>(COMPANIES);
+        let vec_company = Csv::from_slice::<true>(COMPANIES);
         assert_eq!(vec_company.len(), 61);
     }
 }

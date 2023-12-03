@@ -1,9 +1,10 @@
 use crate::domain::entity::company::Company;
 use crate::domain::repository::company_repository::CompanyRepository;
-use crate::infrastructure::company_repository::data_format::csv::CompanyCsvRow;
-use crate::infrastructure::csv_ext::CsvExt;
+use crate::infrastructure::company_repository::data_format::csv::Csv;
+use crate::infrastructure::company_repository::data_format::tsv::Tsv;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
+use crate::infrastructure::from_slice::FromSlice;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use itertools::Itertools;
@@ -13,16 +14,17 @@ use tokio::fs::read;
 #[async_trait]
 impl CompanyRepository for FileSystem {
     async fn get_company(&self, code: impl Into<String> + Send + Copy) -> Result<Company> {
-        let file_path = if let DataFormat::Json { ref file_path } = self.data_format {
-            file_path
-        } else if let DataFormat::CSV { ref file_path, .. } = self.data_format {
-            file_path
-        } else {
-            bail!(format!(
-                "Unsupported data format: {:?}\n{}",
-                self.data_format,
-                Backtrace::force_capture()
-            ));
+        let file_path = match self.data_format {
+            DataFormat::JSON { ref file_path } => file_path,
+            DataFormat::CSV { ref file_path, .. } => file_path,
+            DataFormat::TSV { ref file_path, .. } => file_path,
+            _ => {
+                bail!(format!(
+                    "Unsupported data format: {:?}\n{}",
+                    self.data_format,
+                    Backtrace::force_capture()
+                ));
+            }
         };
         let file = read(file_path).await.with_context(|| {
             format!(
@@ -31,22 +33,31 @@ impl CompanyRepository for FileSystem {
                 Backtrace::force_capture()
             )
         })?;
-        let companies = if let DataFormat::Json { .. } = self.data_format {
-            serde_json::from_slice::<Vec<Company>>(&file).with_context(|| {
-                format!(
-                    "Invalid JSON: {:?}). \n{}",
-                    String::from_utf8_lossy(&file),
-                    Backtrace::force_capture()
-                )
-            })?
-        } else if let DataFormat::CSV { has_headers, .. } = self.data_format {
-            if has_headers {
-                CompanyCsvRow::from_slice::<true>(file.as_slice())
-            } else {
-                CompanyCsvRow::from_slice::<false>(file.as_slice())
+        let companies = match self.data_format {
+            DataFormat::JSON { .. } => {
+                serde_json::from_slice::<Vec<Company>>(&file).with_context(|| {
+                    format!(
+                        "Invalid JSON: {:?}). \n{}",
+                        String::from_utf8_lossy(&file),
+                        Backtrace::force_capture()
+                    )
+                })?
             }
-        } else {
-            vec![]
+            DataFormat::CSV { has_headers, .. } => {
+                if has_headers {
+                    Csv::from_slice::<true>(file.as_slice())
+                } else {
+                    Csv::from_slice::<false>(file.as_slice())
+                }
+            }
+            DataFormat::TSV { has_headers, .. } => {
+                if has_headers {
+                    Tsv::from_slice::<true>(file.as_slice())
+                } else {
+                    Tsv::from_slice::<false>(file.as_slice())
+                }
+            }
+            _ => vec![],
         };
         let just_code = code.into().split('.').collect_vec()[0].to_string();
         companies
@@ -76,7 +87,7 @@ mod tests {
     async fn get_vec_company_test() -> Result<()> {
         let code = "8473.T";
         let file_path = PathBuf::from("./assets/companies.json");
-        let data_format = DataFormat::Json { file_path };
+        let data_format = DataFormat::JSON { file_path };
         let repository = FileSystem::new(data_format);
         let company = repository.get_company(code).await?;
         assert_eq!(
@@ -85,6 +96,23 @@ mod tests {
                 code: "8473".to_string(),
                 name: "ＳＢＩホールディングス".to_string(),
                 market: "東S".to_string(),
+            }
+        );
+
+        let code = "9984";
+        let file_path = PathBuf::from("./assets/companies.tsv");
+        let data_format = DataFormat::TSV {
+            has_headers: false,
+            file_path,
+        };
+        let repository = FileSystem::new(data_format);
+        let company = repository.get_company(code).await?;
+        assert_eq!(
+            company,
+            Company {
+                code: "9984".to_string(),
+                name: "ソフトバンクグループ".to_string(),
+                market: "東証".to_string(),
             }
         );
         Ok(())

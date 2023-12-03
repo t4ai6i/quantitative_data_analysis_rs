@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
         file_path,
     });
     let file_path = PathBuf::from("./assets/companies.json");
-    let company_repository = FileSystem::new(DataFormat::Json { file_path });
+    let company_repository = FileSystem::new(DataFormat::JSON { file_path });
     let interactor = TrendAnalysisInteractor::new(&stock_repository, &company_repository);
     let presenter = Chart::new("chalk", 1280.0, 720.0);
     // let presenter = trend_analysis_presenter::SummaryText::new();
