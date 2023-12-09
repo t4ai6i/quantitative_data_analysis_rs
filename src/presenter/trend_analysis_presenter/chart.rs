@@ -11,8 +11,8 @@ use crate::presenter::{
 use crate::utils::float;
 use anyhow::{Context, Result};
 use charts_rs::{
-    Align, Box, CandlestickChart, ChildChart, LegendCategory, MultiChart, Series, SeriesCategory,
-    TableChart,
+    Align, Box, CandlestickChart, ChildChart, Color, LegendCategory, MultiChart, Series,
+    SeriesCategory, TableChart,
 };
 use std::backtrace::Backtrace;
 
@@ -53,7 +53,7 @@ impl TrendAnalysisPresenter for Chart {
         let max = float::max(&candlesticks) + 10.0;
 
         let mut charts = MultiChart::new();
-        charts.margin = (10.0).into();
+        charts.margin = 10.0.into();
 
         let mut candlestick_chart = CandlestickChart::new_with_theme(
             vec![
@@ -83,6 +83,11 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.y_axis_configs[0].axis_min = Some(min);
         candlestick_chart.y_axis_configs[0].axis_max = Some(max);
         candlestick_chart.y_axis_configs[0].axis_formatter = Some("{t}".to_string());
+        candlestick_chart.candlestick_up_color = Color::from((0, 218, 60));
+        candlestick_chart.candlestick_up_color = Color::from((0, 218, 60));
+        candlestick_chart.candlestick_up_border_color = Color::from((0, 143, 40));
+        candlestick_chart.candlestick_down_color = Color::from((236, 0, 0));
+        candlestick_chart.candlestick_down_border_color = Color::from((138, 0, 0));
         charts.add(ChildChart::Candlestick(candlestick_chart, None));
 
         let mut rows = vec![vec![
