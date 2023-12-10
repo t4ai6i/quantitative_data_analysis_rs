@@ -7,7 +7,7 @@ use anyhow::Result;
 
 pub mod chart;
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub enum DisplayCrossPattern {
     #[default]
     Both,
