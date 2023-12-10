@@ -24,6 +24,8 @@ pub struct TrendAnalysis<const N: usize> {
 pub struct VecTrendAnalysis<const N: usize> {
     pub vec_trend_analysis: Vec<TrendAnalysis<N>>,
     pub chance_rate: f64,
+    pub golden_chance_rate: f64,
+    pub dead_chance_rate: f64,
 }
 
 impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
@@ -69,6 +71,27 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
                 }
             })
             .collect_vec();
+        let golden_chance_count = vec_trend_analysis
+            .iter()
+            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::GoldenChance))
+            .count();
+        let golden_loss_count = vec_trend_analysis
+            .iter()
+            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::GoldenLoss))
+            .count();
+        let golden_chance_rate = (golden_chance_count as f64
+            / (golden_chance_count + golden_loss_count) as f64)
+            .mul(100.0);
+        let dead_chance_count = vec_trend_analysis
+            .iter()
+            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadChance))
+            .count();
+        let dead_loss_count = vec_trend_analysis
+            .iter()
+            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadLoss))
+            .count();
+        let dead_chance_rate =
+            (dead_chance_count as f64 / (dead_chance_count + dead_loss_count) as f64).mul(100.0);
         let chance_count = vec_trend_analysis
             .iter()
             .filter(|trend_analysis| match trend_analysis.chance_loss {
@@ -83,6 +106,8 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
         VecTrendAnalysis::<N> {
             vec_trend_analysis,
             chance_rate,
+            golden_chance_rate,
+            dead_chance_rate,
         }
     }
 }
@@ -115,10 +140,16 @@ mod tests {
         let VecTrendAnalysis {
             vec_trend_analysis,
             chance_rate,
+            golden_chance_rate,
+            dead_chance_rate,
         } = VecTrendAnalysis::<3>::from(stock_cross_pair);
         let actual = 11;
         assert_eq!(actual, vec_trend_analysis.len());
         let actual = 45.45454545454545;
         assert_eq!(actual, chance_rate);
+        let actual = 66.66666666666666;
+        assert_eq!(actual, golden_chance_rate);
+        let actual = 20.0;
+        assert_eq!(actual, dead_chance_rate);
     }
 }
