@@ -7,6 +7,14 @@ use anyhow::Result;
 
 pub mod chart;
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
+pub enum DisplayCrossPattern {
+    #[default]
+    Both,
+    GoldenOnly,
+    DeadOnly,
+}
+
 pub struct TrendAnalysisOutput<const N: usize> {
     company: Company,
     vec_stock: VecStock,
@@ -14,6 +22,7 @@ pub struct TrendAnalysisOutput<const N: usize> {
     vec_sma_25: VecSMA<25>,
     vec_cross: VecCross,
     vec_trend: VecTrendAnalysis<N>,
+    display_cross_pattern: DisplayCrossPattern,
 }
 
 impl<const N: usize> TrendAnalysisOutput<N> {
@@ -24,6 +33,7 @@ impl<const N: usize> TrendAnalysisOutput<N> {
         vec_sma_25: VecSMA<25>,
         vec_cross: VecCross,
         vec_trend: VecTrendAnalysis<N>,
+        display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
         Self {
             company,
@@ -32,6 +42,7 @@ impl<const N: usize> TrendAnalysisOutput<N> {
             vec_sma_25,
             vec_cross,
             vec_trend,
+            display_cross_pattern,
         }
     }
 }

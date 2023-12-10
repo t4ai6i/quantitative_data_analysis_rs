@@ -1,4 +1,5 @@
 use crate::domain::entity::cross::CrossDirectionType;
+use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 use crate::presenter::{
     trend_analysis_presenter::{
         TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
@@ -42,30 +43,53 @@ impl TrendAnalysisPresenter for Chart {
         let vec_sma_5_ave = output.vec_sma_5.collect_vec_ave();
         let vec_sma_25_ave = output.vec_sma_25.collect_vec_ave();
         let candlesticks = output.vec_stock.collect_vec_candlestick();
-        let x_axis_data = output.vec_stock.collect_vec_day();
-        let dead_crosses = output
-            .vec_cross
-            .collect_vec_sma_25_ave(CrossDirectionType::Dead);
-        let golden_crosses = output
-            .vec_cross
-            .collect_vec_sma_25_ave(CrossDirectionType::Golden);
         let min = float::min(&candlesticks) - 10.0;
         let max = float::max(&candlesticks) + 10.0;
+        let x_axis_data = output.vec_stock.collect_vec_day();
+        let series_list = match output.display_cross_pattern {
+            DisplayCrossPattern::Both => {
+                let dead_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_ave(CrossDirectionType::Dead);
+                let golden_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_ave(CrossDirectionType::Golden);
+                vec![
+                    Series::from(("SMA5", vec_sma_5_ave)),
+                    Series::from(("SMA25", vec_sma_25_ave)),
+                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Daily", candlesticks)),
+                ]
+            }
+            DisplayCrossPattern::GoldenOnly => {
+                let golden_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_ave(CrossDirectionType::Golden);
+                vec![
+                    Series::from(("SMA5", vec_sma_5_ave)),
+                    Series::from(("SMA25", vec_sma_25_ave)),
+                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Daily", candlesticks)),
+                ]
+            }
+            DisplayCrossPattern::DeadOnly => {
+                let dead_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_ave(CrossDirectionType::Dead);
+                vec![
+                    Series::from(("SMA5", vec_sma_5_ave)),
+                    Series::from(("SMA25", vec_sma_25_ave)),
+                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Daily", candlesticks)),
+                ]
+            }
+        };
 
         let mut charts = MultiChart::new();
         charts.margin = 10.0.into();
-
-        let mut candlestick_chart = CandlestickChart::new_with_theme(
-            vec![
-                Series::from(("SMA5", vec_sma_5_ave)),
-                Series::from(("SMA25", vec_sma_25_ave)),
-                Series::from(("Dead", dead_crosses)),
-                Series::from(("Golden", golden_crosses)),
-                Series::from(("Daily", candlesticks)),
-            ],
-            x_axis_data,
-            self.theme.as_str(),
-        );
+        let mut candlestick_chart =
+            CandlestickChart::new_with_theme(series_list, x_axis_data, self.theme.as_str());
         candlestick_chart.title_text = format!("{}({})", company.name, company.code);
         candlestick_chart.width = self.width;
         candlestick_chart.height = self.height;
@@ -76,10 +100,22 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.series_list[0].start_index = 5;
         candlestick_chart.series_list[1].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[1].start_index = 25;
-        candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
-        candlestick_chart.series_list[2].start_index = 6;
-        candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
-        candlestick_chart.series_list[3].start_index = 6;
+        match output.display_cross_pattern {
+            DisplayCrossPattern::Both => {
+                candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
+                candlestick_chart.series_list[2].start_index = 6;
+                candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
+                candlestick_chart.series_list[3].start_index = 6;
+            }
+            DisplayCrossPattern::GoldenOnly => {
+                candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
+                candlestick_chart.series_list[2].start_index = 6;
+            }
+            DisplayCrossPattern::DeadOnly => {
+                candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
+                candlestick_chart.series_list[2].start_index = 6;
+            }
+        }
         candlestick_chart.y_axis_configs[0].axis_min = Some(min);
         candlestick_chart.y_axis_configs[0].axis_max = Some(max);
         candlestick_chart.y_axis_configs[0].axis_formatter = Some("{t}".to_string());
@@ -98,9 +134,13 @@ impl TrendAnalysisPresenter for Chart {
             "close at cross".to_string(),
             format!("close after {} days", N),
         ]];
-        let mut body = output.vec_trend.table_chart_rows();
+        let mut body = output
+            .vec_trend
+            .table_chart_rows(&output.display_cross_pattern);
         rows.append(&mut body);
-        let mut summary = output.vec_trend.table_chart_summary();
+        let mut summary = output
+            .vec_trend
+            .table_chart_summary(&output.display_cross_pattern);
         rows.append(&mut summary);
 
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());

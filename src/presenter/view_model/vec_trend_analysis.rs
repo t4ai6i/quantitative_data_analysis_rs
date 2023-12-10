@@ -1,19 +1,32 @@
 use crate::domain::entity::chance_loss::ChanceLoss;
+use crate::domain::entity::cross::CrossDirectionType;
 use crate::domain::entity::trend_analysis::VecTrendAnalysis;
+use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 use itertools::Itertools;
 
 pub trait VecTrendAnalysisExt {
-    fn table_chart_rows(&self) -> Vec<Vec<String>>;
-    fn table_chart_summary(&self) -> Vec<Vec<String>>;
+    fn table_chart_rows(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>>;
+    fn table_chart_summary(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>>;
 }
 
 impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
-    fn table_chart_rows(&self) -> Vec<Vec<String>> {
+    fn table_chart_rows(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
         self.vec_trend_analysis
             .iter()
+            .filter(|trend_analysis| match pattern {
+                DisplayCrossPattern::Both => true,
+                DisplayCrossPattern::GoldenOnly => trend_analysis
+                    .cross_direction_5_25
+                    .0
+                    .eq(&CrossDirectionType::Golden),
+                DisplayCrossPattern::DeadOnly => trend_analysis
+                    .cross_direction_5_25
+                    .0
+                    .eq(&CrossDirectionType::Dead),
+            })
             .map(|trend_analysis| {
                 let chance_loss = match trend_analysis.chance_loss {
-                    ChanceLoss::None => "⏸️".to_string(),
+                    ChanceLoss::None => "❔".to_string(),
                     ChanceLoss::GoldenChance => "✅".to_string(),
                     ChanceLoss::DeadChance => "✅".to_string(),
                     ChanceLoss::GoldenLoss => "❌".to_string(),
@@ -36,8 +49,18 @@ impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
             .collect_vec()
     }
 
-    fn table_chart_summary(&self) -> Vec<Vec<String>> {
-        let chance_rate = format!("{:.0}%", self.chance_rate);
+    fn table_chart_summary(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
+        let chance_rate = match pattern {
+            DisplayCrossPattern::Both => {
+                format!("{:.0}%", self.chance_rate)
+            }
+            DisplayCrossPattern::GoldenOnly => {
+                format!("{:.0}%", self.golden_chance_rate)
+            }
+            DisplayCrossPattern::DeadOnly => {
+                format!("{:.0}%", self.dead_chance_rate)
+            }
+        };
         vec![vec![
             "".to_string(),
             chance_rate,
@@ -56,6 +79,7 @@ mod tests {
     use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
+    use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
     use crate::presenter::view_model::vec_trend_analysis::VecTrendAnalysisExt;
     use anyhow::Result;
 
@@ -76,12 +100,36 @@ mod tests {
             crosses: crosses.as_slice(),
         };
         let vec_trend = VecTrendAnalysis::<5>::from(stock_cross_pair);
-        let summary = vec_trend.table_chart_summary();
+        let summary = vec_trend.table_chart_summary(&DisplayCrossPattern::Both);
         assert_eq!(
             summary,
             vec![vec![
                 "".to_string(),
                 "27%".to_string(),
+                "".to_string(),
+                "".to_string(),
+                "".to_string(),
+                "".to_string(),
+            ]]
+        );
+        let summary = vec_trend.table_chart_summary(&DisplayCrossPattern::GoldenOnly);
+        assert_eq!(
+            summary,
+            vec![vec![
+                "".to_string(),
+                "33%".to_string(),
+                "".to_string(),
+                "".to_string(),
+                "".to_string(),
+                "".to_string(),
+            ]]
+        );
+        let summary = vec_trend.table_chart_summary(&DisplayCrossPattern::DeadOnly);
+        assert_eq!(
+            summary,
+            vec![vec![
+                "".to_string(),
+                "20%".to_string(),
                 "".to_string(),
                 "".to_string(),
                 "".to_string(),
