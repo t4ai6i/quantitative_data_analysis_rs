@@ -15,6 +15,16 @@ pub enum DisplayCrossPattern {
     DeadOnly,
 }
 
+impl DisplayCrossPattern {
+    pub fn get_chance_rate(self, chance_rate: &ChanceRate) -> f64 {
+        match self {
+            DisplayCrossPattern::Both => chance_rate.total,
+            DisplayCrossPattern::GoldenOnly => chance_rate.golden_only,
+            DisplayCrossPattern::DeadOnly => chance_rate.dead_only,
+        }
+    }
+}
+
 pub struct TrendAnalysisOutput<const N: usize> {
     company: Company,
     vec_stock: VecStock,
@@ -62,4 +72,30 @@ pub trait TrendAnalysisPresenter {
         &self,
         output: TrendAnalysisOutput<N>,
     ) -> Result<TrendAnalysisResponse>;
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::domain::entity::trend_analysis::ChanceRate;
+    use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+    use anyhow::Result;
+
+    #[test]
+    fn display_cross_direction_test() -> Result<()> {
+        let chance_rate = ChanceRate {
+            total: 0.0,
+            golden_only: 1.0,
+            dead_only: 2.0,
+        };
+        let display_cross_pattern = DisplayCrossPattern::Both;
+        let actual = display_cross_pattern.get_chance_rate(&chance_rate);
+        assert_eq!(actual, 0.0);
+        let display_cross_pattern = DisplayCrossPattern::GoldenOnly;
+        let actual = display_cross_pattern.get_chance_rate(&chance_rate);
+        assert_eq!(actual, 1.0);
+        let display_cross_pattern = DisplayCrossPattern::DeadOnly;
+        let actual = display_cross_pattern.get_chance_rate(&chance_rate);
+        assert_eq!(actual, 2.0);
+        Ok(())
+    }
 }
