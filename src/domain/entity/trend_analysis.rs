@@ -27,7 +27,7 @@ pub struct ChanceRate {
     pub dead_only: f64,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct LatestChance {
     pub latest_golden_chance: Option<NaiveDate>,
     pub latest_dead_chance: Option<NaiveDate>,
