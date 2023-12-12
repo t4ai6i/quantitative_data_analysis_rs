@@ -52,13 +52,13 @@ impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
     fn table_chart_summary(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
         let chance_rate = match pattern {
             DisplayCrossPattern::Both => {
-                format!("{:.0}%", self.chance_rate)
+                format!("{:.0}%", self.chance_rate.total)
             }
             DisplayCrossPattern::GoldenOnly => {
-                format!("{:.0}%", self.golden_chance_rate)
+                format!("{:.0}%", self.chance_rate.golden_only)
             }
             DisplayCrossPattern::DeadOnly => {
-                format!("{:.0}%", self.dead_chance_rate)
+                format!("{:.0}%", self.chance_rate.dead_only)
             }
         };
         vec![vec![

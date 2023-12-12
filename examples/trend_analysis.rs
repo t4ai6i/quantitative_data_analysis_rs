@@ -35,9 +35,15 @@ async fn main() -> Result<()> {
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let start_date = NaiveDate::default();
     let end_date = NaiveDate::default();
-    let TrendAnalysisResponse::Chart { body, .. } = controller
+    let TrendAnalysisResponse::Chart {
+        body,
+        chance_rate,
+        latest_chance,
+        ..
+    } = controller
         .analyze::<5>(code, start_date, end_date, DisplayCrossPattern::Both)
         .await?;
+    dbg!(latest_chance, chance_rate);
     write("./examples/8473.T.from_csv.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_csv.svg"), &body);
 

@@ -21,11 +21,23 @@ pub struct TrendAnalysis<const N: usize> {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+pub struct ChanceRate {
+    pub total: f64,
+    pub golden_only: f64,
+    pub dead_only: f64,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+pub struct LatestChance {
+    pub latest_golden_chance: Option<NaiveDate>,
+    pub latest_dead_chance: Option<NaiveDate>,
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct VecTrendAnalysis<const N: usize> {
     pub vec_trend_analysis: Vec<TrendAnalysis<N>>,
-    pub chance_rate: f64,
-    pub golden_chance_rate: f64,
-    pub dead_chance_rate: f64,
+    pub chance_rate: ChanceRate,
+    pub latest_chance: LatestChance,
 }
 
 impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
@@ -79,7 +91,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             .iter()
             .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::GoldenLoss))
             .count();
-        let golden_chance_rate = (golden_chance_count as f64
+        let golden_only = (golden_chance_count as f64
             / (golden_chance_count + golden_loss_count) as f64)
             .mul(100.0);
         let dead_chance_count = vec_trend_analysis
@@ -90,7 +102,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             .iter()
             .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadLoss))
             .count();
-        let dead_chance_rate =
+        let dead_only =
             (dead_chance_count as f64 / (dead_chance_count + dead_loss_count) as f64).mul(100.0);
         let chance_count = vec_trend_analysis
             .iter()
@@ -102,12 +114,30 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
                 ChanceLoss::DeadLoss => false,
             })
             .count();
-        let chance_rate = (chance_count as f64 / vec_trend_analysis.len() as f64).mul(100.0);
+        let all = (chance_count as f64 / vec_trend_analysis.len() as f64).mul(100.0);
+        let chance_rate = ChanceRate {
+            total: all,
+            golden_only,
+            dead_only,
+        };
+        let latest_golden_chance = vec_trend_analysis
+            .iter()
+            .rev()
+            .find(|trend_analysis| trend_analysis.chance_loss.eq(&ChanceLoss::GoldenChance))
+            .map(|trend_analysis| trend_analysis.cross_date);
+        let latest_dead_chance = vec_trend_analysis
+            .iter()
+            .rev()
+            .find(|trend_analysis| trend_analysis.chance_loss.eq(&ChanceLoss::DeadChance))
+            .map(|trend_analysis| trend_analysis.cross_date);
+        let latest_chance = LatestChance {
+            latest_golden_chance,
+            latest_dead_chance,
+        };
         VecTrendAnalysis::<N> {
             vec_trend_analysis,
             chance_rate,
-            golden_chance_rate,
-            dead_chance_rate,
+            latest_chance,
         }
     }
 }
@@ -119,6 +149,7 @@ mod tests {
     use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
+    use chrono::NaiveDate;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
@@ -140,16 +171,19 @@ mod tests {
         let VecTrendAnalysis {
             vec_trend_analysis,
             chance_rate,
-            golden_chance_rate,
-            dead_chance_rate,
+            latest_chance,
         } = VecTrendAnalysis::<3>::from(stock_cross_pair);
         let actual = 11;
         assert_eq!(actual, vec_trend_analysis.len());
         let actual = 45.45454545454545;
-        assert_eq!(actual, chance_rate);
+        assert_eq!(actual, chance_rate.total);
         let actual = 66.66666666666666;
-        assert_eq!(actual, golden_chance_rate);
+        assert_eq!(actual, chance_rate.golden_only);
         let actual = 20.0;
-        assert_eq!(actual, dead_chance_rate);
+        assert_eq!(actual, chance_rate.dead_only);
+        let actual = NaiveDate::from_ymd_opt(2023, 8, 30);
+        assert_eq!(actual, latest_chance.latest_golden_chance);
+        let actual = NaiveDate::from_ymd_opt(2023, 3, 14);
+        assert_eq!(actual, latest_chance.latest_dead_chance);
     }
 }
