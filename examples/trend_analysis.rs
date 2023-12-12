@@ -5,7 +5,9 @@ use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
 use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
 use quantitative_data_analysis_rs::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::chart::Chart;
-use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::TrendAnalysisResponse;
+use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::{
+    DisplayCrossPattern, TrendAnalysisResponse,
+};
 use quantitative_data_analysis_rs::use_case::interactor::trend_analysis_interactor::TrendAnalysisInteractor;
 use std::path::PathBuf;
 use tokio::fs::write;
@@ -33,8 +35,15 @@ async fn main() -> Result<()> {
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let start_date = NaiveDate::default();
     let end_date = NaiveDate::default();
-    let TrendAnalysisResponse::Chart { body, .. } =
-        controller.analyze::<5>(code, start_date, end_date).await?;
+    let TrendAnalysisResponse::Chart {
+        body,
+        chance_rate,
+        latest_chance,
+        ..
+    } = controller
+        .analyze::<5>(code, start_date, end_date, DisplayCrossPattern::Both)
+        .await?;
+    dbg!(latest_chance, chance_rate);
     write("./examples/8473.T.from_csv.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_csv.svg"), &body);
 
@@ -45,8 +54,9 @@ async fn main() -> Result<()> {
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let start_date = NaiveDate::from_ymd_opt(2022, 9, 9).unwrap();
     let end_date = NaiveDate::from_ymd_opt(2023, 9, 8).unwrap();
-    let TrendAnalysisResponse::Chart { body, .. } =
-        controller.analyze::<5>(code, start_date, end_date).await?;
+    let TrendAnalysisResponse::Chart { body, .. } = controller
+        .analyze::<5>(code, start_date, end_date, DisplayCrossPattern::Both)
+        .await?;
     write("./examples/8473.T.from_yfapi.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_yfapi.svg"), &body);
 

@@ -1,4 +1,6 @@
-use crate::presenter::trend_analysis_presenter::{TrendAnalysisPresenter, TrendAnalysisResponse};
+use crate::presenter::trend_analysis_presenter::{
+    DisplayCrossPattern, TrendAnalysisPresenter, TrendAnalysisResponse,
+};
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
 };
@@ -28,8 +30,9 @@ where
         code: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
+        display_cross_pattern: DisplayCrossPattern,
     ) -> Result<TrendAnalysisResponse> {
-        let input = TrendAnalysisInput::new(code, start_date, end_date);
+        let input = TrendAnalysisInput::new(code, start_date, end_date, display_cross_pattern);
         let output = self.interactor.handle::<N>(input).await?;
         let response = self.presenter.handle(output)?;
         Ok(response)

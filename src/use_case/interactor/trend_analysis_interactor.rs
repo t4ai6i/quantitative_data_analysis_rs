@@ -63,6 +63,7 @@ where
             vec_sma_25,
             vec_cross,
             vec_trend_analysis,
+            input.display_cross_pattern,
         );
         Ok(output)
     }
