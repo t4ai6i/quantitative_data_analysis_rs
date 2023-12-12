@@ -2,7 +2,7 @@ use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
-use crate::domain::entity::trend_analysis::VecTrendAnalysis;
+use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance, VecTrendAnalysis};
 use anyhow::Result;
 
 pub mod chart;
@@ -51,7 +51,9 @@ pub enum TrendAnalysisResponse {
     Chart {
         company: Company,
         body: String,
-        chance_rate: f64,
+        display_cross_pattern: DisplayCrossPattern,
+        chance_rate: ChanceRate,
+        latest_chance: LatestChance,
     },
 }
 
