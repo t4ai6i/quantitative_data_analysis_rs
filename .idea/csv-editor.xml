@@ -17,13 +17,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/assets/screener_result_jp_stock_under_10000.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
       </map>
     </option>
   </component>

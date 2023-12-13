@@ -1,9 +1,11 @@
+use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
 use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance, VecTrendAnalysis};
 use anyhow::Result;
+use chrono::NaiveDate;
 
 pub mod chart;
 
@@ -35,6 +37,59 @@ impl DisplayCrossPattern {
                 latest_golden_chance: None,
                 latest_dead_chance: latest_chance.latest_dead_chance,
             },
+        }
+    }
+
+    pub fn latest_chance_within_days(
+        self,
+        within_days: NaiveDate,
+        latest_chance: &LatestChance,
+    ) -> Option<(ChanceLoss, NaiveDate)> {
+        let LatestChance {
+            latest_golden_chance,
+            latest_dead_chance,
+        } = latest_chance;
+        match self {
+            DisplayCrossPattern::Both => {
+                if latest_golden_chance.is_none() || latest_dead_chance.is_none() {
+                    return None;
+                };
+                let latest_golden_chance = latest_golden_chance.unwrap();
+                let latest_dead_chance = latest_dead_chance.unwrap();
+                if latest_golden_chance >= latest_dead_chance {
+                    if latest_golden_chance >= within_days {
+                        Some((ChanceLoss::GoldenChance, latest_golden_chance))
+                    } else {
+                        None
+                    }
+                } else if latest_dead_chance >= within_days {
+                    Some((ChanceLoss::DeadChance, latest_dead_chance))
+                } else {
+                    None
+                }
+            }
+            DisplayCrossPattern::GoldenOnly => {
+                if latest_golden_chance.is_none() {
+                    return None;
+                };
+                let latest_golden_chance = latest_golden_chance.unwrap();
+                if latest_golden_chance >= within_days {
+                    Some((ChanceLoss::GoldenChance, latest_golden_chance))
+                } else {
+                    None
+                }
+            }
+            DisplayCrossPattern::DeadOnly => {
+                if latest_dead_chance.is_none() {
+                    return None;
+                };
+                let latest_dead_chance = latest_dead_chance.unwrap();
+                if latest_dead_chance >= within_days {
+                    Some((ChanceLoss::DeadChance, latest_dead_chance))
+                } else {
+                    None
+                }
+            }
         }
     }
 }
