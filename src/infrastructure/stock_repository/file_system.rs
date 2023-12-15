@@ -28,7 +28,8 @@ impl StockRepository for FileSystem {
     /// assert_eq!(vec_stock.0.len(), 246);
     async fn get_vec_stock(
         &self,
-        _: impl Into<String> + Send,
+        _: &str,
+        _: &str,
         _: NaiveDate,
         _: NaiveDate,
     ) -> Result<VecStock> {
@@ -74,16 +75,19 @@ mod tests {
 
     #[tokio::test]
     async fn get_vec_stock_test() -> Result<()> {
-        let code = "8473.T";
+        let code = "8473";
+        let market = "T";
         let start_date = NaiveDate::default();
         let end_date = NaiveDate::default();
-        let file_path = PathBuf::from(format!("./assets/{}.csv", code));
+        let file_path = PathBuf::from(format!("./assets/{}.{}.csv", code, market));
         let data_format = DataFormat::CSV {
             has_headers: true,
             file_path,
         };
         let repository = FileSystem::new(data_format);
-        let vec_stock = repository.get_vec_stock(code, start_date, end_date).await?;
+        let vec_stock = repository
+            .get_vec_stock(code, market, start_date, end_date)
+            .await?;
         assert_eq!(vec_stock.0.len(), 246);
         Ok(())
     }

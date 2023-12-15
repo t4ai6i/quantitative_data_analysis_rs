@@ -20,8 +20,9 @@ async fn main() -> Result<()> {
     // TODO: Consider DB schema
     // TODO: Register data
 
-    let code = "8473.T";
-    let file_path = PathBuf::from(format!("./assets/{}.csv", code));
+    let code = "8473";
+    let market = "T";
+    let file_path = PathBuf::from("./assets/8473.T.csv");
     let stock_repository = FileSystem::new(DataFormat::CSV {
         has_headers: true,
         file_path,
@@ -41,7 +42,13 @@ async fn main() -> Result<()> {
         latest_chance,
         ..
     } = controller
-        .analyze::<5>(code, start_date, end_date, DisplayCrossPattern::Both)
+        .analyze::<5>(
+            code,
+            market,
+            start_date,
+            end_date,
+            DisplayCrossPattern::Both,
+        )
         .await?;
     dbg!(latest_chance, chance_rate);
     write("./examples/8473.T.from_csv.svg", &body).await?;
@@ -55,7 +62,13 @@ async fn main() -> Result<()> {
     let start_date = NaiveDate::from_ymd_opt(2022, 9, 9).unwrap();
     let end_date = NaiveDate::from_ymd_opt(2023, 9, 8).unwrap();
     let TrendAnalysisResponse::Chart { body, .. } = controller
-        .analyze::<5>(code, start_date, end_date, DisplayCrossPattern::Both)
+        .analyze::<5>(
+            code,
+            market,
+            start_date,
+            end_date,
+            DisplayCrossPattern::Both,
+        )
         .await?;
     write("./examples/8473.T.from_yfapi.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_yfapi.svg"), &body);

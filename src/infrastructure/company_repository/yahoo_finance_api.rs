@@ -9,20 +9,21 @@ use yahoo_finance_api::YQuoteItem;
 
 #[async_trait]
 impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
-    async fn get_company(&self, code: impl Into<String> + Send) -> Result<Company> {
+    async fn get_company(&self, code: &str, market: &str) -> Result<Company> {
         if let DataFormat::YahooFinanceAPI = self.data_format {
-            let code = code.into();
-            let y_search_result = self.provider.search_ticker(&code).await.with_context(|| {
+            let name = Company::symbol(code, market);
+            let y_search_result = self.provider.search_ticker(&name).await.with_context(|| {
                 format!(
-                    "Failed fetching code: {:?}). \n{}",
-                    &code,
+                    "Failed fetching code: {}, market: {}). \n{}",
+                    code,
+                    market,
                     Backtrace::force_capture()
                 )
             })?;
             let quotes = y_search_result.quotes;
             quotes
                 .into_iter()
-                .find(|quote| quote.symbol.eq(&code))
+                .find(|quote| quote.symbol.eq(&name))
                 .map(Company::from)
                 .with_context(|| {
                     format!(
@@ -43,10 +44,16 @@ impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
 
 impl From<YQuoteItem> for Company {
     fn from(value: YQuoteItem) -> Self {
+        let mut split = value.symbol.split('.');
+        let code = split
+            .next()
+            .with_context(|| format!("Unknown symbol: {}", value.symbol))
+            .unwrap();
         Company {
-            code: value.symbol,
-            name: value.short_name,
+            code: code.to_string(),
+            name: value.long_name,
             market: value.exchange,
+            symbol: value.symbol,
         }
     }
 }
@@ -62,17 +69,33 @@ mod tests {
 
     #[tokio::test]
     async fn get_company_test() -> Result<()> {
-        let code = "8473.T";
-        let provider = YahooConnector::new();
+        let code = "8473";
+        let market = "T";
         let data_format = DataFormat::YahooFinanceAPI;
+        let provider = YahooConnector::new();
         let repository = YahooFinanceAPI::new(&provider, data_format);
-        let company = repository.get_company(code).await?;
+        let company = repository.get_company(code, market).await?;
         assert_eq!(
             company,
             Company {
-                code: "8473.T".to_string(),
-                name: "SBI HOLDINGS INC".to_string(),
+                code: "8473".to_string(),
+                name: "SBI Holdings, Inc.".to_string(),
                 market: "JPX".to_string(),
+                symbol: "8473.T".to_string(),
+            }
+        );
+        let code = "V";
+        let market = "";
+        let data_format = DataFormat::YahooFinanceAPI;
+        let repository = YahooFinanceAPI::new(&provider, data_format);
+        let company = repository.get_company(code, market).await?;
+        assert_eq!(
+            company,
+            Company {
+                code: "V".to_string(),
+                name: "Visa Inc.".to_string(),
+                market: "NYQ".to_string(),
+                symbol: "V".to_string(),
             }
         );
         Ok(())
@@ -82,9 +105,10 @@ mod tests {
     #[should_panic]
     async fn get_company_code_not_found_test() {
         let code = "";
+        let market = "";
         let provider = YahooConnector::new();
         let data_format = DataFormat::YahooFinanceAPI;
         let repository = YahooFinanceAPI::new(&provider, data_format);
-        let _ = repository.get_company(code).await.unwrap();
+        let _ = repository.get_company(code, market).await.unwrap();
     }
 }

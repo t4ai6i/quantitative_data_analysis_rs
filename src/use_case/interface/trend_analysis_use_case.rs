@@ -6,6 +6,7 @@ use chrono::NaiveDate;
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub struct TrendAnalysisInput {
     pub code: String,
+    pub market: String,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
     pub display_cross_pattern: DisplayCrossPattern,
@@ -14,12 +15,14 @@ pub struct TrendAnalysisInput {
 impl TrendAnalysisInput {
     pub fn new(
         code: impl Into<String>,
+        market: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
         Self {
             code: code.into(),
+            market: market.into(),
             start_date,
             end_date,
             display_cross_pattern,

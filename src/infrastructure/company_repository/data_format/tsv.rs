@@ -23,11 +23,9 @@ impl From<Tsv> for Company {
         let code_name = code_name.split(' ').collect_vec();
         let code = code_name[0].to_string();
         let name = code_name[1].to_string();
-        Self {
-            code,
-            name,
-            market: "東証".to_string(),
-        }
+        let market = "T".to_string();
+        let symbol = Self::symbol(&code, &market);
+        Self::new(code, name, market, symbol)
     }
 }
 

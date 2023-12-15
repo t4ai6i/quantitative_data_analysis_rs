@@ -1,3 +1,4 @@
+use crate::domain::entity::company::Company;
 use crate::domain::entity::stock::VecStock;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::data_format::DataFormat;
@@ -11,29 +12,30 @@ use std::backtrace::Backtrace;
 impl<'a> StockRepository for YahooFinanceAPI<'a> {
     async fn get_vec_stock(
         &self,
-        code: impl Into<String> + Send,
+        code: &str,
+        market: &str,
         start_date: NaiveDate,
         end_date: NaiveDate,
     ) -> Result<VecStock> {
         if let DataFormat::YahooFinanceAPI = self.data_format {
-            let code = code.into();
+            let symbol = Company::symbol(code, market);
             let start_date = OffsetDateTimeWrapper::from(start_date);
             let end_date = OffsetDateTimeWrapper::from(end_date);
             let y_response = self
                 .provider
-                .get_quote_history(&code, start_date.0, end_date.0)
+                .get_quote_history(&symbol, start_date.0, end_date.0)
                 .await
                 .with_context(|| {
                     format!(
-                        "Failed fetching code: {:?}). \n{}",
-                        &code,
+                        "Failed fetching symbol: {:?}). \n{}",
+                        &symbol,
                         Backtrace::force_capture()
                     )
                 })?;
             let vec_stock = y_response.quotes().map(VecStock::from).with_context(|| {
                 format!(
                     "Failed mapping quotes into VecStock: {:?}). \n{}",
-                    &code,
+                    &symbol,
                     Backtrace::force_capture()
                 )
             })?;
@@ -59,14 +61,25 @@ mod tests {
 
     #[tokio::test]
     async fn get_vec_stock_test() -> Result<()> {
-        let provider = YahooConnector::new();
-        let code = "8473.T";
+        let code = "8473";
+        let market = "T";
         let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
         let data_format = DataFormat::YahooFinanceAPI;
+        let provider = YahooConnector::new();
         let repository = YahooFinanceAPI::new(&provider, data_format);
-        let vec_stock = repository.get_vec_stock(code, start_date, end_date).await?;
+        let vec_stock = repository
+            .get_vec_stock(code, market, start_date, end_date)
+            .await?;
         assert_eq!(vec_stock.0.len(), 244);
+        let code = "V";
+        let market = "";
+        let data_format = DataFormat::YahooFinanceAPI;
+        let repository = YahooFinanceAPI::new(&provider, data_format);
+        let vec_stock = repository
+            .get_vec_stock(code, market, start_date, end_date)
+            .await?;
+        assert_eq!(vec_stock.0.len(), 251);
         Ok(())
     }
 
@@ -75,12 +88,13 @@ mod tests {
     async fn get_vec_stock_code_not_found_test() {
         let provider = YahooConnector::new();
         let code = "";
+        let market = "";
         let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
         let data_format = DataFormat::YahooFinanceAPI;
         let repository = YahooFinanceAPI::new(&provider, data_format);
         let _ = repository
-            .get_vec_stock(code, start_date, end_date)
+            .get_vec_stock(code, market, start_date, end_date)
             .await
             .unwrap();
     }
