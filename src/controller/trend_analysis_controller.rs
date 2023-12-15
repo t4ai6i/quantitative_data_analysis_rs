@@ -28,11 +28,13 @@ where
     pub async fn analyze<const N: usize>(
         &self,
         code: impl Into<String>,
+        market: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Result<TrendAnalysisResponse> {
-        let input = TrendAnalysisInput::new(code, start_date, end_date, display_cross_pattern);
+        let input =
+            TrendAnalysisInput::new(code, market, start_date, end_date, display_cross_pattern);
         let output = self.interactor.handle::<N>(input).await?;
         let response = self.presenter.handle(output)?;
         Ok(response)

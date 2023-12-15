@@ -7,7 +7,8 @@ use chrono::NaiveDate;
 pub trait StockRepository {
     async fn get_vec_stock(
         &self,
-        code: impl Into<String> + Send,
+        code: &str,
+        market: &str,
         start_date: NaiveDate,
         end_date: NaiveDate,
     ) -> Result<VecStock>;

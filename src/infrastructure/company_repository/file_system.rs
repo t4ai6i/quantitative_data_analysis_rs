@@ -7,13 +7,12 @@ use crate::infrastructure::file_system::FileSystem;
 use crate::infrastructure::from_slice::FromSlice;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use itertools::Itertools;
 use std::backtrace::Backtrace;
 use tokio::fs::read;
 
 #[async_trait]
 impl CompanyRepository for FileSystem {
-    async fn get_company(&self, code: impl Into<String> + Send + Copy) -> Result<Company> {
+    async fn get_company(&self, code: &str, _: &str) -> Result<Company> {
         let file_path = match self.data_format {
             DataFormat::JSON { ref file_path } => file_path,
             DataFormat::CSV { ref file_path, .. } => file_path,
@@ -59,14 +58,13 @@ impl CompanyRepository for FileSystem {
             }
             _ => vec![],
         };
-        let just_code = code.into().split('.').collect_vec()[0].to_string();
         companies
             .into_iter()
-            .find(|company: &Company| company.code.eq(&just_code))
+            .find(|company: &Company| company.code.eq(code))
             .with_context(|| {
                 format!(
                     "Not found company: {}). \n{}",
-                    code.into(),
+                    code,
                     Backtrace::force_capture()
                 )
             })
@@ -85,34 +83,38 @@ mod tests {
 
     #[tokio::test]
     async fn get_vec_company_test() -> Result<()> {
-        let code = "8473.T";
+        let code = "8473";
+        let market = "T";
         let file_path = PathBuf::from("./assets/companies.json");
         let data_format = DataFormat::JSON { file_path };
         let repository = FileSystem::new(data_format);
-        let company = repository.get_company(code).await?;
+        let actual = repository.get_company(code, market).await?;
         assert_eq!(
-            company,
+            actual,
             Company {
                 code: "8473".to_string(),
                 name: "ＳＢＩホールディングス".to_string(),
-                market: "東S".to_string(),
+                market: "T".to_string(),
+                symbol: "8473.T".to_string()
             }
         );
 
         let code = "9984";
+        let market = "T";
         let file_path = PathBuf::from("./assets/companies.tsv");
         let data_format = DataFormat::TSV {
             has_headers: false,
             file_path,
         };
         let repository = FileSystem::new(data_format);
-        let company = repository.get_company(code).await?;
+        let company = repository.get_company(code, market).await?;
         assert_eq!(
             company,
             Company {
                 code: "9984".to_string(),
                 name: "ソフトバンクグループ".to_string(),
-                market: "東証".to_string(),
+                market: "T".to_string(),
+                symbol: "9984.T".to_string(),
             }
         );
         Ok(())
@@ -136,35 +138,38 @@ mod tests {
     #[tokio::test]
     #[should_panic]
     async fn get_vec_company_file_read_error_test() {
-        let code = "8473.T";
+        let code = "8473";
+        let market = "T";
         let file_path = PathBuf::from("./assets/not_exists.csv");
         let data_format = DataFormat::CSV {
             has_headers: true,
             file_path,
         };
         let repository = FileSystem::new(data_format);
-        let _ = repository.get_company(code).await.unwrap();
+        let _ = repository.get_company(code, market).await.unwrap();
     }
 
     #[tokio::test]
     #[should_panic]
     async fn get_vec_company_not_found_company_error_test() {
-        let code = "8473.T";
+        let code = "8473";
+        let market = "T";
         let file_path = PathBuf::from("./assets/companies.csv");
         let data_format = DataFormat::CSV {
             has_headers: true,
             file_path,
         };
         let repository = FileSystem::new(data_format);
-        let _ = repository.get_company(code).await.unwrap();
+        let _ = repository.get_company(code, market).await.unwrap();
     }
 
     #[tokio::test]
     #[should_panic]
     async fn get_vec_company_data_format_error_test() {
-        let code = "8473.T";
+        let code = "8473";
+        let market = "T";
         let data_format = DataFormat::YahooFinanceAPI;
         let repository = FileSystem::new(data_format);
-        let _ = repository.get_company(code).await.unwrap();
+        let _ = repository.get_company(code, market).await.unwrap();
     }
 }

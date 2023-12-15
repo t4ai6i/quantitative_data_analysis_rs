@@ -4,5 +4,5 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait CompanyRepository {
-    async fn get_company(&self, code: impl Into<String> + Send + Copy) -> Result<Company>;
+    async fn get_company(&self, code: &str, market: &str) -> Result<Company>;
 }
