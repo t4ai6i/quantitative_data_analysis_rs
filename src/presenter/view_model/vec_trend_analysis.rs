@@ -14,7 +14,7 @@ impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
         self.vec_trend_analysis
             .iter()
             .filter(|trend_analysis| match pattern {
-                DisplayCrossPattern::Both => true,
+                DisplayCrossPattern::All => true,
                 DisplayCrossPattern::GoldenOnly => trend_analysis
                     .cross_direction_5_25
                     .0
@@ -51,8 +51,8 @@ impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
 
     fn table_chart_summary(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
         let chance_rate = match pattern {
-            DisplayCrossPattern::Both => {
-                format!("{:.0}%", self.chance_rate.total)
+            DisplayCrossPattern::All => {
+                format!("{:.0}%", self.chance_rate.all)
             }
             DisplayCrossPattern::GoldenOnly => {
                 format!("{:.0}%", self.chance_rate.golden_only)
@@ -100,7 +100,7 @@ mod tests {
             crosses: crosses.as_slice(),
         };
         let vec_trend = VecTrendAnalysis::<5>::from(stock_cross_pair);
-        let summary = vec_trend.table_chart_summary(&DisplayCrossPattern::Both);
+        let summary = vec_trend.table_chart_summary(&DisplayCrossPattern::All);
         assert_eq!(
             summary,
             vec![vec![

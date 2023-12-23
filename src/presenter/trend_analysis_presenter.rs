@@ -6,13 +6,14 @@ use crate::domain::entity::stock::VecStock;
 use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance, VecTrendAnalysis};
 use anyhow::Result;
 use chrono::NaiveDate;
+use strum::Display;
 
 pub mod chart;
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Display)]
 pub enum DisplayCrossPattern {
     #[default]
-    Both,
+    All,
     GoldenOnly,
     DeadOnly,
 }
@@ -20,7 +21,7 @@ pub enum DisplayCrossPattern {
 impl DisplayCrossPattern {
     pub fn get_chance_rate(self, chance_rate: &ChanceRate) -> f64 {
         match self {
-            DisplayCrossPattern::Both => chance_rate.total,
+            DisplayCrossPattern::All => chance_rate.all,
             DisplayCrossPattern::GoldenOnly => chance_rate.golden_only,
             DisplayCrossPattern::DeadOnly => chance_rate.dead_only,
         }
@@ -28,7 +29,7 @@ impl DisplayCrossPattern {
 
     pub fn get_latest_chance(self, latest_chance: &LatestChance) -> LatestChance {
         match self {
-            DisplayCrossPattern::Both => *latest_chance,
+            DisplayCrossPattern::All => *latest_chance,
             DisplayCrossPattern::GoldenOnly => LatestChance {
                 latest_golden_chance: latest_chance.latest_golden_chance,
                 latest_dead_chance: None,
@@ -50,7 +51,7 @@ impl DisplayCrossPattern {
             latest_dead_chance,
         } = latest_chance;
         match self {
-            DisplayCrossPattern::Both => {
+            DisplayCrossPattern::All => {
                 if latest_golden_chance.is_none() || latest_dead_chance.is_none() {
                     return None;
                 };
@@ -126,6 +127,7 @@ impl<const N: usize> TrendAnalysisOutput<N> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum TrendAnalysisResponse {
     Chart {
         company: Company,
@@ -153,7 +155,7 @@ mod tests {
     #[test]
     fn display_cross_direction_test() -> Result<()> {
         let chance_rate = ChanceRate {
-            total: 0.0,
+            all: 0.0,
             golden_only: 1.0,
             dead_only: 2.0,
         };
@@ -161,7 +163,7 @@ mod tests {
             latest_golden_chance: NaiveDate::from_ymd_opt(2023, 12, 12),
             latest_dead_chance: NaiveDate::from_ymd_opt(2022, 12, 12),
         };
-        let display_cross_pattern = DisplayCrossPattern::Both;
+        let display_cross_pattern = DisplayCrossPattern::All;
         let actual = display_cross_pattern.get_chance_rate(&chance_rate);
         assert_eq!(actual, 0.0);
         let actual = display_cross_pattern.get_latest_chance(&latest_chance);
