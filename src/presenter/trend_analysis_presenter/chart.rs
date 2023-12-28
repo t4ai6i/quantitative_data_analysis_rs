@@ -90,7 +90,7 @@ impl TrendAnalysisPresenter for Chart {
         charts.margin = 10.0.into();
         let mut candlestick_chart =
             CandlestickChart::new_with_theme(series_list, x_axis_data, self.theme.as_str());
-        candlestick_chart.title_text = format!("{}({})", company.name, company.symbol);
+        candlestick_chart.title_text = company.symbol.to_string();
         candlestick_chart.width = self.width;
         candlestick_chart.height = self.height;
         candlestick_chart.legend_margin = Some(Box::from(30.0));

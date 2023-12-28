@@ -1,3 +1,4 @@
+use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 use crate::presenter::trend_summary_presenter::{
     TrendSummaryOutput, TrendSummaryPresenter, TrendSummaryResponse,
 };
@@ -24,14 +25,18 @@ impl Chart {
 }
 
 impl TrendSummaryPresenter for Chart {
-    fn handle(&self, output: TrendSummaryOutput) -> Result<TrendSummaryResponse> {
+    fn handle(
+        &self,
+        output: TrendSummaryOutput,
+        display_cross_pattern: DisplayCrossPattern,
+    ) -> Result<TrendSummaryResponse> {
+        let chance_rate = format!("chance rate({})", display_cross_pattern.to_string());
         let mut rows = vec![vec![
             "code".to_string(),
             "symbol".to_string(),
-            "name".to_string(),
             "cross direction".to_string(),
-            "per inc/dec".to_string(),
             "latest".to_string(),
+            chance_rate,
         ]];
         let mut body = output.vec_trend_analysis_response.table_chart_rows();
         rows.append(&mut body);
