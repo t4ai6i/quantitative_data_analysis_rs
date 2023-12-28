@@ -1,4 +1,4 @@
-use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
+use crate::presenter::trend_analysis_presenter::{DisplayCrossPattern, TrendAnalysisResponse};
 use crate::presenter::trend_summary_presenter::{TrendSummaryPresenter, TrendSummaryResponse};
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
 use crate::use_case::interface::trend_summary_use_case::{TrendSummaryInput, TrendSummaryUseCase};
@@ -25,10 +25,11 @@ where
     pub async fn analyze(
         &self,
         vec_trend_analysis_response: Vec<TrendAnalysisResponse>,
+        display_cross_pattern: DisplayCrossPattern,
     ) -> Result<TrendSummaryResponse> {
         let input = TrendSummaryInput::new(VecTrendAnalysisResponse(vec_trend_analysis_response));
         let output = self.interactor.handle(input).await?;
-        let response = self.presenter.handle(output)?;
+        let response = self.presenter.handle(output, display_cross_pattern)?;
         Ok(response)
     }
 }

@@ -1,5 +1,6 @@
 pub mod chart;
 
+use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
 use anyhow::Result;
 
@@ -21,5 +22,9 @@ pub enum TrendSummaryResponse {
 }
 
 pub trait TrendSummaryPresenter {
-    fn handle(&self, output: TrendSummaryOutput) -> Result<TrendSummaryResponse>;
+    fn handle(
+        &self,
+        output: TrendSummaryOutput,
+        display_cross_pattern: DisplayCrossPattern,
+    ) -> Result<TrendSummaryResponse>;
 }

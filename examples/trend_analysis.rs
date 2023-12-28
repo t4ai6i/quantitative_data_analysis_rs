@@ -64,8 +64,9 @@ async fn main() -> Result<()> {
     let interactor = TrendSummaryInteractor::new();
     let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
     let controller = TrendSummaryController::new(&interactor, &presenter);
-    let TrendSummaryResponse::Summary { body } =
-        controller.analyze(vec_trend_analysis_response).await?;
+    let TrendSummaryResponse::Summary { body } = controller
+        .analyze(vec_trend_analysis_response, display_cross_pattern)
+        .await?;
     write("./examples/trend_summary.svg", &body).await?;
     assert_eq!(include_str!("../assets/trend_summary.svg"), &body);
 

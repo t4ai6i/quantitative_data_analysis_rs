@@ -25,9 +25,9 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 let latest_chance = display_cross_pattern.get_latest_chance(latest_chance);
                 let cross_direction_type = CrossDirectionType::from(latest_chance);
                 let cross_direction = cross_direction_type.to_string();
-                let chance_rate = chance_rate.to_string(display_cross_pattern);
                 let latest_chance = latest_chance.to_string();
-                vec![code, symbol, cross_direction, chance_rate, latest_chance]
+                let chance_rate = chance_rate.to_string(display_cross_pattern);
+                vec![code, symbol, cross_direction, latest_chance, chance_rate]
             })
             .collect_vec()
     }
