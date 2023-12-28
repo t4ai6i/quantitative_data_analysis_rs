@@ -28,7 +28,6 @@ impl TrendSummaryPresenter for Chart {
         let mut rows = vec![vec![
             "code".to_string(),
             "symbol".to_string(),
-            "name".to_string(),
             "cross direction".to_string(),
             "per inc/dec".to_string(),
             "latest".to_string(),
