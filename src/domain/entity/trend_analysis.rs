@@ -4,6 +4,7 @@ use crate::domain::entity::stock::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use std::ops::{Mul, Sub};
+use CrossDirectionType::{Dead, Golden};
 
 pub struct StockCrossPair<'a> {
     pub stocks: &'a [Stock],
@@ -22,7 +23,7 @@ pub struct TrendAnalysis<const N: usize> {
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct ChanceRate {
-    pub total: f64,
+    pub all: f64,
     pub golden_only: f64,
     pub dead_only: f64,
 }
@@ -31,6 +32,48 @@ pub struct ChanceRate {
 pub struct LatestChance {
     pub latest_golden_chance: Option<NaiveDate>,
     pub latest_dead_chance: Option<NaiveDate>,
+}
+
+impl From<LatestChance> for CrossDirectionType {
+    fn from(value: LatestChance) -> Self {
+        let LatestChance {
+            latest_golden_chance,
+            latest_dead_chance,
+        } = value;
+        match (latest_golden_chance, latest_dead_chance) {
+            (Some(golden), Some(dead)) => {
+                if golden >= dead {
+                    Golden
+                } else {
+                    Dead
+                }
+            }
+            (Some(_), None) => Golden,
+            (None, Some(_)) => Dead,
+            _ => CrossDirectionType::None,
+        }
+    }
+}
+
+impl From<LatestChance> for NaiveDate {
+    fn from(value: LatestChance) -> Self {
+        let LatestChance {
+            latest_golden_chance,
+            latest_dead_chance,
+        } = value;
+        match (latest_golden_chance, latest_dead_chance) {
+            (Some(golden), Some(dead)) => {
+                if golden >= dead {
+                    golden
+                } else {
+                    dead
+                }
+            }
+            (Some(golden), None) => golden,
+            (None, Some(dead)) => dead,
+            _ => NaiveDate::default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -116,7 +159,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             .count();
         let all = (chance_count as f64 / vec_trend_analysis.len() as f64).mul(100.0);
         let chance_rate = ChanceRate {
-            total: all,
+            all,
             golden_only,
             dead_only,
         };
@@ -176,7 +219,7 @@ mod tests {
         let actual = 11;
         assert_eq!(actual, vec_trend_analysis.len());
         let actual = 45.45454545454545;
-        assert_eq!(actual, chance_rate.total);
+        assert_eq!(actual, chance_rate.all);
         let actual = 66.66666666666666;
         assert_eq!(actual, chance_rate.golden_only);
         let actual = 20.0;

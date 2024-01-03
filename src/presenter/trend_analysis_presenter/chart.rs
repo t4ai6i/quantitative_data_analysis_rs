@@ -47,7 +47,7 @@ impl TrendAnalysisPresenter for Chart {
         let max = float::max(&candlesticks) + 10.0;
         let x_axis_data = output.vec_stock.collect_vec_day();
         let series_list = match output.display_cross_pattern {
-            DisplayCrossPattern::Both => {
+            DisplayCrossPattern::All => {
                 let dead_crosses = output
                     .vec_cross
                     .collect_vec_sma_25_ave(CrossDirectionType::Dead);
@@ -90,7 +90,7 @@ impl TrendAnalysisPresenter for Chart {
         charts.margin = 10.0.into();
         let mut candlestick_chart =
             CandlestickChart::new_with_theme(series_list, x_axis_data, self.theme.as_str());
-        candlestick_chart.title_text = format!("{}({})", company.name, company.code);
+        candlestick_chart.title_text = company.symbol.to_string();
         candlestick_chart.width = self.width;
         candlestick_chart.height = self.height;
         candlestick_chart.legend_margin = Some(Box::from(30.0));
@@ -101,7 +101,7 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.series_list[1].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[1].start_index = 25;
         match output.display_cross_pattern {
-            DisplayCrossPattern::Both => {
+            DisplayCrossPattern::All => {
                 candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[2].start_index = 6;
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);

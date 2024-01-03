@@ -1,0 +1,36 @@
+<svg width="1280" height="86" viewBox="0 0 1280 86" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="1280" height="46" fill="#293441"/>
+<line stroke-width="1" x1="0" y1="0" x2="1280" y2="0" stroke="#646464"/>
+<text font-size="14" x="10" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+code
+</text>
+<text font-size="14" x="266" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+symbol
+</text>
+<text font-size="14" x="522" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+cross direction
+</text>
+<text font-size="14" x="778" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+latest
+</text>
+<text font-size="14" x="1034" y="8" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+chance rate(All)
+</text>
+<rect x="0" y="46" width="1280" height="40" fill="#293441" fill-opacity="0.9"/>
+<line stroke-width="1" x1="0" y1="46" x2="1280" y2="46" stroke="#646464"/>
+<text font-size="14" x="10" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+8473
+</text>
+<text font-size="14" x="266" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+8473.T
+</text>
+<text font-size="14" x="522" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+Golden
+</text>
+<text font-size="14" x="778" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+2023-08-30
+</text>
+<text font-size="14" x="1034" y="51" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
+27%
+</text>
+</svg>
