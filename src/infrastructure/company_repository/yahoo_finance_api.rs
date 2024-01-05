@@ -2,6 +2,7 @@ use crate::domain::entity::company::Company;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
+use crate::utils::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use std::backtrace::Backtrace;
@@ -12,14 +13,17 @@ impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
     async fn get_company(&self, code: &str, market: &str) -> Result<Company> {
         if let DataFormat::YahooFinanceAPI = self.data_format {
             let name = Company::symbol(code, market);
-            let y_search_result = self.provider.search_ticker(&name).await.with_context(|| {
-                format!(
-                    "Failed fetching code: {}, market: {}). \n{}",
-                    code,
-                    market,
-                    Backtrace::force_capture()
-                )
-            })?;
+            let retry_future_config = get_common_retry_future_config();
+            let y_search_result = tryhard::retry_fn(|| self.provider.search_ticker(&name))
+                .with_config(retry_future_config)
+                .await
+                .with_context(|| {
+                    format!(
+                        "Failed fetching code: {}. \n{}",
+                        code,
+                        Backtrace::force_capture()
+                    )
+                })?;
             let quotes = y_search_result.quotes;
             quotes
                 .into_iter()
