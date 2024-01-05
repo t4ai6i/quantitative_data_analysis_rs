@@ -3,6 +3,7 @@ use crate::domain::entity::stock::VecStock;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
+use crate::utils::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use chrono::NaiveDate;
@@ -21,17 +22,20 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
             let symbol = Company::symbol(code, market);
             let start_date = OffsetDateTimeWrapper::from(start_date);
             let end_date = OffsetDateTimeWrapper::from(end_date);
-            let y_response = self
-                .provider
-                .get_quote_history(&symbol, start_date.0, end_date.0)
-                .await
-                .with_context(|| {
-                    format!(
-                        "Failed fetching symbol: {:?}). \n{}",
-                        &symbol,
-                        Backtrace::force_capture()
-                    )
-                })?;
+            let retry_future_config = get_common_retry_future_config();
+            let y_response = tryhard::retry_fn(|| {
+                self.provider
+                    .get_quote_history(&symbol, start_date.0, end_date.0)
+            })
+            .with_config(retry_future_config)
+            .await
+            .with_context(|| {
+                format!(
+                    "Failed fetching symbol: {:?}). \n{}",
+                    &symbol,
+                    Backtrace::force_capture()
+                )
+            })?;
             let vec_stock = y_response.quotes().map(VecStock::from).with_context(|| {
                 format!(
                     "Failed mapping quotes into VecStock: {:?}). \n{}",
