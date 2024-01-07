@@ -2,16 +2,22 @@ use crate::domain::entity::ordering::{Ordering, OrderingPair};
 use crate::domain::entity::sma::{SMAListPair, SMAPair};
 use chrono::NaiveDate;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering as Ord;
 use strum::Display;
 
 /// クロスの向き
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display)]
+#[derive(
+    Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
+)]
 pub enum CrossDirectionType {
     #[default]
-    /// ゴールデンクロス・デッドクロスになっていない場合は、None
-    None,
+    #[serde(rename = "neither")]
+    /// ゴールデンクロス・デッドクロスになっていない場合、Neither
+    Neither,
+    #[serde(rename = "golden")]
     Golden,
+    #[serde(rename = "dead")]
     Dead,
 }
 
@@ -26,7 +32,7 @@ impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection
         match (past.0, future.0) {
             (Some(Ord::Less), Some(Ord::Greater)) => CrossDirection(CrossDirectionType::Golden),
             (Some(Ord::Greater), Some(Ord::Less)) => CrossDirection(CrossDirectionType::Dead),
-            _ => CrossDirection(CrossDirectionType::None),
+            _ => CrossDirection(CrossDirectionType::Neither),
         }
     }
 }

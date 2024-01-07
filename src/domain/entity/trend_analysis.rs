@@ -4,7 +4,7 @@ use crate::domain::entity::stock::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use std::ops::{Mul, Sub};
-use CrossDirectionType::{Dead, Golden};
+use CrossDirectionType::{Dead, Golden, Neither};
 
 pub struct StockCrossPair<'a> {
     pub stocks: &'a [Stock],
@@ -50,7 +50,7 @@ impl From<LatestChance> for CrossDirectionType {
             }
             (Some(_), None) => Golden,
             (None, Some(_)) => Dead,
-            _ => CrossDirectionType::None,
+            _ => Neither,
         }
     }
 }
@@ -88,7 +88,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
         let StockCrossPair { stocks, crosses } = value;
         let vec_trend_analysis = crosses
             .iter()
-            .filter(|cross| cross.cross_direction_5_25.0.ne(&CrossDirectionType::None))
+            .filter(|cross| cross.cross_direction_5_25.0.ne(&Neither))
             .filter_map(|cross| {
                 // Crossの発生した日を特定
                 stocks.iter().find_map(|stock| {
