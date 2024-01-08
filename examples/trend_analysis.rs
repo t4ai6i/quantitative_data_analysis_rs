@@ -60,15 +60,28 @@ async fn main() -> Result<()> {
     write("./examples/8473.T.from_yfapi.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_yfapi.svg"), &body);
 
-    let vec_trend_analysis_response = vec![trend_analysis_response];
+    let vec_trend_analysis_response = vec![trend_analysis_response.clone()];
     let interactor = TrendSummaryInteractor::new();
     let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
     let controller = TrendSummaryController::new(&interactor, &presenter);
-    let TrendSummaryResponse::Summary { body } = controller
+    if let TrendSummaryResponse::Chart { body } = controller
         .analyze(vec_trend_analysis_response, display_cross_pattern)
-        .await?;
-    write("./examples/trend_summary.svg", &body).await?;
-    assert_eq!(include_str!("../assets/trend_summary.svg"), &body);
+        .await?
+    {
+        write("./examples/trend_summary.svg", &body).await?;
+        assert_eq!(include_str!("../assets/trend_summary.svg"), &body);
+    };
+
+    let vec_trend_analysis_response = vec![trend_analysis_response.clone()];
+    let presenter = trend_summary_presenter::json::JSON::new();
+    let controller = TrendSummaryController::new(&interactor, &presenter);
+    if let TrendSummaryResponse::JSON { data } = controller
+        .analyze(vec_trend_analysis_response, display_cross_pattern)
+        .await?
+    {
+        let json_str = serde_json::to_string(&data)?;
+        assert_eq!(include_str!("../assets/trend_summary.json"), &json_str);
+    };
 
     Ok(())
 }

@@ -42,7 +42,7 @@ impl TrendSummaryPresenter for Chart {
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.width = self.width;
-        Ok(TrendSummaryResponse::Summary {
+        Ok(TrendSummaryResponse::Chart {
             body: table_chart
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
