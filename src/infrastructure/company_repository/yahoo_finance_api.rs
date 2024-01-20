@@ -5,7 +5,6 @@ use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 use crate::utils::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use std::backtrace::Backtrace;
 use yahoo_finance_api::YQuoteItem;
 
 #[async_trait]
@@ -17,30 +16,19 @@ impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
             let y_search_result = tryhard::retry_fn(|| self.provider.search_ticker(&name))
                 .with_config(retry_future_config)
                 .await
-                .with_context(|| {
-                    format!(
-                        "Failed fetching code: {}. \n{}",
-                        code,
-                        Backtrace::force_capture()
-                    )
-                })?;
+                .with_context(|| format!("Failed fetching code: {}", code))?;
             let quotes = y_search_result.quotes;
             quotes
                 .into_iter()
                 .find(|quote| quote.symbol.eq(&name))
                 .map(Company::from)
-                .with_context(|| {
-                    format!(
-                        "Code fetching from yahoo! finance not exist: {:?}). \n{}",
-                        &code,
-                        Backtrace::force_capture()
-                    )
-                })
+                .with_context(|| format!("Code fetching from yahoo! finance not exist: {}", code))
         } else {
             bail!(format!(
-                "Unsupported data format: {:?}\n{}",
+                "Unsupported data format: {:?} at {}:{}",
                 self.data_format,
-                Backtrace::force_capture()
+                file!(),
+                line!()
             ));
         }
     }
