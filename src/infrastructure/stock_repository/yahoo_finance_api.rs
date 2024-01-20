@@ -7,7 +7,6 @@ use crate::utils::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use chrono::NaiveDate;
-use std::backtrace::Backtrace;
 
 #[async_trait]
 impl<'a> StockRepository for YahooFinanceAPI<'a> {
@@ -29,26 +28,18 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
             })
             .with_config(retry_future_config)
             .await
-            .with_context(|| {
-                format!(
-                    "Failed fetching symbol: {:?}). \n{}",
-                    &symbol,
-                    Backtrace::force_capture()
-                )
-            })?;
-            let vec_stock = y_response.quotes().map(VecStock::from).with_context(|| {
-                format!(
-                    "Failed mapping quotes into VecStock: {:?}). \n{}",
-                    &symbol,
-                    Backtrace::force_capture()
-                )
-            })?;
+            .with_context(|| format!("Failed fetching symbol: {}", &symbol))?;
+            let vec_stock = y_response
+                .quotes()
+                .map(VecStock::from)
+                .with_context(|| format!("Failed mapping quotes into VecStock: {}", &symbol))?;
             Ok(vec_stock)
         } else {
             bail!(format!(
-                "Unsupported data format: {:?}\n{}",
+                "Unsupported data format: {:?} at {}:{}",
                 self.data_format,
-                Backtrace::force_capture()
+                file!(),
+                line!()
             ));
         }
     }
