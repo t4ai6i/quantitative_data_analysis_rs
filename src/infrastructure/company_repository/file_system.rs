@@ -7,7 +7,6 @@ use crate::infrastructure::file_system::FileSystem;
 use crate::infrastructure::from_slice::FromSlice;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use std::backtrace::Backtrace;
 use tokio::fs::read;
 
 #[async_trait]
@@ -19,26 +18,24 @@ impl CompanyRepository for FileSystem {
             DataFormat::TSV { ref file_path, .. } => file_path,
             _ => {
                 bail!(format!(
-                    "Unsupported data format: {:?}\n{}",
+                    "Unsupported data format: {:?} at {}:{}",
                     self.data_format,
-                    Backtrace::force_capture()
+                    file!(),
+                    line!()
                 ));
             }
         };
         let file = read(file_path).await.with_context(|| {
-            format!(
-                "File not found: {:?}). \n{}",
-                file_path,
-                Backtrace::force_capture()
-            )
+            format!("File not found: {:?} at {}:{}", file_path, file!(), line!())
         })?;
         let companies = match self.data_format {
             DataFormat::JSON { .. } => {
                 serde_json::from_slice::<Vec<Company>>(&file).with_context(|| {
                     format!(
-                        "Invalid JSON: {:?}). \n{}",
+                        "Invalid JSON: {:?} at {}:{}",
                         String::from_utf8_lossy(&file),
-                        Backtrace::force_capture()
+                        file!(),
+                        line!()
                     )
                 })?
             }
@@ -61,13 +58,7 @@ impl CompanyRepository for FileSystem {
         companies
             .into_iter()
             .find(|company: &Company| company.code.eq(code))
-            .with_context(|| {
-                format!(
-                    "Not found company: {}). \n{}",
-                    code,
-                    Backtrace::force_capture()
-                )
-            })
+            .with_context(|| format!("Not found company: {} at {}:{}", code, file!(), line!()))
     }
 }
 
@@ -99,7 +90,7 @@ mod tests {
             }
         );
 
-        let code = "9984";
+        let code = "1301";
         let market = "T";
         let file_path = PathBuf::from("./assets/companies.tsv");
         let data_format = DataFormat::TSV {
@@ -111,10 +102,10 @@ mod tests {
         assert_eq!(
             company,
             Company {
-                code: "9984".to_string(),
-                name: "ソフトバンクグループ".to_string(),
+                code: "1301".to_string(),
+                name: "極洋".to_string(),
                 market: "T".to_string(),
-                symbol: "9984.T".to_string(),
+                symbol: "1301.T".to_string(),
             }
         );
         Ok(())
