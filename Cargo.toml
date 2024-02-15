@@ -1,6 +1,6 @@
 [package]
 name = "quantitative-data-analysis-rs"
-version = "0.16.0"
+version = "0.17.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -16,7 +16,7 @@ chrono = { version = "0.4", features = ["serde"] }
 itertools = "0.12.0"
 charts-rs = "0.3.0"
 num-traits = "0.2.17"
-strum = { version = "0.25.0", features = ["derive"] }
+strum = { version = "0.26.1", features = ["derive"] }
 yahoo_finance_api = "2.1.0"
 tokio = { version = "1.34.0", features = ["full"] }
 async-trait = "0.1.74"
