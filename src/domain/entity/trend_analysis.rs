@@ -137,6 +137,11 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
         let golden_only = (golden_chance_count as f64
             / (golden_chance_count + golden_loss_count) as f64)
             .mul(100.0);
+        let golden_only = if golden_only.is_nan() {
+            0.0
+        } else {
+            golden_only
+        };
         let dead_chance_count = vec_trend_analysis
             .iter()
             .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadChance))
@@ -147,6 +152,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             .count();
         let dead_only =
             (dead_chance_count as f64 / (dead_chance_count + dead_loss_count) as f64).mul(100.0);
+        let dead_only = if dead_only.is_nan() { 0.0 } else { dead_only };
         let chance_count = vec_trend_analysis
             .iter()
             .filter(|trend_analysis| match trend_analysis.chance_loss {
@@ -158,6 +164,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             })
             .count();
         let all = (chance_count as f64 / vec_trend_analysis.len() as f64).mul(100.0);
+        let all = if all.is_nan() { 0.0 } else { all };
         let chance_rate = ChanceRate {
             all,
             golden_only,
