@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/assets/9223.T.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/assets/companies.csv">
           <value>
             <Attribute>

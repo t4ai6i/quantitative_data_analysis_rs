@@ -18,7 +18,7 @@ use yahoo_finance_api::YahooConnector;
 #[tokio::main]
 async fn main() -> Result<()> {
     let display_cross_pattern = DisplayCrossPattern::All;
-    let code = "2031";
+    let code = "9223";
     let market = "T";
 
     let provider = YahooConnector::new();
@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
         .await?;
     let body = trend_analysis_response.clone();
     let TrendAnalysisResponse::Chart { body, .. } = body;
-    write("./examples/error.T.from_yfapi.svg", &body).await?;
+    write("./examples/9223.T.from_yfapi.svg", &body).await?;
 
     let vec_trend_analysis_response = vec![trend_analysis_response.clone()];
     let interactor = TrendSummaryInteractor::new();
@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
         .analyze(vec_trend_analysis_response, display_cross_pattern)
         .await?
     {
-        write("./examples/error_trend_summary.svg", &body).await?;
+        write("./examples/9223_trend_summary.svg", &body).await?;
     };
 
     let vec_trend_analysis_response = vec![trend_analysis_response.clone()];
