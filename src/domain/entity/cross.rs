@@ -52,8 +52,15 @@ pub struct VecCross(pub Vec<Cross>);
 impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
     ///
     /// # Examples
-    /// ```ignore
-    /// let vec_stock = StockCsvRow::from_slice::<true>(CSV_8473);
+    /// ```
+    /// use quantitative_data_analysis_rs::domain::entity::cross::VecCross;
+    /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListPair, VecSMA};
+    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
+    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    ///
+    /// const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
+    ///
+    /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
     /// let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
     /// let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
     /// let sma_list_pair = SMAListPair {
@@ -105,28 +112,5 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
             })
             .collect_vec();
         Self(crosses)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::domain::entity::sma::VecSMA;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::stock_repository::data_format::csv::Csv;
-
-    const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
-
-    #[test]
-    fn vec_cross_test() {
-        let vec_stock = Csv::from_slice::<true>(CSV_8473);
-        let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
-        let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
-        let sma_list_pair = SMAListPair {
-            smas_n: smas_5.as_slice(),
-            smas_o: smas_25.as_slice(),
-        };
-        let VecCross(crosses) = VecCross::from(sma_list_pair);
-        assert_eq!(crosses.len(), 241);
     }
 }
