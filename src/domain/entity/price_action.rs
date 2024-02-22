@@ -8,7 +8,7 @@ use strum::Display;
 
 /// 売買シグナル
 #[derive(
-Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
+    Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
 )]
 pub enum BuySellSignal {
     #[default]
