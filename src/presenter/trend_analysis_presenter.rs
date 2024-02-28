@@ -1,6 +1,7 @@
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
+use crate::domain::entity::price_action::VecBuySellSignalByPriceAction;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
 use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance, VecTrendAnalysis};
@@ -102,6 +103,7 @@ pub struct TrendAnalysisOutput<const N: usize> {
     vec_sma_25: VecSMA<25>,
     vec_cross: VecCross,
     vec_trend: VecTrendAnalysis<N>,
+    vec_buy_sell_signal: VecBuySellSignalByPriceAction,
     display_cross_pattern: DisplayCrossPattern,
 }
 
@@ -113,6 +115,7 @@ impl<const N: usize> TrendAnalysisOutput<N> {
         vec_sma_25: VecSMA<25>,
         vec_cross: VecCross,
         vec_trend: VecTrendAnalysis<N>,
+        vec_buy_sell_signal: VecBuySellSignalByPriceAction,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
         Self {
@@ -122,6 +125,7 @@ impl<const N: usize> TrendAnalysisOutput<N> {
             vec_sma_25,
             vec_cross,
             vec_trend,
+            vec_buy_sell_signal,
             display_cross_pattern,
         }
     }
@@ -135,6 +139,7 @@ pub enum TrendAnalysisResponse {
         display_cross_pattern: DisplayCrossPattern,
         chance_rate: ChanceRate,
         latest_chance: LatestChance,
+        vec_buy_sell_signal: VecBuySellSignalByPriceAction,
     },
 }
 

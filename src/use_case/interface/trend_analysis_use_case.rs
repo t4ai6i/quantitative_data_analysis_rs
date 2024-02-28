@@ -32,8 +32,8 @@ impl TrendAnalysisInput {
 
 #[async_trait]
 pub trait TrendAnalysisUseCase {
-    async fn handle<const N: usize>(
+    async fn handle<const AFTER_DAYS: usize, const FOR_DAYS: usize>(
         &self,
         input: TrendAnalysisInput,
-    ) -> Result<TrendAnalysisOutput<N>>;
+    ) -> Result<TrendAnalysisOutput<AFTER_DAYS>>;
 }

@@ -10,12 +10,17 @@ use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::{
     DisplayCrossPattern, TrendAnalysisResponse,
 };
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter;
-use quantitative_data_analysis_rs::presenter::trend_summary_presenter::TrendSummaryResponse;
+use quantitative_data_analysis_rs::presenter::trend_summary_presenter::{
+    AnalysisJSON, TrendSummaryResponse,
+};
 use quantitative_data_analysis_rs::use_case::interactor::trend_analysis_interactor::TrendAnalysisInteractor;
 use quantitative_data_analysis_rs::use_case::interactor::trend_summary_interactor::TrendSummaryInteractor;
 use std::path::PathBuf;
 use tokio::fs::write;
 use yahoo_finance_api::YahooConnector;
+
+const AFTER_5DAYS: usize = 5;
+const FOR_7DAYS: usize = 7;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -40,7 +45,13 @@ async fn main() -> Result<()> {
     let start_date = NaiveDate::default();
     let end_date = NaiveDate::default();
     let TrendAnalysisResponse::Chart { body, .. } = controller
-        .analyze::<5>(code, market, start_date, end_date, display_cross_pattern)
+        .analyze::<AFTER_5DAYS, FOR_7DAYS>(
+            code,
+            market,
+            start_date,
+            end_date,
+            display_cross_pattern,
+        )
         .await?;
     write("./examples/8473.T.from_csv.svg", &body).await?;
     assert_eq!(include_str!("../assets/8473.T.from_csv.svg"), &body);
@@ -53,7 +64,13 @@ async fn main() -> Result<()> {
     let start_date = NaiveDate::from_ymd_opt(2022, 9, 9).unwrap();
     let end_date = NaiveDate::from_ymd_opt(2023, 9, 8).unwrap();
     let trend_analysis_response = controller
-        .analyze::<5>(code, market, start_date, end_date, display_cross_pattern)
+        .analyze::<AFTER_5DAYS, FOR_7DAYS>(
+            code,
+            market,
+            start_date,
+            end_date,
+            display_cross_pattern,
+        )
         .await?;
     let body = trend_analysis_response.clone();
     let TrendAnalysisResponse::Chart { body, .. } = body;
@@ -79,8 +96,26 @@ async fn main() -> Result<()> {
         .analyze(vec_trend_analysis_response, display_cross_pattern)
         .await?
     {
-        let json_str = serde_json::to_string(&data)?;
-        assert_eq!(include_str!("../assets/trend_summary.json"), &json_str);
+        let (cross, buy_sell_signal): (Vec<_>, Vec<_>) = data
+            .into_iter()
+            .map(|e| {
+                let AnalysisJSON {
+                    cross_analysis,
+                    buy_sell_signal_analysis,
+                } = e;
+                (cross_analysis, buy_sell_signal_analysis)
+            })
+            .unzip();
+        let json_str = serde_json::to_string(&cross)?;
+        assert_eq!(
+            include_str!("../assets/cross_analysis_summary.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string(&buy_sell_signal)?;
+        assert_eq!(
+            include_str!("../assets/buy_sell_analysis_summary.json"),
+            &json_str
+        );
     };
 
     Ok(())

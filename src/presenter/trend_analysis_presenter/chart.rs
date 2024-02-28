@@ -155,6 +155,7 @@ impl TrendAnalysisPresenter for Chart {
             display_cross_pattern: output.display_cross_pattern,
             chance_rate: output.vec_trend.chance_rate,
             latest_chance: output.vec_trend.latest_chance,
+            vec_buy_sell_signal: output.vec_buy_sell_signal,
         })
     }
 }
