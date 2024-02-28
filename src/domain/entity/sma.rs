@@ -22,16 +22,18 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
     /// use quantitative_data_analysis_rs::domain::entity::stock::VecStock;
     ///
     /// const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
+    /// const DAYS_5: usize = 5;
+    /// const DAYS_25: usize = 25;
     ///
     /// let stocks = Csv::from_slice::<true>(CSV_8473);
-    /// let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
+    /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(stocks.as_slice());
     /// assert_eq!(smas_5.len(), 242);
     ///
-    /// let VecSMA(smas_25) = VecSMA::<25>::from(stocks.as_slice());
+    /// let VecSMA(smas_25) = VecSMA::<DAYS_25>::from(stocks.as_slice());
     /// assert_eq!(smas_25.len(), 222);
     ///
     /// let VecStock(stocks) = VecStock(vec![]);
-    /// let VecSMA(smas_5) = VecSMA::<5>::from(stocks.as_slice());
+    /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(stocks.as_slice());
     /// assert_eq!(smas_5.len(), 0);
     /// ```
     fn from(value: &[Stock]) -> Self {

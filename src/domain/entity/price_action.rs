@@ -28,9 +28,9 @@ pub struct BuySellSignalByPriceAction {
     /// 前日・当日それぞぞれの安値が切り上がったか切り下がったか
     low_trend: Ordering<1, 1>,
     /// 高値・安値の切り上げ・切り下げを基にした売買シグナル
-    buy_sell_signal: BuySellSignal,
+    pub(crate) buy_sell_signal: BuySellSignal,
     /// シグナルの対象の日付
-    date: NaiveDate,
+    pub(crate) date: NaiveDate,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -58,6 +58,20 @@ impl From<(Ordering<1, 1>, Ordering<1, 1>)> for BuySellSignal {
 }
 
 impl From<&[Stock]> for VecBuySellSignalByPriceAction {
+    ///
+    /// # Examples
+    /// ```
+    /// use quantitative_data_analysis_rs::domain::entity::price_action::VecBuySellSignalByPriceAction;
+    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
+    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    ///
+    /// const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    ///
+    /// let vec_stock = Csv::from_slice::<true>(CSV_9223);
+    /// let VecBuySellSignalByPriceAction(vec) =
+    ///     VecBuySellSignalByPriceAction::from(vec_stock.as_slice());
+    /// assert_eq!(vec.len(), 34);
+    /// ```
     fn from(value: &[Stock]) -> Self {
         let vec = value
             .windows(2)
@@ -81,22 +95,5 @@ impl From<&[Stock]> for VecBuySellSignalByPriceAction {
             })
             .collect_vec();
         VecBuySellSignalByPriceAction(vec)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::domain::entity::price_action::VecBuySellSignalByPriceAction;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::stock_repository::data_format::csv::Csv;
-
-    const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
-
-    #[test]
-    fn vec_buy_sell_signal_by_price_action_test() {
-        let vec_stock = Csv::from_slice::<true>(CSV_9223);
-        let VecBuySellSignalByPriceAction(vec) =
-            VecBuySellSignalByPriceAction::from(vec_stock.as_slice());
-        assert_eq!(vec.len(), 34);
     }
 }

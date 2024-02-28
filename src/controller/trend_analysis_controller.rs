@@ -25,7 +25,7 @@ where
         }
     }
 
-    pub async fn analyze<const N: usize>(
+    pub async fn analyze<const AFTER_DAYS: usize, const FOR_DAYS: usize>(
         &self,
         code: impl Into<String>,
         market: impl Into<String>,
@@ -35,7 +35,10 @@ where
     ) -> Result<TrendAnalysisResponse> {
         let input =
             TrendAnalysisInput::new(code, market, start_date, end_date, display_cross_pattern);
-        let output = self.interactor.handle::<N>(input).await?;
+        let output = self
+            .interactor
+            .handle::<AFTER_DAYS, FOR_DAYS>(input)
+            .await?;
         let response = self.presenter.handle(output)?;
         Ok(response)
     }

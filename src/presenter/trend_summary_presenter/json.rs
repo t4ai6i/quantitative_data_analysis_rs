@@ -19,7 +19,7 @@ impl TrendSummaryPresenter for JSON {
         output: TrendSummaryOutput,
         _display_cross_pattern: DisplayCrossPattern,
     ) -> Result<TrendSummaryResponse> {
-        let vec_json = output.vec_trend_analysis_response.vec_json();
-        Ok(TrendSummaryResponse::JSON { data: vec_json })
+        let data = output.vec_trend_analysis_response.vec_json();
+        Ok(TrendSummaryResponse::JSON { data })
     }
 }

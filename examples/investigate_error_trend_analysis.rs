@@ -15,6 +15,9 @@ use quantitative_data_analysis_rs::use_case::interactor::trend_summary_interacto
 use tokio::fs::write;
 use yahoo_finance_api::YahooConnector;
 
+const AFTER_5DAYS: usize = 5;
+const FOR_7DAYS: usize = 7;
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let display_cross_pattern = DisplayCrossPattern::All;
@@ -31,7 +34,13 @@ async fn main() -> Result<()> {
     let days_ago = Days::new(365);
     let start_date = end_date.checked_sub_days(days_ago).unwrap();
     let trend_analysis_response = controller
-        .analyze::<5>(code, market, start_date, end_date, display_cross_pattern)
+        .analyze::<AFTER_5DAYS, FOR_7DAYS>(
+            code,
+            market,
+            start_date,
+            end_date,
+            display_cross_pattern,
+        )
         .await?;
     let body = trend_analysis_response.clone();
     let TrendAnalysisResponse::Chart { body, .. } = body;
