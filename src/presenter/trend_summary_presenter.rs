@@ -35,16 +35,16 @@ pub struct CrossAnalysisJSON {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct BuySellSignalJSON {
-    pub(crate) buy_sell_signal: BuySellSignal,
+    pub buy_sell_signal: BuySellSignal,
     #[serde(with = "custom_date_format")]
-    pub(crate) date: NaiveDate,
+    pub date: NaiveDate,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct BuySellSignalAnalysisJSON {
-    pub(crate) code: String,
-    pub(crate) symbol: String,
-    pub(crate) buy_sell_signals: Vec<BuySellSignalJSON>,
+    pub code: String,
+    pub symbol: String,
+    pub buy_sell_signals: Vec<BuySellSignalJSON>,
 }
 
 impl From<&[BuySellSignalByPriceAction]> for BuySellSignalAnalysisJSON {
