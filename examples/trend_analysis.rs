@@ -10,9 +10,8 @@ use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::{
     DisplayCrossPattern, TrendAnalysisResponse,
 };
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter;
-use quantitative_data_analysis_rs::presenter::trend_summary_presenter::{
-    AnalysisJSON, TrendSummaryResponse,
-};
+use quantitative_data_analysis_rs::presenter::trend_summary_presenter::TrendSummaryResponse;
+use quantitative_data_analysis_rs::presenter::view_model::analysis::Analysis;
 use quantitative_data_analysis_rs::use_case::interactor::trend_analysis_interactor::TrendAnalysisInteractor;
 use quantitative_data_analysis_rs::use_case::interactor::trend_summary_interactor::TrendSummaryInteractor;
 use std::path::PathBuf;
@@ -99,7 +98,7 @@ async fn main() -> Result<()> {
         let (cross, buy_sell_signal): (Vec<_>, Vec<_>) = data
             .into_iter()
             .map(|e| {
-                let AnalysisJSON {
+                let Analysis {
                     cross_analysis,
                     buy_sell_signal_analysis,
                 } = e;

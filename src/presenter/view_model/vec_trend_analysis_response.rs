@@ -1,8 +1,8 @@
 use crate::domain::entity::cross::CrossDirectionType;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
-use crate::presenter::trend_summary_presenter::{
-    AnalysisJSON, BuySellSignalAnalysisJSON, CrossAnalysisJSON,
-};
+use crate::presenter::view_model::analysis::Analysis;
+use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
+use crate::presenter::view_model::cross_analysis::CrossAnalysis;
 use chrono::NaiveDate;
 use itertools::Itertools;
 
@@ -10,7 +10,7 @@ pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysisResponse>);
 
 pub trait VecTrendAnalysisResponseExt {
     fn table_chart_rows(&self) -> Vec<Vec<String>>;
-    fn vec_json(&self) -> Vec<AnalysisJSON>;
+    fn vec_json(&self) -> Vec<Analysis>;
 }
 
 impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
@@ -37,7 +37,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
             .collect_vec()
     }
 
-    fn vec_json(&self) -> Vec<AnalysisJSON> {
+    fn vec_json(&self) -> Vec<Analysis> {
         self.0
             .iter()
             .map(|response| {
@@ -55,7 +55,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 let cross_direction_type = CrossDirectionType::from(latest_chance);
                 let latest_chance = NaiveDate::from(latest_chance);
                 let chance_rate = display_cross_pattern.get_chance_rate(chance_rate);
-                let cross_analysis = CrossAnalysisJSON {
+                let cross_analysis = CrossAnalysis {
                     code: code.clone(),
                     symbol: symbol.clone(),
                     cross_direction: cross_direction_type,
@@ -63,10 +63,10 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     chance_rate,
                 };
                 let mut buy_sell_signal_analysis =
-                    BuySellSignalAnalysisJSON::from(vec_buy_sell_signal.0.as_slice());
+                    BuySellSignalAnalysis::from(vec_buy_sell_signal.0.as_slice());
                 buy_sell_signal_analysis.code = code.clone();
                 buy_sell_signal_analysis.symbol = symbol.clone();
-                AnalysisJSON {
+                Analysis {
                     cross_analysis,
                     buy_sell_signal_analysis,
                 }
