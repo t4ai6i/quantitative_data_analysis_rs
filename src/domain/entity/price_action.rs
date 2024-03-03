@@ -10,7 +10,7 @@ use strum::Display;
 #[derive(
     Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
 )]
-pub enum BuySellSignal {
+pub enum BuySellSignalType {
     #[default]
     #[serde(rename = "wait_and_see")]
     WaitAndSee,
@@ -28,7 +28,7 @@ pub struct BuySellSignalByPriceAction {
     /// 前日・当日それぞぞれの安値が切り上がったか切り下がったか
     low_trend: Ordering<1, 1>,
     /// 高値・安値の切り上げ・切り下げを基にした売買シグナル
-    pub(crate) buy_sell_signal: BuySellSignal,
+    pub(crate) buy_sell_signal: BuySellSignalType,
     /// シグナルの対象の日付
     pub(crate) date: NaiveDate,
 }
@@ -44,7 +44,7 @@ impl From<(f64, f64)> for Ordering<1, 1> {
     }
 }
 
-impl From<(Ordering<1, 1>, Ordering<1, 1>)> for BuySellSignal {
+impl From<(Ordering<1, 1>, Ordering<1, 1>)> for BuySellSignalType {
     fn from(value: (Ordering<1, 1>, Ordering<1, 1>)) -> Self {
         let (low, high) = value;
         let low = low.0;
@@ -84,7 +84,7 @@ impl From<&[Stock]> for VecBuySellSignalByPriceAction {
                 let today_low = today.low;
                 let low_trend = Ordering::<1, 1>::from((prev_low, today_low));
                 let high_trend = Ordering::<1, 1>::from((prev_high, today_high));
-                let buy_sell_signal = BuySellSignal::from((high_trend, low_trend));
+                let buy_sell_signal = BuySellSignalType::from((high_trend, low_trend));
                 let date = today.date;
                 BuySellSignalByPriceAction {
                     high_trend,
