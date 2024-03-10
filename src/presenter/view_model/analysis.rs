@@ -10,8 +10,8 @@ pub struct Analysis {
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::entity::buy_sell_signal::BuySellSignalType;
     use crate::domain::entity::cross::CrossDirectionType;
-    use crate::domain::entity::price_action::BuySellSignalType;
     use crate::presenter::view_model::analysis::Analysis;
     use crate::presenter::view_model::buy_sell_signal_analysis::{
         BuySellSignal, BuySellSignalAnalysis,

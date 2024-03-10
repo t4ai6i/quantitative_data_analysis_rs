@@ -1,5 +1,5 @@
 use crate::domain::entity::cross::VecCross;
-use crate::domain::entity::price_action::VecBuySellSignalByPriceAction;
+use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
 use crate::domain::entity::sma::{SMAListPair, VecSMA};
 use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
 use crate::domain::repository::company_repository::CompanyRepository;
@@ -62,7 +62,7 @@ where
         let vec_cross = VecCross::from(sma_list_pair);
 
         let stocks = get_vec_containing_number_from_end_of_array(vec_stock.0.as_slice(), FOR_DAYS);
-        let vec_buy_sell_signal = VecBuySellSignalByPriceAction::from(stocks.as_slice());
+        let vec_buy_sell_signal = VecEngulfingCandlestickPattern::from(stocks.as_slice());
 
         let stock_cross_pair = StockCrossPair {
             stocks: vec_stock.0.as_slice(),
