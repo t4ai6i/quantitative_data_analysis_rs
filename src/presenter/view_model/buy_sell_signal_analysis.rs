@@ -1,4 +1,5 @@
-use crate::domain::entity::price_action::{BuySellSignalByPriceAction, BuySellSignalType};
+use crate::domain::entity::buy_sell_signal::BuySellSignalType;
+use crate::domain::entity::engulfing_candlestick_pattern::EngulfingCandlestickPattern;
 use crate::utils::custom_date_format;
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -18,8 +19,8 @@ pub struct BuySellSignalAnalysis {
     pub buy_sell_signals: Vec<BuySellSignal>,
 }
 
-impl From<&[BuySellSignalByPriceAction]> for BuySellSignalAnalysis {
-    fn from(value: &[BuySellSignalByPriceAction]) -> Self {
+impl From<&[EngulfingCandlestickPattern]> for BuySellSignalAnalysis {
+    fn from(value: &[EngulfingCandlestickPattern]) -> Self {
         let buy_sell_signals = value
             .iter()
             .map(|e| BuySellSignal {

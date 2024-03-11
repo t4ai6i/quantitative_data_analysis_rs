@@ -23,3 +23,11 @@ pub struct OrderingPair<const N: usize, const O: usize> {
     pub past: Ordering<N, O>,
     pub future: Ordering<N, O>,
 }
+
+impl From<(f64, f64)> for Ordering<1, 1> {
+    fn from(value: (f64, f64)) -> Self {
+        let (prev, today) = value;
+        let ordering = today.partial_cmp(&prev);
+        Ordering::<1, 1>(ordering)
+    }
+}
