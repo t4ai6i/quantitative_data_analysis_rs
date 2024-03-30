@@ -16,4 +16,5 @@ pub enum DataFormat {
         file_path: PathBuf,
     },
     YahooFinanceAPI,
+    JQuantsAPI,
 }
