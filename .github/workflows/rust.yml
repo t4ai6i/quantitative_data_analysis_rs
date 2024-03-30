@@ -8,6 +8,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  JQUANTS_MAIL_ADDRESS: ${{ secrets.JQUANTS_MAIL_ADDRESS }}
+  JQUANTS_PASSWORD: ${{ secrets.JQUANTS_PASSWORD }}
 
 jobs:
   build:
@@ -15,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: Swatinem/rust-cache@v2
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Build
-      run: cargo build --verbose
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Build
+        run: cargo build --verbose
