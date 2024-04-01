@@ -1,5 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
+use itertools::Itertools;
 use query_string_builder::QueryString;
 use reqwest::Client;
 
@@ -11,6 +12,23 @@ const COMPANY_URL: &str = "https://api.jquants.com/v1/listed/info";
 
 #[async_trait]
 impl CompanyRepository for JQuantsAPI {
+    async fn get_companies(&self) -> anyhow::Result<Vec<Company>> {
+        let id_token = self.id_token.as_str();
+        let response = Client::new()
+            .get(COMPANY_URL)
+            .bearer_auth(id_token)
+            .send()
+            .await?;
+        let response = &response.json::<serde_json::Value>().await?;
+        let company = response["info"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(Self::company_from_value)
+            .collect_vec();
+        Ok(company)
+    }
+
     async fn get_company(&self, code: &str, _market: &str) -> anyhow::Result<Company> {
         let qs = QueryString::new().with_value("code", code);
         let company_url = format!("{COMPANY_URL}{qs}");
@@ -23,13 +41,8 @@ impl CompanyRepository for JQuantsAPI {
         let response = &response.json::<serde_json::Value>().await?;
         let company = response["info"]
             .get(0)
-            .with_context(|| format!("Not found. {}", code))?;
-        let company = Company {
-            code: company["Code"].as_str().unwrap().to_string(),
-            name: company["CompanyNameEnglish"].as_str().unwrap().to_string(),
-            market: company["MarketCode"].as_str().unwrap().to_string(),
-            symbol: "".to_string(),
-        };
+            .with_context(|| format!("Not found company. {}", code))?;
+        let company = Self::company_from_value(company);
         Ok(company)
     }
 }
@@ -62,6 +75,17 @@ mod tests {
             company,
             Company::new("84730", "SBI Holdings,Inc.", "0111", "")
         );
+        Ok(())
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn get_companies_test(#[future] setup: Result<Token>) -> Result<()> {
+        let token = setup.await?;
+        let data_format = DataFormat::JQuantsAPI;
+        let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
+        let company = repository.get_companies().await?;
+        assert_eq!(company.len(), 4335);
         Ok(())
     }
 }

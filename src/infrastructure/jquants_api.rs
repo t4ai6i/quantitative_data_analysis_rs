@@ -1,3 +1,4 @@
+use crate::domain::entity::company::Company;
 use crate::infrastructure::data_format::DataFormat;
 use anyhow::{bail, Result};
 use chrono::{Days, NaiveDateTime, Utc};
@@ -95,6 +96,24 @@ pub struct JQuantsAPI {
 }
 
 impl JQuantsAPI {
+    pub fn new(id_token: impl Into<String>, data_format: DataFormat) -> Result<Self> {
+        match data_format {
+            DataFormat::JQuantsAPI => (),
+            _ => {
+                bail!(format!(
+                    "Unsupported data format: {:?} at {}:{}",
+                    data_format,
+                    file!(),
+                    line!()
+                ));
+            }
+        };
+        Ok(Self {
+            id_token: Into::into(id_token),
+            data_format,
+        })
+    }
+
     pub async fn get_refresh_token(
         mail_address: impl Into<String>,
         password: impl Into<String>,
@@ -131,22 +150,13 @@ impl JQuantsAPI {
         })
     }
 
-    pub fn new(id_token: impl Into<String>, data_format: DataFormat) -> Result<Self> {
-        match data_format {
-            DataFormat::JQuantsAPI => (),
-            _ => {
-                bail!(format!(
-                    "Unsupported data format: {:?} at {}:{}",
-                    data_format,
-                    file!(),
-                    line!()
-                ));
-            }
-        };
-        Ok(Self {
-            id_token: Into::into(id_token),
-            data_format,
-        })
+    pub fn company_from_value(value: &serde_json::Value) -> Company {
+        Company {
+            code: value["Code"].as_str().unwrap().to_string(),
+            name: value["CompanyNameEnglish"].as_str().unwrap().to_string(),
+            market: value["MarketCode"].as_str().unwrap().to_string(),
+            symbol: "".to_string(),
+        }
     }
 }
 

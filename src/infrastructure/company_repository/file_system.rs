@@ -11,6 +11,10 @@ use tokio::fs::read;
 
 #[async_trait]
 impl CompanyRepository for FileSystem {
+    async fn get_companies(&self) -> Result<Vec<Company>> {
+        todo!()
+    }
+
     async fn get_company(&self, code: &str, _: &str) -> Result<Company> {
         let file_path = match self.data_format {
             DataFormat::JSON { ref file_path } => file_path,
