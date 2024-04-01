@@ -34,7 +34,7 @@ impl StockRepository for JQuantsAPI {
             .await?;
         let response = &mut response.json::<serde_json::Value>().await?;
         let stocks = response["daily_quotes"]
-            .as_array_mut()
+            .as_array()
             .unwrap()
             .iter()
             .map(|value| {

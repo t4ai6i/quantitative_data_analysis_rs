@@ -9,6 +9,10 @@ use yahoo_finance_api::YQuoteItem;
 
 #[async_trait]
 impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
+    async fn get_companies(&self) -> Result<Vec<Company>> {
+        todo!()
+    }
+
     async fn get_company(&self, code: &str, market: &str) -> Result<Company> {
         if let DataFormat::YahooFinanceAPI = self.data_format {
             let name = Company::symbol(code, market);
