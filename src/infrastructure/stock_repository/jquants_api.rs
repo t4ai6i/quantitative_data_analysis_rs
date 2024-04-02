@@ -1,3 +1,4 @@
+use anyhow::Context;
 use async_trait::async_trait;
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -35,7 +36,7 @@ impl StockRepository for JQuantsAPI {
         let response = &mut response.json::<serde_json::Value>().await?;
         let stocks = response["daily_quotes"]
             .as_array()
-            .unwrap()
+            .with_context(|| format!("daily_quotes is empty. code = {}", code))?
             .iter()
             .map(|value| {
                 let date = value["Date"].as_str().unwrap();
