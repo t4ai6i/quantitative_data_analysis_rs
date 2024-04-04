@@ -38,16 +38,27 @@ impl StockRepository for JQuantsAPI {
             .as_array()
             .with_context(|| format!("daily_quotes is empty. code = {}", code))?
             .iter()
-            .map(|value| {
-                let date = value["Date"].as_str().unwrap();
+            .filter_map(|value| {
+                let date = value["Date"].as_str();
+                let open = value["Open"].as_f64();
+                let high = value["High"].as_f64();
+                let low = value["Low"].as_f64();
+                let close = value["Close"].as_f64();
+                let adj_close = value["AdjustmentClose"].as_f64();
+                let volume = value["Volume"].as_f64().unwrap().to_u64();
+                match (date, open, high, low, close, adj_close, volume) {
+                    (Some(_), Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => {}
+                    _ => return None,
+                };
+                let date = date.unwrap();
                 let date = NaiveDate::from_str(date).unwrap();
-                let open = value["Open"].as_f64().unwrap();
-                let high = value["High"].as_f64().unwrap();
-                let low = value["Low"].as_f64().unwrap();
-                let close = value["Close"].as_f64().unwrap();
-                let adj_close = value["AdjustmentClose"].as_f64().unwrap();
-                let volume = value["Volume"].as_f64().unwrap().to_u64().unwrap();
-                Stock {
+                let open = open.unwrap();
+                let high = high.unwrap();
+                let low = low.unwrap();
+                let close = close.unwrap();
+                let adj_close = adj_close.unwrap();
+                let volume = volume.unwrap().to_u64().unwrap();
+                Some(Stock {
                     date,
                     open,
                     high,
@@ -55,7 +66,7 @@ impl StockRepository for JQuantsAPI {
                     close,
                     adj_close,
                     volume,
-                }
+                })
             })
             .collect_vec();
         Ok(VecStock(stocks))
