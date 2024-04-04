@@ -45,7 +45,7 @@ impl StockRepository for JQuantsAPI {
                 let low = value["Low"].as_f64();
                 let close = value["Close"].as_f64();
                 let adj_close = value["AdjustmentClose"].as_f64();
-                let volume = value["Volume"].as_f64().unwrap().to_u64();
+                let volume = value["Volume"].as_f64();
                 match (date, open, high, low, close, adj_close, volume) {
                     (Some(_), Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => {}
                     _ => return None,
