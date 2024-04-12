@@ -1,4 +1,4 @@
-use crate::domain::entity::trend_analysis::ChanceRate;
+use crate::domain::entity::cross_trend_analysis::ChanceRate;
 use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 
 impl ChanceRate {

@@ -1,10 +1,12 @@
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
+use crate::domain::entity::cross_trend_analysis::{
+    ChanceRate, LatestChance, VecCrossTrendAnalysis,
+};
 use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
-use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance, VecTrendAnalysis};
 use anyhow::Result;
 use chrono::NaiveDate;
 use strum::Display;
@@ -102,7 +104,7 @@ pub struct TrendAnalysisOutput<const N: usize> {
     vec_sma_5: VecSMA<5>,
     vec_sma_25: VecSMA<25>,
     vec_cross: VecCross,
-    vec_trend: VecTrendAnalysis<N>,
+    vec_trend: VecCrossTrendAnalysis<N>,
     vec_buy_sell_signal: VecEngulfingCandlestickPattern,
     display_cross_pattern: DisplayCrossPattern,
 }
@@ -114,7 +116,7 @@ impl<const N: usize> TrendAnalysisOutput<N> {
         vec_sma_5: VecSMA<5>,
         vec_sma_25: VecSMA<25>,
         vec_cross: VecCross,
-        vec_trend: VecTrendAnalysis<N>,
+        vec_trend: VecCrossTrendAnalysis<N>,
         vec_buy_sell_signal: VecEngulfingCandlestickPattern,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
@@ -152,7 +154,7 @@ pub trait TrendAnalysisPresenter {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance};
+    use crate::domain::entity::cross_trend_analysis::{ChanceRate, LatestChance};
     use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
     use anyhow::Result;
     use chrono::NaiveDate;

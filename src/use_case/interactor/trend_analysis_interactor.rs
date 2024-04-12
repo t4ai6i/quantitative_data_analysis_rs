@@ -1,7 +1,7 @@
 use crate::domain::entity::cross::VecCross;
+use crate::domain::entity::cross_trend_analysis::{StockCrossPair, VecCrossTrendAnalysis};
 use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
 use crate::domain::entity::sma::{SMAListPair, VecSMA};
-use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
@@ -68,7 +68,7 @@ where
             stocks: vec_stock.0.as_slice(),
             crosses: vec_cross.0.as_slice(),
         };
-        let vec_trend_analysis = VecTrendAnalysis::<AFTER_DAYS>::from(stock_cross_pair);
+        let vec_trend_analysis = VecCrossTrendAnalysis::<AFTER_DAYS>::from(stock_cross_pair);
 
         let output = TrendAnalysisOutput::new(
             company,
