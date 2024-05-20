@@ -17,6 +17,7 @@ use yahoo_finance_api::YahooConnector;
 
 const AFTER_5DAYS: usize = 5;
 const FOR_7DAYS: usize = 7;
+const MARUBOZU_MIN_RATE: usize = 90;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -34,7 +35,7 @@ async fn main() -> Result<()> {
     let days_ago = Days::new(365);
     let start_date = end_date.checked_sub_days(days_ago).unwrap();
     let trend_analysis_response = controller
-        .analyze::<AFTER_5DAYS, FOR_7DAYS>(
+        .analyze::<AFTER_5DAYS, FOR_7DAYS, MARUBOZU_MIN_RATE>(
             code,
             market,
             start_date,

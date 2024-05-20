@@ -1,4 +1,5 @@
 pub mod buy_sell_signal;
+pub mod candle_stick;
 pub mod chance_loss;
 pub mod company;
 pub mod cross;

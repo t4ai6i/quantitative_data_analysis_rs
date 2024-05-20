@@ -1,3 +1,7 @@
+use anyhow::Result;
+use async_trait::async_trait;
+
+use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::cross::VecCross;
 use crate::domain::entity::cross_trend_analysis::{StockCrossPair, VecCrossTrendAnalysis};
 use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
@@ -9,8 +13,6 @@ use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
 };
 use crate::utils::iterator::get_vec_containing_number_from_end_of_array;
-use anyhow::Result;
-use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysisInteractor<'a, SR, CR> {
@@ -33,10 +35,14 @@ where
     SR: StockRepository + Sync,
     CR: CompanyRepository + Sync,
 {
-    async fn handle<const AFTER_DAYS: usize, const FOR_DAYS: usize>(
+    async fn handle<
+        const AFTER_DAYS: usize,
+        const FOR_DAYS: usize,
+        const MARUBOZU_MIN_RATE: usize,
+    >(
         &self,
         input: TrendAnalysisInput,
-    ) -> Result<TrendAnalysisOutput<AFTER_DAYS>> {
+    ) -> Result<TrendAnalysisOutput<AFTER_DAYS, MARUBOZU_MIN_RATE>> {
         let company = self
             .company_repository
             .get_company(input.code.as_str(), input.market.as_str())
@@ -52,6 +58,8 @@ where
             )
             .await?;
 
+        let vec_candle_stick = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.0.as_slice());
+
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());
         let vec_sma_25 = VecSMA::<25>::from(vec_stock.0.as_slice());
 
@@ -62,7 +70,8 @@ where
         let vec_cross = VecCross::from(sma_list_pair);
 
         let stocks = get_vec_containing_number_from_end_of_array(vec_stock.0.as_slice(), FOR_DAYS);
-        let vec_buy_sell_signal = VecEngulfingCandlestickPattern::from(stocks.as_slice());
+        let vec_engulfing_candlestick_pattern =
+            VecEngulfingCandlestickPattern::from(stocks.as_slice());
 
         let stock_cross_pair = StockCrossPair {
             stocks: vec_stock.0.as_slice(),
@@ -77,7 +86,8 @@ where
             vec_sma_25,
             vec_cross,
             vec_trend_analysis,
-            vec_buy_sell_signal,
+            vec_engulfing_candlestick_pattern,
+            vec_candle_stick,
             input.display_cross_pattern,
         );
         Ok(output)

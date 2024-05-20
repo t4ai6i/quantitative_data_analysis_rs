@@ -58,15 +58,7 @@ impl StockRepository for JQuantsAPI {
                 let close = close.unwrap();
                 let adj_close = adj_close.unwrap();
                 let volume = volume.unwrap().to_u64().unwrap();
-                Some(Stock {
-                    date,
-                    open,
-                    high,
-                    low,
-                    close,
-                    adj_close,
-                    volume,
-                })
+                Some(Stock::new(date, open, high, low, close, adj_close, volume))
             })
             .collect_vec();
         Ok(VecStock(stocks))

@@ -11,5 +11,27 @@ pub struct Stock {
     pub volume: u64,
 }
 
+impl Stock {
+    pub fn new(
+        date: NaiveDate,
+        open: f64,
+        high: f64,
+        low: f64,
+        close: f64,
+        adj_close: f64,
+        volume: u64,
+    ) -> Self {
+        Self {
+            date,
+            open,
+            high,
+            low,
+            close,
+            adj_close,
+            volume,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct VecStock(pub Vec<Stock>);

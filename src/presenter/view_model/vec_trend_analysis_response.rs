@@ -46,7 +46,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     display_cross_pattern,
                     chance_rate,
                     latest_chance,
-                    vec_buy_sell_signal,
+                    vec_engulfing_candlestick_pattern,
                     ..
                 } = response;
                 let code = company.code.clone();
@@ -63,7 +63,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     chance_rate,
                 };
                 let mut buy_sell_signal_analysis =
-                    BuySellSignalAnalysis::from(vec_buy_sell_signal.0.as_slice());
+                    BuySellSignalAnalysis::from(vec_engulfing_candlestick_pattern.0.as_slice());
                 buy_sell_signal_analysis.code = code.clone();
                 buy_sell_signal_analysis.symbol = symbol.clone();
                 Analysis {

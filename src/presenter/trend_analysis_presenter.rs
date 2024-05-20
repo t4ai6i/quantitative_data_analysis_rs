@@ -1,3 +1,4 @@
+use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
@@ -98,18 +99,19 @@ impl DisplayCrossPattern {
     }
 }
 
-pub struct TrendAnalysisOutput<const N: usize> {
+pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     company: Company,
     vec_stock: VecStock,
     vec_sma_5: VecSMA<5>,
     vec_sma_25: VecSMA<25>,
     vec_cross: VecCross,
     vec_trend: VecCrossTrendAnalysis<N>,
-    vec_buy_sell_signal: VecEngulfingCandlestickPattern,
+    vec_engulfing_candlestick_pattern: VecEngulfingCandlestickPattern,
+    vec_candle_stick: VecCandleStick<M>,
     display_cross_pattern: DisplayCrossPattern,
 }
 
-impl<const N: usize> TrendAnalysisOutput<N> {
+impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
     pub fn new(
         company: Company,
         vec_stock: VecStock,
@@ -117,7 +119,8 @@ impl<const N: usize> TrendAnalysisOutput<N> {
         vec_sma_25: VecSMA<25>,
         vec_cross: VecCross,
         vec_trend: VecCrossTrendAnalysis<N>,
-        vec_buy_sell_signal: VecEngulfingCandlestickPattern,
+        vec_engulfing_candlestick_pattern: VecEngulfingCandlestickPattern,
+        vec_candle_stick: VecCandleStick<M>,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
         Self {
@@ -127,7 +130,8 @@ impl<const N: usize> TrendAnalysisOutput<N> {
             vec_sma_25,
             vec_cross,
             vec_trend,
-            vec_buy_sell_signal,
+            vec_engulfing_candlestick_pattern,
+            vec_candle_stick,
             display_cross_pattern,
         }
     }
@@ -141,14 +145,14 @@ pub enum TrendAnalysisResponse {
         display_cross_pattern: DisplayCrossPattern,
         chance_rate: ChanceRate,
         latest_chance: LatestChance,
-        vec_buy_sell_signal: VecEngulfingCandlestickPattern,
+        vec_engulfing_candlestick_pattern: VecEngulfingCandlestickPattern,
     },
 }
 
 pub trait TrendAnalysisPresenter {
-    fn handle<const N: usize>(
+    fn handle<const N: usize, const M: usize>(
         &self,
-        output: TrendAnalysisOutput<N>,
+        output: TrendAnalysisOutput<N, M>,
     ) -> Result<TrendAnalysisResponse>;
 }
 
