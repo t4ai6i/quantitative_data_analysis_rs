@@ -13,6 +13,7 @@ use chrono::NaiveDate;
 use strum::Display;
 
 pub mod chart;
+pub mod json;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Display)]
 pub enum DisplayCrossPattern {
@@ -141,7 +142,13 @@ impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
 pub enum TrendAnalysisResponse {
     Chart {
         company: Company,
+        display_cross_pattern: DisplayCrossPattern,
+        chance_rate: ChanceRate,
+        latest_chance: LatestChance,
         body: String,
+    },
+    Json {
+        company: Company,
         display_cross_pattern: DisplayCrossPattern,
         chance_rate: ChanceRate,
         latest_chance: LatestChance,
