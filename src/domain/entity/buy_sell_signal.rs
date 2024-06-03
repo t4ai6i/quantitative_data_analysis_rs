@@ -17,8 +17,20 @@ pub enum BuySellSignalType {
     SellSignal,
 }
 
-impl From<(Ordering<1, 1>, Ordering<1, 1>)> for BuySellSignalType {
-    fn from(value: (Ordering<1, 1>, Ordering<1, 1>)) -> Self {
+pub type CompareLowForTwoDays = Ordering<1, 1>;
+pub type CompareHighForTwoDays = Ordering<1, 1>;
+/// Engulfing Candlestick Pattern1
+///
+/// ある日とその前日の安値・高値の切り上がり・切り下がりをみる
+///
+/// * **BuySignal**: 安値切り上がりかつ高値切り上がり
+/// * **SellSignal**: 安値切り下がりかつ高値切り下がり
+/// * **WaitAndSee**: 上記のどちらにもあてはまならない
+///
+pub type ECP1 = (CompareLowForTwoDays, CompareHighForTwoDays);
+
+impl From<ECP1> for BuySellSignalType {
+    fn from(value: ECP1) -> Self {
         let (low, high) = value;
         let low = low.0;
         let high = high.0;

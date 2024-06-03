@@ -21,14 +21,10 @@ const MARUBOZU_MIN_RATE: usize = 90;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let display_cross_pattern = DisplayCrossPattern::All;
-    let code = "9223";
-    let market = "T";
-
     let provider = YahooConnector::new();
-    let stock_repository = YahooFinanceAPI::new(&provider, DataFormat::YahooFinanceAPI);
-    let company_repository = YahooFinanceAPI::new(&provider, DataFormat::YahooFinanceAPI);
-    let interactor = TrendAnalysisInteractor::new(&stock_repository, &company_repository);
+    let repository = YahooFinanceAPI::new(&provider, DataFormat::YahooFinanceAPI);
+
+    let interactor = TrendAnalysisInteractor::new(&repository, &repository);
     let presenter = trend_analysis_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let end_date = Local::now().date_naive();
@@ -36,23 +32,23 @@ async fn main() -> Result<()> {
     let start_date = end_date.checked_sub_days(days_ago).unwrap();
     let trend_analysis_response = controller
         .analyze::<AFTER_5DAYS, FOR_7DAYS, MARUBOZU_MIN_RATE>(
-            code,
-            market,
+            "9223",
+            "T",
             start_date,
             end_date,
-            display_cross_pattern,
+            DisplayCrossPattern::All,
         )
         .await?;
-    let body = trend_analysis_response.clone();
-    let TrendAnalysisResponse::Chart { body, .. } = body;
-    write("./examples/9223.T.from_yfapi.svg", &body).await?;
+    if let TrendAnalysisResponse::Chart { body, .. } = trend_analysis_response.clone() {
+        write("./examples/9223.T.from_yfapi.svg", &body).await?;
+    }
 
-    let vec_trend_analysis_response = vec![trend_analysis_response.clone()];
     let interactor = TrendSummaryInteractor::new();
+    let vec_trend_analysis_response = vec![trend_analysis_response.clone()];
     let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
     let controller = TrendSummaryController::new(&interactor, &presenter);
     if let TrendSummaryResponse::Chart { body } = controller
-        .analyze(vec_trend_analysis_response, display_cross_pattern)
+        .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
         .await?
     {
         write("./examples/9223_trend_summary.svg", &body).await?;
@@ -62,7 +58,7 @@ async fn main() -> Result<()> {
     let presenter = trend_summary_presenter::json::JSON::new();
     let controller = TrendSummaryController::new(&interactor, &presenter);
     if let TrendSummaryResponse::JSON { data } = controller
-        .analyze(vec_trend_analysis_response, display_cross_pattern)
+        .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
         .await?
     {
         let json_str = serde_json::to_string(&data)?;

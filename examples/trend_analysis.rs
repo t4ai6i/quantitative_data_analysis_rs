@@ -91,17 +91,18 @@ async fn main() -> Result<()> {
             .map(|e| {
                 let Analysis {
                     cross_analysis,
-                    buy_sell_signal_analysis,
+                    vec_engulfing_candlestick_pattern: engulfing_candlestick_pattern,
+                    ..
                 } = e;
-                (cross_analysis, buy_sell_signal_analysis)
+                (cross_analysis, engulfing_candlestick_pattern.0)
             })
             .unzip();
-        let json_str = serde_json::to_string(&cross)?;
+        let json_str = serde_json::to_string_pretty(&cross)?;
         assert_eq!(
             include_str!("../assets/cross_analysis_summary.json"),
             &json_str
         );
-        let json_str = serde_json::to_string(&buy_sell_signal)?;
+        let json_str = serde_json::to_string_pretty(&buy_sell_signal)?;
         assert_eq!(
             include_str!("../assets/buy_sell_analysis_summary.json"),
             &json_str
@@ -147,19 +148,20 @@ async fn main() -> Result<()> {
         .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
         .await?
     {
-        let (cross, buy_sell_signal): (Vec<_>, Vec<_>) = data
+        let (cross, engulfing_candlestick_pattern): (Vec<_>, Vec<_>) = data
             .into_iter()
             .map(|e| {
                 let Analysis {
                     cross_analysis,
-                    buy_sell_signal_analysis,
+                    vec_engulfing_candlestick_pattern,
+                    ..
                 } = e;
-                (cross_analysis, buy_sell_signal_analysis)
+                (cross_analysis, vec_engulfing_candlestick_pattern)
             })
             .unzip();
         let json_str = serde_json::to_string(&cross)?;
         dbg!(json_str);
-        let json_str = serde_json::to_string(&buy_sell_signal)?;
+        let json_str = serde_json::to_string(&engulfing_candlestick_pattern)?;
         dbg!(json_str);
     };
 

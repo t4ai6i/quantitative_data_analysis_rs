@@ -1,10 +1,10 @@
+use chrono::NaiveDate;
+use itertools::Itertools;
+
 use crate::domain::entity::cross::CrossDirectionType;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::view_model::analysis::Analysis;
-use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::cross_analysis::CrossAnalysis;
-use chrono::NaiveDate;
-use itertools::Itertools;
 
 pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysisResponse>);
 
@@ -63,19 +63,16 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     let latest_chance = NaiveDate::from(latest_chance);
                     let chance_rate = display_cross_pattern.get_chance_rate(chance_rate);
                     let cross_analysis = CrossAnalysis {
-                        code: code.clone(),
-                        symbol: symbol.clone(),
                         cross_direction: cross_direction_type,
                         latest_chance,
                         chance_rate,
                     };
-                    let mut buy_sell_signal_analysis =
-                        BuySellSignalAnalysis::from(vec_engulfing_candlestick_pattern.0.as_slice());
-                    buy_sell_signal_analysis.code = code.clone();
-                    buy_sell_signal_analysis.symbol = symbol.clone();
+                    let engulfing_candlestick_pattern = vec_engulfing_candlestick_pattern.clone();
                     Some(Analysis {
+                        code,
+                        symbol,
                         cross_analysis,
-                        buy_sell_signal_analysis,
+                        vec_engulfing_candlestick_pattern: engulfing_candlestick_pattern,
                     })
                 }
                 _ => None,
