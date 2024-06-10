@@ -91,10 +91,10 @@ async fn main() -> Result<()> {
             .map(|e| {
                 let Analysis {
                     cross_analysis,
-                    vec_engulfing_candlestick_pattern: engulfing_candlestick_pattern,
+                    ecp1_analysis,
                     ..
                 } = e;
-                (cross_analysis, engulfing_candlestick_pattern.0)
+                (cross_analysis, ecp1_analysis)
             })
             .unzip();
         let json_str = serde_json::to_string_pretty(&cross)?;
@@ -148,20 +148,20 @@ async fn main() -> Result<()> {
         .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
         .await?
     {
-        let (cross, engulfing_candlestick_pattern): (Vec<_>, Vec<_>) = data
+        let (cross_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = data
             .into_iter()
             .map(|e| {
                 let Analysis {
                     cross_analysis,
-                    vec_engulfing_candlestick_pattern,
+                    ecp1_analysis,
                     ..
                 } = e;
-                (cross_analysis, vec_engulfing_candlestick_pattern)
+                (cross_analysis, ecp1_analysis)
             })
             .unzip();
-        let json_str = serde_json::to_string(&cross)?;
+        let json_str = serde_json::to_string(&cross_analysis)?;
         dbg!(json_str);
-        let json_str = serde_json::to_string(&engulfing_candlestick_pattern)?;
+        let json_str = serde_json::to_string(&ecp1_analysis)?;
         dbg!(json_str);
     };
 

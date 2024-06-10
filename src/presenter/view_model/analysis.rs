@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
 use crate::presenter::view_model::cross_analysis::CrossAnalysis;
+use crate::presenter::view_model::ecp1_analysis::ECP1Analysis;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct Analysis {
     pub code: String,
     pub symbol: String,
     pub cross_analysis: CrossAnalysis,
-    pub vec_engulfing_candlestick_pattern: VecEngulfingCandlestickPattern,
+    pub ecp1_analysis: ECP1Analysis,
 }
 
 #[cfg(test)]
@@ -18,10 +18,10 @@ mod tests {
 
     use crate::domain::entity::buy_sell_signal::BuySellSignalType;
     use crate::domain::entity::cross::CrossDirectionType;
-    use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
     use crate::presenter::view_model::analysis::Analysis;
-    use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignal;
+    use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
     use crate::presenter::view_model::cross_analysis::CrossAnalysis;
+    use crate::presenter::view_model::ecp1_analysis::ECP1Analysis;
 
     #[test]
     fn serde_test() {
@@ -34,9 +34,11 @@ mod tests {
                 "latest_chance": "2017-02-16",
                 "chance_rate": 32.7
               },
-              "vec_engulfing_candlestick_pattern": [
+              "ecp1_analysis": [
                 {
-                  "buy_sell_signal": "wait_and_see",
+                  "buy_sell_signal": {
+                    "kind": "Stay"
+                  },
                   "date": "2017-02-16"
                 }
               ]
@@ -46,16 +48,15 @@ mod tests {
             latest_chance: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
             chance_rate: 32.7,
         };
-        let vec_engulfing_candlestick_pattern =
-            VecEngulfingCandlestickPattern(vec![BuySellSignal {
-                buy_sell_signal: BuySellSignalType::WaitAndSee,
-                date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
-            }]);
+        let ecp1_analysis = ECP1Analysis(vec![BuySellSignal {
+            buy_sell_signal: BuySellSignalType::Stay,
+            date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
+        }]);
         let analysis = Analysis {
             code: "8473".to_string(),
             symbol: "8473.T".to_string(),
             cross_analysis,
-            vec_engulfing_candlestick_pattern,
+            ecp1_analysis,
         };
         let actual = serde_json::to_string_pretty(&analysis).unwrap();
         assert_eq!(actual, json_str);

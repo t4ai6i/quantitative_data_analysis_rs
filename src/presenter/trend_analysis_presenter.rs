@@ -5,7 +5,7 @@ use crate::domain::entity::cross::VecCross;
 use crate::domain::entity::cross_trend_analysis::{
     ChanceRate, LatestChance, VecCrossTrendAnalysis,
 };
-use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
+use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
 use anyhow::Result;
@@ -107,7 +107,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     vec_sma_25: VecSMA<25>,
     vec_cross: VecCross,
     vec_trend: VecCrossTrendAnalysis<N>,
-    vec_engulfing_candlestick_pattern: VecEngulfingCandlestickPattern,
+    vec_ecp1: VecECP1,
     vec_candle_stick: VecCandleStick<M>,
     display_cross_pattern: DisplayCrossPattern,
 }
@@ -120,7 +120,7 @@ impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
         vec_sma_25: VecSMA<25>,
         vec_cross: VecCross,
         vec_trend: VecCrossTrendAnalysis<N>,
-        vec_engulfing_candlestick_pattern: VecEngulfingCandlestickPattern,
+        vec_ecp1: VecECP1,
         vec_candle_stick: VecCandleStick<M>,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
@@ -131,7 +131,7 @@ impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
             vec_sma_25,
             vec_cross,
             vec_trend,
-            vec_engulfing_candlestick_pattern,
+            vec_ecp1,
             vec_candle_stick,
             display_cross_pattern,
         }
@@ -152,7 +152,7 @@ pub enum TrendAnalysisResponse {
         display_cross_pattern: DisplayCrossPattern,
         chance_rate: ChanceRate,
         latest_chance: LatestChance,
-        vec_engulfing_candlestick_pattern: VecEngulfingCandlestickPattern,
+        vec_ecp1: VecECP1,
     },
 }
 

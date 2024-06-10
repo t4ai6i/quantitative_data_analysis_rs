@@ -4,7 +4,7 @@ pub mod chance_loss;
 pub mod company;
 pub mod cross;
 pub mod cross_trend_analysis;
-pub mod engulfing_candlestick_pattern;
+pub mod ecp1;
 mod ordering;
 pub mod sma;
 pub mod stock;

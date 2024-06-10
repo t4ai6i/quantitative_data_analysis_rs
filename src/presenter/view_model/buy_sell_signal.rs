@@ -9,8 +9,3 @@ pub struct BuySellSignal {
     #[serde(with = "custom_date_format")]
     pub date: NaiveDate,
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
-pub struct BuySellSignalAnalysis {
-    pub buy_sell_signals: Vec<BuySellSignal>,
-}
