@@ -44,14 +44,14 @@ async fn main() -> Result<()> {
             DisplayCrossPattern::All,
         )
         .await?;
-    if let TrendAnalysisResponse::Chart { body, .. } = trend_analysis_response.clone() {
-        write("./examples/8473.T.from_jquants_api.svg", &body).await?;
-        assert_eq!(include_str!("../assets/8473.T.from_jquants_api.svg"), &body);
+    if let TrendAnalysisResponse::Chart { ref body, .. } = trend_analysis_response {
+        write("./examples/8473.T.from_jquants_api.svg", body).await?;
+        assert_eq!(include_str!("../assets/8473.T.from_jquants_api.svg"), body);
     }
 
     // このexampleではひとつの証券コードだが、運用ではJQuantsAPIで取得できる全証券コード毎のトレンド解析結果のサマリーを出力する
     let interactor = TrendSummaryInteractor::new();
-    let vec_trend_analysis_response = vec![trend_analysis_response.clone()];
+    let vec_trend_analysis_response = vec![trend_analysis_response];
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
     let controller = TrendSummaryController::new(&interactor, &presenter);
@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
         .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
         .await?
     {
-        let (cross, buy_sell_signal): (Vec<_>, Vec<_>) = data
+        let (cross_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = data
             .into_iter()
             .map(|e| {
                 let Analysis {
@@ -97,14 +97,14 @@ async fn main() -> Result<()> {
                 (cross_analysis, ecp1_analysis)
             })
             .unzip();
-        let json_str = serde_json::to_string_pretty(&cross)?;
+        let json_str = serde_json::to_string_pretty(&cross_analysis)?;
         assert_eq!(
             include_str!("../assets/cross_analysis_summary.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&buy_sell_signal)?;
+        let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
-            include_str!("../assets/buy_sell_analysis_summary.json"),
+            include_str!("../assets/ecp1_analysis_summary.json"),
             &json_str
         );
     };
@@ -123,7 +123,7 @@ async fn main() -> Result<()> {
             DisplayCrossPattern::All,
         )
         .await?;
-    if let TrendAnalysisResponse::Chart { body, .. } = trend_analysis_response.clone() {
+    if let TrendAnalysisResponse::Chart { body, .. } = trend_analysis_response {
         write("./examples/9223.T.from_jquants_api.svg", &body).await?;
     }
 
