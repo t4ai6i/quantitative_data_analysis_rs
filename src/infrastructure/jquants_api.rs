@@ -137,7 +137,7 @@ impl JQuantsAPI {
     }
 
     pub async fn get_id_token(refresh_token: &RefreshToken) -> Result<IdToken> {
-        let qs = QueryString::new().with_value("refreshtoken", &refresh_token.value);
+        let qs = QueryString::dynamic().with_value("refreshtoken", &refresh_token.value);
         let auth_refresh_url = format!("{AUTH_REFRESH_URL}{qs}");
         let response = Client::new().post(auth_refresh_url).send().await?;
         let body = response.bytes().await?;
