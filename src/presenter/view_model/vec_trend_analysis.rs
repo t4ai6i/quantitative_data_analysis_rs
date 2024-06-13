@@ -1,6 +1,6 @@
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::cross::CrossDirectionType;
-use crate::domain::entity::trend_analysis::VecTrendAnalysis;
+use crate::domain::entity::cross_trend_analysis::VecCrossTrendAnalysis;
 use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 use itertools::Itertools;
 
@@ -9,7 +9,7 @@ pub trait VecTrendAnalysisExt {
     fn table_chart_summary(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>>;
 }
 
-impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
+impl<const N: usize> VecTrendAnalysisExt for VecCrossTrendAnalysis<N> {
     fn table_chart_rows(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
         self.vec_trend_analysis
             .iter()
@@ -75,8 +75,8 @@ impl<const N: usize> VecTrendAnalysisExt for VecTrendAnalysis<N> {
 #[cfg(test)]
 mod tests {
     use crate::domain::entity::cross::VecCross;
+    use crate::domain::entity::cross_trend_analysis::{StockCrossPair, VecCrossTrendAnalysis};
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
-    use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
@@ -99,7 +99,7 @@ mod tests {
             stocks: vec_stock.as_slice(),
             crosses: crosses.as_slice(),
         };
-        let vec_trend = VecTrendAnalysis::<5>::from(stock_cross_pair);
+        let vec_trend = VecCrossTrendAnalysis::<5>::from(stock_cross_pair);
         let summary = vec_trend.table_chart_summary(&DisplayCrossPattern::All);
         assert_eq!(
             summary,

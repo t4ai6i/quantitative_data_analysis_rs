@@ -30,7 +30,7 @@ impl CompanyRepository for JQuantsAPI {
     }
 
     async fn get_company(&self, code: &str, _market: &str) -> anyhow::Result<Company> {
-        let qs = QueryString::new().with_value("code", code);
+        let qs = QueryString::dynamic().with_value("code", code);
         let company_url = format!("{COMPANY_URL}{qs}");
         let id_token = self.id_token.as_str();
         let response = Client::new()

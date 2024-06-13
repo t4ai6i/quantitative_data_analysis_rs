@@ -12,7 +12,7 @@ pub struct StockCrossPair<'a> {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct TrendAnalysis<const N: usize> {
+pub struct CrossTrendAnalysis<const N: usize> {
     pub cross_date: NaiveDate,
     pub close_on_cross: f64,
     pub close_after_n_days: f64,
@@ -77,13 +77,13 @@ impl From<LatestChance> for NaiveDate {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecTrendAnalysis<const N: usize> {
-    pub vec_trend_analysis: Vec<TrendAnalysis<N>>,
+pub struct VecCrossTrendAnalysis<const N: usize> {
+    pub vec_trend_analysis: Vec<CrossTrendAnalysis<N>>,
     pub chance_rate: ChanceRate,
     pub latest_chance: LatestChance,
 }
 
-impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
+impl<'a, const N: usize> From<StockCrossPair<'a>> for VecCrossTrendAnalysis<N> {
     fn from(value: StockCrossPair<'a>) -> Self {
         let StockCrossPair { stocks, crosses } = value;
         let vec_trend_analysis = crosses
@@ -116,7 +116,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
                     change,
                 };
                 let chance_loss = ChanceLoss::from(cross_direction_chance_pair);
-                TrendAnalysis {
+                CrossTrendAnalysis {
                     cross_date: cross.date,
                     close_on_cross: stock.close,
                     close_after_n_days: stock_after_n_days.close,
@@ -184,7 +184,7 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
             latest_golden_chance,
             latest_dead_chance,
         };
-        VecTrendAnalysis::<N> {
+        VecCrossTrendAnalysis::<N> {
             vec_trend_analysis,
             chance_rate,
             latest_chance,
@@ -195,8 +195,8 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecTrendAnalysis<N> {
 #[cfg(test)]
 mod tests {
     use crate::domain::entity::cross::VecCross;
+    use crate::domain::entity::cross_trend_analysis::{StockCrossPair, VecCrossTrendAnalysis};
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
-    use crate::domain::entity::trend_analysis::{StockCrossPair, VecTrendAnalysis};
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
@@ -218,11 +218,11 @@ mod tests {
             crosses: crosses.as_slice(),
         };
         // 3日後トレンドを取得
-        let VecTrendAnalysis {
+        let VecCrossTrendAnalysis {
             vec_trend_analysis,
             chance_rate,
             latest_chance,
-        } = VecTrendAnalysis::<3>::from(stock_cross_pair);
+        } = VecCrossTrendAnalysis::<3>::from(stock_cross_pair);
         let actual = 11;
         assert_eq!(actual, vec_trend_analysis.len());
         let actual = 45.45454545454545;

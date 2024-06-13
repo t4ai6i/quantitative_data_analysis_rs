@@ -32,8 +32,12 @@ impl TrendAnalysisInput {
 
 #[async_trait]
 pub trait TrendAnalysisUseCase {
-    async fn handle<const AFTER_DAYS: usize, const FOR_DAYS: usize>(
+    async fn handle<
+        const AFTER_DAYS: usize,
+        const FOR_DAYS: usize,
+        const MARUBOZU_MIN_RATE: usize,
+    >(
         &self,
         input: TrendAnalysisInput,
-    ) -> Result<TrendAnalysisOutput<AFTER_DAYS>>;
+    ) -> Result<TrendAnalysisOutput<AFTER_DAYS, MARUBOZU_MIN_RATE>>;
 }

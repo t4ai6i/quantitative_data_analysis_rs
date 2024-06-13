@@ -10,15 +10,15 @@ impl From<Vec<Quote>> for VecStock {
             .map(|quote| {
                 let date =
                     NaiveDateTime::from_timestamp_opt(quote.timestamp as u32 as i64, 0).unwrap();
-                Stock {
-                    date: date.date(),
-                    open: quote.open,
-                    high: quote.high,
-                    low: quote.low,
-                    close: quote.close,
-                    adj_close: quote.adjclose,
-                    volume: quote.volume,
-                }
+                Stock::new(
+                    date.date(),
+                    quote.open,
+                    quote.high,
+                    quote.low,
+                    quote.close,
+                    quote.adjclose,
+                    quote.volume,
+                )
             })
             .collect_vec();
         Self(vec_stock)

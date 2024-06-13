@@ -67,11 +67,6 @@ impl Token {
                 let has_refresh_token_expired = token.has_refresh_token_expired(now);
                 let has_id_token_expired = token.has_id_token_expired(now);
                 match (has_refresh_token_expired, has_id_token_expired) {
-                    (_, true) => {
-                        let id_token = JQuantsAPI::get_id_token(&token.refresh_token).await?;
-                        let token = Token { id_token, ..token };
-                        Either::Right(token)
-                    }
                     (true, _) => {
                         let refresh_token =
                             JQuantsAPI::get_refresh_token(mailaddress, password).await?;
@@ -80,6 +75,11 @@ impl Token {
                             refresh_token,
                             id_token,
                         };
+                        Either::Right(token)
+                    }
+                    (_, true) => {
+                        let id_token = JQuantsAPI::get_id_token(&token.refresh_token).await?;
+                        let token = Token { id_token, ..token };
                         Either::Right(token)
                     }
                     _ => Either::Left(token),
@@ -137,7 +137,7 @@ impl JQuantsAPI {
     }
 
     pub async fn get_id_token(refresh_token: &RefreshToken) -> Result<IdToken> {
-        let qs = QueryString::new().with_value("refreshtoken", &refresh_token.value);
+        let qs = QueryString::dynamic().with_value("refreshtoken", &refresh_token.value);
         let auth_refresh_url = format!("{AUTH_REFRESH_URL}{qs}");
         let response = Client::new().post(auth_refresh_url).send().await?;
         let body = response.bytes().await?;

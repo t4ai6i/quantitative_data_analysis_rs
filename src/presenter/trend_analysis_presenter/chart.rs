@@ -1,12 +1,11 @@
 use crate::domain::entity::cross::CrossDirectionType;
-use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 use crate::presenter::{
     trend_analysis_presenter::{
-        TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
+        DisplayCrossPattern, TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
-        vec_cross::VecCrossExt, vec_sma::VecSMAExt, vec_stock::VecStockExt,
-        vec_trend_analysis::VecTrendAnalysisExt,
+        vec_candle_stick::VecCandleStickExt, vec_cross::VecCrossExt, vec_sma::VecSMAExt,
+        vec_stock::VecStockExt, vec_trend_analysis::VecTrendAnalysisExt,
     },
 };
 use crate::utils::float;
@@ -35,9 +34,9 @@ impl Chart {
 }
 
 impl TrendAnalysisPresenter for Chart {
-    fn handle<const N: usize>(
+    fn handle<const N: usize, const M: usize>(
         &self,
-        output: TrendAnalysisOutput<N>,
+        output: TrendAnalysisOutput<N, M>,
     ) -> Result<TrendAnalysisResponse> {
         let company = output.company;
         let vec_sma_5_ave = output.vec_sma_5.collect_vec_ave();
@@ -119,11 +118,10 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.y_axis_configs[0].axis_min = Some(min);
         candlestick_chart.y_axis_configs[0].axis_max = Some(max);
         candlestick_chart.y_axis_configs[0].axis_formatter = Some("{t}".to_string());
-        candlestick_chart.candlestick_up_color = Color::from((0, 218, 60));
-        candlestick_chart.candlestick_up_color = Color::from((0, 218, 60));
-        candlestick_chart.candlestick_up_border_color = Color::from((0, 143, 40));
-        candlestick_chart.candlestick_down_color = Color::from((236, 0, 0));
-        candlestick_chart.candlestick_down_border_color = Color::from((138, 0, 0));
+        candlestick_chart.candlestick_up_color = Color::from((236, 0, 0));
+        candlestick_chart.candlestick_up_border_color = Color::from((138, 0, 0));
+        candlestick_chart.candlestick_down_color = Color::from((0, 60, 218));
+        candlestick_chart.candlestick_down_border_color = Color::from((0, 40, 143));
         charts.add(ChildChart::Candlestick(candlestick_chart, None));
 
         let mut rows = vec![vec![
@@ -142,7 +140,20 @@ impl TrendAnalysisPresenter for Chart {
             .vec_trend
             .table_chart_summary(&output.display_cross_pattern);
         rows.append(&mut summary);
+        let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
+        table_chart.width = self.width;
+        charts.add(ChildChart::Table(table_chart, None));
 
+        let mut rows = vec![vec![
+            "Date".to_string(),
+            "Size, Body(%)".to_string(),
+            "⤴️⤵️".to_string(),
+            "Marubozu".to_string(),
+            "UpperWick(%), LowerWick(%)".to_string(),
+            "Doji".to_string(),
+        ]];
+        let mut body = output.vec_candle_stick.table_chart_rows();
+        rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.width = self.width;
         charts.add(ChildChart::Table(table_chart, None));
@@ -155,7 +166,6 @@ impl TrendAnalysisPresenter for Chart {
             display_cross_pattern: output.display_cross_pattern,
             chance_rate: output.vec_trend.chance_rate,
             latest_chance: output.vec_trend.latest_chance,
-            vec_buy_sell_signal: output.vec_buy_sell_signal,
         })
     }
 }

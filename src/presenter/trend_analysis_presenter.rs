@@ -1,15 +1,19 @@
+use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
-use crate::domain::entity::engulfing_candlestick_pattern::VecEngulfingCandlestickPattern;
+use crate::domain::entity::cross_trend_analysis::{
+    ChanceRate, LatestChance, VecCrossTrendAnalysis,
+};
+use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
-use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance, VecTrendAnalysis};
 use anyhow::Result;
 use chrono::NaiveDate;
 use strum::Display;
 
 pub mod chart;
+pub mod json;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Display)]
 pub enum DisplayCrossPattern {
@@ -96,26 +100,28 @@ impl DisplayCrossPattern {
     }
 }
 
-pub struct TrendAnalysisOutput<const N: usize> {
+pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     company: Company,
     vec_stock: VecStock,
     vec_sma_5: VecSMA<5>,
     vec_sma_25: VecSMA<25>,
     vec_cross: VecCross,
-    vec_trend: VecTrendAnalysis<N>,
-    vec_buy_sell_signal: VecEngulfingCandlestickPattern,
+    vec_trend: VecCrossTrendAnalysis<N>,
+    vec_ecp1: VecECP1,
+    vec_candle_stick: VecCandleStick<M>,
     display_cross_pattern: DisplayCrossPattern,
 }
 
-impl<const N: usize> TrendAnalysisOutput<N> {
+impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
     pub fn new(
         company: Company,
         vec_stock: VecStock,
         vec_sma_5: VecSMA<5>,
         vec_sma_25: VecSMA<25>,
         vec_cross: VecCross,
-        vec_trend: VecTrendAnalysis<N>,
-        vec_buy_sell_signal: VecEngulfingCandlestickPattern,
+        vec_trend: VecCrossTrendAnalysis<N>,
+        vec_ecp1: VecECP1,
+        vec_candle_stick: VecCandleStick<M>,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
         Self {
@@ -125,7 +131,8 @@ impl<const N: usize> TrendAnalysisOutput<N> {
             vec_sma_25,
             vec_cross,
             vec_trend,
-            vec_buy_sell_signal,
+            vec_ecp1,
+            vec_candle_stick,
             display_cross_pattern,
         }
     }
@@ -135,24 +142,30 @@ impl<const N: usize> TrendAnalysisOutput<N> {
 pub enum TrendAnalysisResponse {
     Chart {
         company: Company,
-        body: String,
         display_cross_pattern: DisplayCrossPattern,
         chance_rate: ChanceRate,
         latest_chance: LatestChance,
-        vec_buy_sell_signal: VecEngulfingCandlestickPattern,
+        body: String,
+    },
+    Json {
+        company: Company,
+        display_cross_pattern: DisplayCrossPattern,
+        chance_rate: ChanceRate,
+        latest_chance: LatestChance,
+        vec_ecp1: VecECP1,
     },
 }
 
 pub trait TrendAnalysisPresenter {
-    fn handle<const N: usize>(
+    fn handle<const N: usize, const M: usize>(
         &self,
-        output: TrendAnalysisOutput<N>,
+        output: TrendAnalysisOutput<N, M>,
     ) -> Result<TrendAnalysisResponse>;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::trend_analysis::{ChanceRate, LatestChance};
+    use crate::domain::entity::cross_trend_analysis::{ChanceRate, LatestChance};
     use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
     use anyhow::Result;
     use chrono::NaiveDate;

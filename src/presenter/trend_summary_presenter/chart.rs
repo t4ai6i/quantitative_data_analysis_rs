@@ -30,7 +30,7 @@ impl TrendSummaryPresenter for Chart {
         output: TrendSummaryOutput,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Result<TrendSummaryResponse> {
-        let chance_rate = format!("chance rate({})", display_cross_pattern.to_string());
+        let chance_rate = format!("chance rate({})", display_cross_pattern);
         let mut rows = vec![vec![
             "code".to_string(),
             "symbol".to_string(),

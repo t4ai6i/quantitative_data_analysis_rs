@@ -1,12 +1,11 @@
-use crate::domain::entity::cross::CrossDirectionType;
+use crate::domain::entity::buy_sell_signal::BuySellSignalType;
 use crate::utils::custom_date_format;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
-pub struct CrossAnalysis {
-    pub(crate) cross_direction: CrossDirectionType,
+pub struct BuySellSignal {
+    pub buy_sell_signal: BuySellSignalType,
     #[serde(with = "custom_date_format")]
-    pub(crate) latest_chance: NaiveDate,
-    pub(crate) chance_rate: f64,
+    pub date: NaiveDate,
 }

@@ -1,31 +1,22 @@
-use crate::domain::entity::ordering::Ordering;
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use std::cmp;
 use strum::Display;
 
-/// 売買シグナル
+/// 売買シグナルタイプ
 #[derive(
     Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
 )]
+#[serde(tag = "kind")]
 pub enum BuySellSignalType {
     #[default]
-    #[serde(rename = "wait_and_see")]
-    WaitAndSee,
-    #[serde(rename = "buy_signal")]
-    BuySignal,
-    #[serde(rename = "sell_signal")]
-    SellSignal,
+    Stay,
+    Buy,
+    Sell,
 }
 
-impl From<(Ordering<1, 1>, Ordering<1, 1>)> for BuySellSignalType {
-    fn from(value: (Ordering<1, 1>, Ordering<1, 1>)) -> Self {
-        let (low, high) = value;
-        let low = low.0;
-        let high = high.0;
-        match (low, high) {
-            (Some(cmp::Ordering::Greater), Some(cmp::Ordering::Greater)) => Self::BuySignal,
-            (Some(cmp::Ordering::Less), Some(cmp::Ordering::Less)) => Self::SellSignal,
-            _ => Self::WaitAndSee,
-        }
-    }
+/// 売買シグナル
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct BuySellSignal {
+    pub r#type: BuySellSignalType,
+    pub date: NaiveDate,
 }

@@ -22,7 +22,7 @@ impl StockRepository for JQuantsAPI {
         start_date: NaiveDate,
         end_date: NaiveDate,
     ) -> anyhow::Result<VecStock> {
-        let qs = QueryString::new()
+        let qs = QueryString::dynamic()
             .with_value("code", code)
             .with_value("from", start_date.to_string())
             .with_value("to", end_date.to_string());
@@ -58,15 +58,7 @@ impl StockRepository for JQuantsAPI {
                 let close = close.unwrap();
                 let adj_close = adj_close.unwrap();
                 let volume = volume.unwrap().to_u64().unwrap();
-                Some(Stock {
-                    date,
-                    open,
-                    high,
-                    low,
-                    close,
-                    adj_close,
-                    volume,
-                })
+                Some(Stock::new(date, open, high, low, close, adj_close, volume))
             })
             .collect_vec();
         Ok(VecStock(stocks))

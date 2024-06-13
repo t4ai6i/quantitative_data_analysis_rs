@@ -1,9 +1,10 @@
 pub mod buy_sell_signal;
+pub mod candle_stick;
 pub mod chance_loss;
 pub mod company;
 pub mod cross;
-pub mod engulfing_candlestick_pattern;
+pub mod cross_trend_analysis;
+pub mod ecp1;
 mod ordering;
 pub mod sma;
 pub mod stock;
-pub mod trend_analysis;
