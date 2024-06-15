@@ -6,7 +6,6 @@ use strum::Display;
 #[derive(
     Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
 )]
-#[serde(tag = "kind")]
 pub enum BuySellSignalType {
     #[default]
     Stay,

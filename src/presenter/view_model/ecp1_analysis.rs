@@ -12,7 +12,7 @@ impl From<VecECP1> for ECP1Analysis {
             .0
             .into_iter()
             .map(|element| BuySellSignal {
-                buy_sell_signal: element.r#type,
+                r#type: element.r#type,
                 date: element.date,
             })
             .collect_vec();

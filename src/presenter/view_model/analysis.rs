@@ -36,9 +36,7 @@ mod tests {
               },
               "ecp1_analysis": [
                 {
-                  "buy_sell_signal": {
-                    "kind": "Stay"
-                  },
+                  "type": "Stay",
                   "date": "2017-02-16"
                 }
               ]
@@ -49,7 +47,7 @@ mod tests {
             chance_rate: 32.7,
         };
         let ecp1_analysis = ECP1Analysis(vec![BuySellSignal {
-            buy_sell_signal: BuySellSignalType::Stay,
+            r#type: BuySellSignalType::Stay,
             date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
         }]);
         let analysis = Analysis {
