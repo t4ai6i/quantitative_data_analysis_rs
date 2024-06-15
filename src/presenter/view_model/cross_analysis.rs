@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct CrossAnalysis {
-    pub(crate) cross_direction: CrossDirectionType,
+    pub cross_direction: CrossDirectionType,
     #[serde(with = "custom_date_format")]
-    pub(crate) latest_chance: NaiveDate,
-    pub(crate) chance_rate: f64,
+    pub latest_chance: NaiveDate,
+    pub chance_rate: f64,
 }
