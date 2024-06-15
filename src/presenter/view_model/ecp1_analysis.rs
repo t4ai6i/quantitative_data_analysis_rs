@@ -3,7 +3,7 @@ use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct ECP1Analysis(pub Vec<BuySellSignal>);
 
 impl From<VecECP1> for ECP1Analysis {

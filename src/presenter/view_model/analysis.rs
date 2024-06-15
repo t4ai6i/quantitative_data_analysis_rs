@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::presenter::view_model::cross_analysis::CrossAnalysis;
 use crate::presenter::view_model::ecp1_analysis::ECP1Analysis;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Analysis {
     pub code: String,
     pub symbol: String,
