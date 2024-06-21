@@ -1,30 +1,31 @@
 use itertools::Itertools;
-use std::cmp;
+use std::cmp::Ordering;
 
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
-use crate::domain::entity::ordering::Ordering;
 use crate::domain::entity::stock::Stock;
 
-pub type CompareLowForTwoDays = Ordering<1, 1>;
-pub type CompareHighForTwoDays = Ordering<1, 1>;
-
-pub type ECP1 = (CompareLowForTwoDays, CompareHighForTwoDays);
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct ECP1 {
+    low_ordering: Option<Ordering>,
+    high_ordering: Option<Ordering>,
+}
 
 /// Engulfing Candlestick Pattern1
 ///
 /// ある日とその前日の安値・高値の切り上がり・切り下がりをみる
 ///
-/// * **BuySignal**: 安値切り上がりかつ高値切り上がり
-/// * **SellSignal**: 安値切り下がりかつ高値切り下がり
-/// * **WaitAndSee**: 上記のどちらにもあてはまならない
+/// * **Buy**: 安値切り上がりかつ高値切り上がり
+/// * **Sell**: 安値切り下がりかつ高値切り下がり
+/// * **Stay**: 上記のどちらにもあてはまならない
 impl From<ECP1> for BuySellSignalType {
     fn from(value: ECP1) -> Self {
-        let (low, high) = value;
-        let low = low.0;
-        let high = high.0;
-        match (low, high) {
-            (Some(cmp::Ordering::Greater), Some(cmp::Ordering::Greater)) => Self::Buy,
-            (Some(cmp::Ordering::Less), Some(cmp::Ordering::Less)) => Self::Sell,
+        let ECP1 {
+            low_ordering,
+            high_ordering,
+        } = value;
+        match (low_ordering, high_ordering) {
+            (Some(Ordering::Greater), Some(Ordering::Greater)) => Self::Buy,
+            (Some(Ordering::Less), Some(Ordering::Less)) => Self::Sell,
             _ => Self::Stay,
         }
     }
@@ -52,20 +53,133 @@ impl From<&[Stock]> for VecECP1 {
             .map(|stock| {
                 let prev = stock.get(0).unwrap();
                 let today = stock.get(1).unwrap();
-                let prev_high = prev.high;
-                let today_high = today.high;
-                let prev_low = prev.low;
-                let today_low = today.low;
                 // 前日・当日それぞれの安値を比較する
-                let low_trend = Ordering::<1, 1>::from((prev_low, today_low));
+                let low_ordering = today.low.partial_cmp(&prev.low);
                 // 前日・当日それぞれの高値を比較する
-                let high_trend = Ordering::<1, 1>::from((prev_high, today_high));
+                let high_ordering = today.high.partial_cmp(&prev.high);
+                let ecp1 = ECP1 {
+                    low_ordering,
+                    high_ordering,
+                };
                 // 高値・安値の切り上げ・切り下げを基にした売買シグナル
-                let r#type = BuySellSignalType::from((high_trend, low_trend));
+                let r#type = BuySellSignalType::from(ecp1);
                 let date = today.date;
                 BuySellSignal { r#type, date }
             })
             .collect_vec();
         VecECP1(vec)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
+    use crate::domain::entity::ecp1::VecECP1;
+    use crate::infrastructure::from_slice::FromSlice;
+    use crate::infrastructure::stock_repository::data_format::csv::Csv;
+    use chrono::NaiveDate;
+
+    const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    #[test]
+    fn from_test() {
+        let vec_stock = Csv::from_slice::<true>(CSV_9223);
+        let vec_ecp1 = VecECP1::from(vec_stock.as_slice());
+        let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_ecp1
+            .0
+            .into_iter()
+            .filter(|signal| !signal.r#type.eq(&BuySellSignalType::Stay))
+            .partition(|signal| signal.r#type.eq(&BuySellSignalType::Buy));
+        let expected: (Vec<BuySellSignal>, Vec<BuySellSignal>) = (
+            vec![
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2023, 12, 28).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 4).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 19).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 30).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2024, 2, 2).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2024, 2, 5).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Buy,
+                    date: NaiveDate::from_ymd_opt(2024, 2, 14).unwrap(),
+                },
+            ],
+            vec![
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2023, 12, 27).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 10).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 11).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 16).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 18).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 23).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 24).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 25).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 1, 26).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 2, 7).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 2, 8).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 2, 15).unwrap(),
+                },
+                BuySellSignal {
+                    r#type: BuySellSignalType::Sell,
+                    date: NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
+                },
+            ],
+        );
+        assert_eq!(actual_buy, expected.0);
+        assert_eq!(actual_sell, expected.1);
     }
 }

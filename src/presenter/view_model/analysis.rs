@@ -30,7 +30,7 @@ mod tests {
               "code": "8473",
               "symbol": "8473.T",
               "cross_analysis": {
-                "cross_direction": "neither",
+                "cross_direction": "Neither",
                 "latest_chance": "2017-02-16",
                 "chance_rate": 32.7
               },

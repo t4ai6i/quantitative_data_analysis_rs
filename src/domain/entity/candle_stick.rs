@@ -24,8 +24,14 @@ pub enum BullishBearishType {
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct CandleStick<const N: usize> {
     pub date: NaiveDate,
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub close: f64,
     pub size: f64,
     pub body: f64,
+    pub body_high: f64,
+    pub body_low: f64,
     pub upper_wick: f64,
     pub lower_wick: f64,
     pub body_pct: f64,
@@ -48,20 +54,36 @@ impl<const N: usize> CandleStick<N> {
         );
         let min_body_pct = N.to_f64().unwrap().div(100.0);
 
-        let size = Self::get_size(stock.high, stock.low);
-        let body = Self::get_body(stock.open, stock.close);
-        let upper_wick = Self::get_upper_wick(stock.high, stock.open, stock.close);
-        let lower_wick = Self::get_lower_wick(stock.low, stock.open, stock.close);
+        let Stock {
+            date,
+            open,
+            high,
+            low,
+            close,
+            ..
+        } = stock;
+        let size = Self::get_size(*high, *low);
+        let body = Self::get_body(*open, *close);
+        let body_high = open.max(*close);
+        let body_low = open.min(*close);
+        let upper_wick = Self::get_upper_wick(*high, body_high);
+        let lower_wick = Self::get_lower_wick(*low, body_low);
         let body_pct = Self::get_percentage(size, body);
         let upper_wick_pct = Self::get_percentage(size, upper_wick);
         let lower_wick_pct = Self::get_percentage(size, lower_wick);
-        let bullish_bearish = Self::get_bullish_bearish_type(stock.open, stock.close);
+        let bullish_bearish = Self::get_bullish_bearish_type(*open, *close);
         let is_marubozu = Self::is_marubozu(body_pct, min_body_pct);
         let is_doji = Self::is_doji(body, upper_wick, lower_wick);
         Self {
-            date: stock.date,
+            date: *date,
+            open: *open,
+            high: *high,
+            low: *low,
+            close: *close,
             size,
             body,
+            body_high,
+            body_low,
             upper_wick,
             lower_wick,
             body_pct,
@@ -81,12 +103,12 @@ impl<const N: usize> CandleStick<N> {
         open.sub(&close).abs()
     }
 
-    fn get_upper_wick(high: f64, open: f64, close: f64) -> f64 {
-        high - open.max(close)
+    fn get_upper_wick(high: f64, body_high: f64) -> f64 {
+        high - body_high
     }
 
-    fn get_lower_wick(low: f64, open: f64, close: f64) -> f64 {
-        open.min(close) - low
+    fn get_lower_wick(low: f64, body_low: f64) -> f64 {
+        body_low - low
     }
 
     fn get_percentage(size: f64, target: f64) -> f64 {
@@ -164,6 +186,13 @@ mod tests {
         let actual = CandleStick::<90>::new(&stock);
         let expected = CandleStick::<90> {
             size: 1000.0,
+            open: 1000.0,
+            high: 1500.0,
+            low: 500.0,
+            close: 1000.0,
+            body: 0.0,
+            body_high: 1000.0,
+            body_low: 1000.0,
             upper_wick: 500.0,
             lower_wick: 500.0,
             upper_wick_pct: 0.5,
@@ -193,19 +222,19 @@ mod tests {
 
     #[test]
     fn get_upper_wick_test() {
-        let actual = CandleStick::<90>::get_upper_wick(1000.0, 500.0, 100.0);
+        let actual = CandleStick::<90>::get_upper_wick(1000.0, 500.0);
         assert_eq!(actual, 500.0);
 
-        let actual = CandleStick::<90>::get_upper_wick(1000.0, 100.0, 500.0);
+        let actual = CandleStick::<90>::get_upper_wick(1000.0, 500.0);
         assert_eq!(actual, 500.0);
     }
 
     #[test]
     fn get_lower_wick_test() {
-        let actual = CandleStick::<90>::get_lower_wick(500.0, 1000.0, 600.0);
+        let actual = CandleStick::<90>::get_lower_wick(500.0, 600.0);
         assert_eq!(actual, 100.0);
 
-        let actual = CandleStick::<90>::get_lower_wick(100.0, 500.0, 1000.0);
+        let actual = CandleStick::<90>::get_lower_wick(100.0, 500.0);
         assert_eq!(actual, 400.0);
     }
 
