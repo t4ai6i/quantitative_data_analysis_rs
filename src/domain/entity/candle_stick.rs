@@ -13,11 +13,8 @@ use strum::Display;
 )]
 pub enum BullishBearishType {
     #[default]
-    #[serde(rename = "neither")]
     Neither,
-    #[serde(rename = "bullish")]
     Bullish,
-    #[serde(rename = "bearish")]
     Bearish,
 }
 
