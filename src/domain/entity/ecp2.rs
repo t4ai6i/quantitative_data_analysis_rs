@@ -51,9 +51,9 @@ impl From<ECP2> for BuySellSignalType {
 }
 
 #[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub struct VecECP2<const N: usize>(pub Vec<BuySellSignal>);
+pub struct VecECP2(pub Vec<BuySellSignal>);
 
-impl<const N: usize> From<&[CandleStick<N>]> for VecECP2<N> {
+impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
     ///
     /// # Examples
     /// ```
@@ -66,7 +66,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2<N> {
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_9223);
     /// let VecCandleStick(vec_candle_stick) = VecCandleStick::<90>::from(vec_stock.as_slice());
-    /// let _ = VecECP2::<90>::from(vec_candle_stick.as_slice());
+    /// let _ = VecECP2::from(vec_candle_stick.as_slice());
     /// ```
     fn from(value: &[CandleStick<N>]) -> Self {
         let vec = value
@@ -109,7 +109,7 @@ mod tests {
         let vec_stock = Csv::from_slice::<true>(CSV_8473);
         let VecCandleStick(vec_candle_stick) =
             VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.as_slice());
-        let vec_ecp2 = VecECP2::<MARUBOZU_MIN_RATE>::from(vec_candle_stick.as_slice());
+        let vec_ecp2 = VecECP2::from(vec_candle_stick.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_ecp2
             .0
             .into_iter()

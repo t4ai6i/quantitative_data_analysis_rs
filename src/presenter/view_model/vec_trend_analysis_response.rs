@@ -2,8 +2,8 @@ use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::CrossDirectionType;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::view_model::analysis::Analysis;
+use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::cross_analysis::CrossAnalysis;
-use crate::presenter::view_model::ecp1_analysis::ECP1Analysis;
 use chrono::NaiveDate;
 use itertools::Itertools;
 
@@ -55,6 +55,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     chance_rate,
                     latest_chance,
                     vec_ecp1,
+                    vec_ecp2,
                 } => {
                     let Company { code, symbol, .. } = company;
                     let latest_chance = display_cross_pattern.get_latest_chance(&latest_chance);
@@ -66,12 +67,14 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                         latest_chance,
                         chance_rate,
                     };
-                    let ecp1_analysis = ECP1Analysis::from(vec_ecp1);
+                    let ecp1_analysis = BuySellSignalAnalysis::from(vec_ecp1.0.as_slice());
+                    let ecp2_analysis = BuySellSignalAnalysis::from(vec_ecp2.0.as_slice());
                     Some(Analysis {
                         code,
                         symbol,
                         cross_analysis,
                         ecp1_analysis,
+                        ecp2_analysis,
                     })
                 }
                 _ => None,

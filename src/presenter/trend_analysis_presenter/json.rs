@@ -23,6 +23,7 @@ impl TrendAnalysisPresenter for JSON {
             chance_rate: output.vec_trend.chance_rate,
             latest_chance: output.vec_trend.latest_chance,
             vec_ecp1: output.vec_ecp1,
+            vec_ecp2: output.vec_ecp2,
         })
     }
 }

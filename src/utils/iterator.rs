@@ -1,3 +1,23 @@
+/// Retrieve the specified number of elements from the end
+///
+/// # Arguments
+///
+/// * `slice`: &[T]
+/// * `number`: usize
+///
+/// returns: Vec<T, Global>
+///
+/// # Examples
+///
+/// ```
+/// use quantitative_data_analysis_rs::utils::iterator::get_vec_containing_number_from_end_of_array;
+///
+/// let vec = vec![0, 1, 2, 3, 4];
+/// let number = 2;
+/// let actual = get_vec_containing_number_from_end_of_array(vec.as_slice(), number);
+/// assert_eq!(actual, vec![3, 4]);
+///
+/// ```
 pub fn get_vec_containing_number_from_end_of_array<T: Clone>(slice: &[T], number: usize) -> Vec<T> {
     let number = slice.len().saturating_sub(number);
     let (_, slice) = slice.split_at(number);

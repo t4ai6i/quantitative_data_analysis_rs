@@ -5,6 +5,7 @@ use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::cross::VecCross;
 use crate::domain::entity::cross_trend_analysis::{StockCrossPair, VecCrossTrendAnalysis};
 use crate::domain::entity::ecp1::VecECP1;
+use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::sma::{SMAListPair, VecSMA};
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::stock_repository::StockRepository;
@@ -58,8 +59,6 @@ where
             )
             .await?;
 
-        let vec_candle_stick = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.0.as_slice());
-
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());
         let vec_sma_25 = VecSMA::<25>::from(vec_stock.0.as_slice());
 
@@ -71,6 +70,12 @@ where
 
         let stocks = get_vec_containing_number_from_end_of_array(vec_stock.0.as_slice(), FOR_DAYS);
         let vec_ecp1 = VecECP1::from(stocks.as_slice());
+
+        let vec_candle_stick = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.0.as_slice());
+
+        let candle_sticks =
+            get_vec_containing_number_from_end_of_array(vec_candle_stick.0.as_slice(), FOR_DAYS);
+        let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
 
         let stock_cross_pair = StockCrossPair {
             stocks: vec_stock.0.as_slice(),
@@ -86,6 +91,7 @@ where
             vec_cross,
             vec_trend_analysis,
             vec_ecp1,
+            vec_ecp2,
             vec_candle_stick,
             input.display_cross_pattern,
         );
