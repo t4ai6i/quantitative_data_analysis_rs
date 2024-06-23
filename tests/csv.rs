@@ -37,7 +37,7 @@ fn csv_sandbox() -> Result<()> {
     assert_eq!(actual, expected);
 
     let json = indoc! {r#"{
-            "cross_direction":"golden",
+            "cross_direction":"Golden",
             "latest_chance":"2023-08-30",
             "chance_rate":27.27272727272727
         }"#};
@@ -47,7 +47,7 @@ fn csv_sandbox() -> Result<()> {
     let data = String::from_utf8(builder.into_inner()?)?;
     assert_eq!(
         data,
-        "cross_direction,latest_chance,chance_rate\ngolden,2023-08-30,27.27272727272727\n"
+        "cross_direction,latest_chance,chance_rate\nGolden,2023-08-30,27.27272727272727\n"
     );
     Ok(())
 }

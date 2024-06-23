@@ -1,16 +1,15 @@
-use crate::domain::entity::ecp1::VecECP1;
+use crate::domain::entity::buy_sell_signal::BuySellSignal as EntityBuySellSignal;
 use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct ECP1Analysis(pub Vec<BuySellSignal>);
+pub struct BuySellSignalAnalysis(pub Vec<BuySellSignal>);
 
-impl From<VecECP1> for ECP1Analysis {
-    fn from(value: VecECP1) -> Self {
+impl From<&[EntityBuySellSignal]> for BuySellSignalAnalysis {
+    fn from(value: &[EntityBuySellSignal]) -> Self {
         let vec_buy_sell_signal = value
-            .0
-            .into_iter()
+            .iter()
             .map(|element| BuySellSignal {
                 r#type: element.r#type,
                 date: element.date,

@@ -1,8 +1,8 @@
 pub mod analysis;
 pub mod buy_sell_signal;
+pub mod buy_sell_signal_analysis;
 pub mod chance_rate;
 pub mod cross_analysis;
-pub mod ecp1_analysis;
 pub mod latest_chance;
 pub mod vec_candle_stick;
 pub mod vec_cross;

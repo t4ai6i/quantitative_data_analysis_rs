@@ -5,6 +5,7 @@ pub mod company;
 pub mod cross;
 pub mod cross_trend_analysis;
 pub mod ecp1;
+pub mod ecp2;
 mod ordering;
 pub mod sma;
 pub mod stock;

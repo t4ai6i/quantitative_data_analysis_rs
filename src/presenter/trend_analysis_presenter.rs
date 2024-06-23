@@ -1,3 +1,7 @@
+use anyhow::Result;
+use chrono::NaiveDate;
+use strum::Display;
+
 use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::company::Company;
@@ -6,11 +10,9 @@ use crate::domain::entity::cross_trend_analysis::{
     ChanceRate, LatestChance, VecCrossTrendAnalysis,
 };
 use crate::domain::entity::ecp1::VecECP1;
+use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
-use anyhow::Result;
-use chrono::NaiveDate;
-use strum::Display;
 
 pub mod chart;
 pub mod json;
@@ -108,6 +110,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     vec_cross: VecCross,
     vec_trend: VecCrossTrendAnalysis<N>,
     vec_ecp1: VecECP1,
+    vec_ecp2: VecECP2,
     vec_candle_stick: VecCandleStick<M>,
     display_cross_pattern: DisplayCrossPattern,
 }
@@ -121,6 +124,7 @@ impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
         vec_cross: VecCross,
         vec_trend: VecCrossTrendAnalysis<N>,
         vec_ecp1: VecECP1,
+        vec_ecp2: VecECP2,
         vec_candle_stick: VecCandleStick<M>,
         display_cross_pattern: DisplayCrossPattern,
     ) -> Self {
@@ -132,6 +136,7 @@ impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
             vec_cross,
             vec_trend,
             vec_ecp1,
+            vec_ecp2,
             vec_candle_stick,
             display_cross_pattern,
         }
@@ -153,6 +158,7 @@ pub enum TrendAnalysisResponse {
         chance_rate: ChanceRate,
         latest_chance: LatestChance,
         vec_ecp1: VecECP1,
+        vec_ecp2: VecECP2,
     },
 }
 
@@ -165,10 +171,11 @@ pub trait TrendAnalysisPresenter {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::cross_trend_analysis::{ChanceRate, LatestChance};
-    use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
     use anyhow::Result;
     use chrono::NaiveDate;
+
+    use crate::domain::entity::cross_trend_analysis::{ChanceRate, LatestChance};
+    use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 
     #[test]
     fn display_cross_direction_test() -> Result<()> {

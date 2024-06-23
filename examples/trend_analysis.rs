@@ -1,5 +1,6 @@
 use anyhow::Result;
 use chrono::NaiveDate;
+use itertools::{multiunzip, Itertools};
 use quantitative_data_analysis_rs::controller::trend_analysis_controller::TrendAnalysisController;
 use quantitative_data_analysis_rs::controller::trend_summary_controller::TrendSummaryController;
 use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
@@ -65,7 +66,7 @@ async fn main() -> Result<()> {
 
     // 運用では、NocoDBで取り扱えるJSON形式でトレンド解析とサマリーを出力する
     let interactor = TrendAnalysisInteractor::new(&repository, &repository);
-    // PresenterはJSON型でSVG形式の画像データを出力する
+    // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_analysis_presenter::json::JSON::new();
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let trend_analysis_response = controller
@@ -80,31 +81,40 @@ async fn main() -> Result<()> {
 
     let interactor = TrendSummaryInteractor::new();
     let vec_trend_analysis_response = vec![trend_analysis_response];
+    // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_summary_presenter::json::JSON::new();
     let controller = TrendSummaryController::new(&interactor, &presenter);
     if let TrendSummaryResponse::JSON { data } = controller
         .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
         .await?
     {
-        let (cross_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = data
+        let vec = data
             .into_iter()
             .map(|e| {
                 let Analysis {
                     cross_analysis,
                     ecp1_analysis,
+                    ecp2_analysis,
                     ..
                 } = e;
-                (cross_analysis, ecp1_analysis)
+                (cross_analysis, ecp1_analysis, ecp2_analysis)
             })
-            .unzip();
+            .collect_vec();
+        let (cross_analysis, ecp1_analysis, ecp2_analysis): (Vec<_>, Vec<_>, Vec<_>) =
+            multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&cross_analysis)?;
         assert_eq!(
-            include_str!("../assets/cross_analysis_summary.json"),
+            include_str!("../assets/8473.T.cross_analysis_summary.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
-            include_str!("../assets/ecp1_analysis_summary.json"),
+            include_str!("../assets/8473.T.ecp1_analysis_summary.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string_pretty(&ecp2_analysis)?;
+        assert_eq!(
+            include_str!("../assets/8473.T.ecp2_analysis_summary.json"),
             &json_str
         );
     };
@@ -148,21 +158,35 @@ async fn main() -> Result<()> {
         .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
         .await?
     {
-        let (cross_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = data
+        let vec = data
             .into_iter()
             .map(|e| {
                 let Analysis {
                     cross_analysis,
                     ecp1_analysis,
+                    ecp2_analysis,
                     ..
                 } = e;
-                (cross_analysis, ecp1_analysis)
+                (cross_analysis, ecp1_analysis, ecp2_analysis)
             })
-            .unzip();
-        let json_str = serde_json::to_string(&cross_analysis)?;
-        dbg!(json_str);
-        let json_str = serde_json::to_string(&ecp1_analysis)?;
-        dbg!(json_str);
+            .collect_vec();
+        let (cross_analysis, ecp1_analysis, ecp2_analysis): (Vec<_>, Vec<_>, Vec<_>) =
+            multiunzip(vec);
+        let json_str = serde_json::to_string_pretty(&cross_analysis)?;
+        assert_eq!(
+            include_str!("../assets/9223.T.cross_analysis_summary.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
+        assert_eq!(
+            include_str!("../assets/9223.T.ecp1_analysis_summary.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string_pretty(&ecp2_analysis)?;
+        assert_eq!(
+            include_str!("../assets/9223.T.ecp2_analysis_summary.json"),
+            &json_str
+        );
     };
 
     Ok(())

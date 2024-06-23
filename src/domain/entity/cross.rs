@@ -12,12 +12,9 @@ use strum::Display;
 )]
 pub enum CrossDirectionType {
     #[default]
-    #[serde(rename = "neither")]
     /// ゴールデンクロス・デッドクロスになっていない場合、Neither
     Neither,
-    #[serde(rename = "golden")]
     Golden,
-    #[serde(rename = "dead")]
     Dead,
 }
 
