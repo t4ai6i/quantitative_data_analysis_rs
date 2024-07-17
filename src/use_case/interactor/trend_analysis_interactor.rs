@@ -2,11 +2,13 @@ use anyhow::Result;
 use async_trait::async_trait;
 
 use crate::domain::entity::candle_stick::VecCandleStick;
+use crate::domain::entity::close_cross_trend_analysis::VecCloseCrossTrendAnalysis;
 use crate::domain::entity::cross::VecCross;
-use crate::domain::entity::cross_trend_analysis::{StockCrossPair, VecCrossTrendAnalysis};
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::sma::{SMAListPair, VecSMA};
+use crate::domain::entity::stocks_crosses_pair::StocksCrossesPair;
+use crate::domain::entity::volume_cross_trend_analysis::VecVolumeCrossTrendAnalysis;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
@@ -77,24 +79,27 @@ where
             get_vec_containing_number_from_end_of_array(vec_candle_stick.0.as_slice(), FOR_DAYS);
         let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
 
-        let stock_cross_pair = StockCrossPair {
+        let stock_cross_pair = StocksCrossesPair {
             stocks: vec_stock.0.as_slice(),
             crosses: vec_cross.0.as_slice(),
         };
-        let vec_trend_analysis = VecCrossTrendAnalysis::<AFTER_DAYS>::from(stock_cross_pair);
+        let vec_close_cross_trend_analysis =
+            VecCloseCrossTrendAnalysis::<AFTER_DAYS>::from(&stock_cross_pair);
+        let vec_volume_cross_trend_analysis = VecVolumeCrossTrendAnalysis::from(&stock_cross_pair);
 
-        let output = TrendAnalysisOutput::new(
+        let output = TrendAnalysisOutput {
             company,
             vec_stock,
             vec_sma_5,
             vec_sma_25,
             vec_cross,
-            vec_trend_analysis,
+            vec_close_cross_trend_analysis,
+            vec_volume_cross_trend_analysis,
             vec_ecp1,
             vec_ecp2,
             vec_candle_stick,
-            input.display_cross_pattern,
-        );
+            display_cross_pattern: input.display_cross_pattern,
+        };
         Ok(output)
     }
 }

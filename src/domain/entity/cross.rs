@@ -1,44 +1,62 @@
 use crate::domain::entity::ordering::{Ordering, OrderingPair};
-use crate::domain::entity::sma::{SMAListPair, SMAPair};
+use crate::domain::entity::sma::{Average, SMAListPair, SMAPair};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering as Ord;
 use strum::Display;
 
-/// クロスの向き
+/// 移動平均線が交わったときの向き
 #[derive(
     Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
 )]
 pub enum CrossDirectionType {
-    #[default]
-    /// ゴールデンクロス・デッドクロスになっていない場合、Neither
-    Neither,
+    /// ゴールデンクロス
     Golden,
+    /// デッドクロス
     Dead,
+    #[default]
+    /// 上記どちらでもない場合
+    Neither,
 }
 
+impl From<(Option<Ord>, Option<Ord>)> for CrossDirectionType {
+    fn from(value: (Option<Ord>, Option<Ord>)) -> Self {
+        match value {
+            (Some(Ord::Less), Some(Ord::Greater)) => CrossDirectionType::Golden,
+            (Some(Ord::Greater), Some(Ord::Less)) => CrossDirectionType::Dead,
+            _ => CrossDirectionType::Neither,
+        }
+    }
+}
+
+/// 移動平均線NとOが交わったときの向き
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct CrossDirection<const N: usize, const O: usize>(pub CrossDirectionType);
+pub struct CrossDirection<const N: usize, const O: usize> {
+    pub close_average: CrossDirectionType,
+    pub volume_average: CrossDirectionType,
+}
 
 impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection<N, O> {
     fn from(value: OrderingPair<N, O>) -> Self {
         // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
         // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
         let OrderingPair { past, future } = value;
-        match (past.0, future.0) {
-            (Some(Ord::Less), Some(Ord::Greater)) => CrossDirection(CrossDirectionType::Golden),
-            (Some(Ord::Greater), Some(Ord::Less)) => CrossDirection(CrossDirectionType::Dead),
-            _ => CrossDirection(CrossDirectionType::Neither),
+        let close_average = CrossDirectionType::from((past.close_average, future.close_average));
+        let volume_average = CrossDirectionType::from((past.volume_average, future.volume_average));
+        CrossDirection {
+            close_average,
+            volume_average,
         }
     }
 }
 
+/// 5日移動平均線と25日移動平均線の交わりの情報
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct Cross {
     pub date: NaiveDate,
-    pub sma_5_ave: Option<f64>,
-    pub sma_25_ave: Option<f64>,
+    pub sma_5_average: Option<Average<5>>,
+    pub sma_25_average: Option<Average<25>>,
     pub ordering_5_25: Ordering<5, 25>,
     pub cross_direction_5_25: CrossDirection<5, 25>,
 }
@@ -83,8 +101,8 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
                 let ordering_5_25 = Ordering::from(sma_pair);
                 Cross {
                     date: sma_5.date,
-                    sma_5_ave: Some(sma_5.ave),
-                    sma_25_ave: sma_25.map(|sma_25| sma_25.ave),
+                    sma_5_average: Some(sma_5.average),
+                    sma_25_average: sma_25.map(|sma_25| sma_25.average),
                     ordering_5_25,
                     ..Default::default()
                 }
@@ -101,8 +119,8 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
                 let cross_direction_5_25 = CrossDirection::from(ordering_pair);
                 Cross {
                     date: x[1].date,
-                    sma_5_ave: x[1].sma_5_ave,
-                    sma_25_ave: x[1].sma_25_ave,
+                    sma_5_average: x[1].sma_5_average,
+                    sma_25_average: x[1].sma_25_average,
                     ordering_5_25: x[1].ordering_5_25,
                     cross_direction_5_25,
                 }

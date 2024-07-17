@@ -12,7 +12,7 @@ pub enum ChanceLoss {
 
 pub struct CrossDirectionChangePair {
     pub cross_direction: CrossDirectionType,
-    pub change: f64,
+    pub rate_of_change: f64,
 }
 
 impl From<CrossDirectionChangePair> for ChanceLoss {
@@ -23,19 +23,19 @@ impl From<CrossDirectionChangePair> for ChanceLoss {
         match value {
             CrossDirectionChangePair {
                 cross_direction: CrossDirectionType::Golden,
-                change,
+                rate_of_change: change,
             } if change > 0.0 => ChanceLoss::GoldenChance,
             CrossDirectionChangePair {
                 cross_direction: CrossDirectionType::Dead,
-                change,
+                rate_of_change: change,
             } if change < 0.0 => ChanceLoss::DeadChance,
             CrossDirectionChangePair {
                 cross_direction: CrossDirectionType::Golden,
-                change,
+                rate_of_change: change,
             } if change <= 0.0 => ChanceLoss::GoldenLoss,
             CrossDirectionChangePair {
                 cross_direction: CrossDirectionType::Dead,
-                change,
+                rate_of_change: change,
             } if change >= 0.0 => ChanceLoss::DeadLoss,
             _ => ChanceLoss::None,
         }

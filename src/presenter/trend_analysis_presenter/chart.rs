@@ -1,34 +1,46 @@
+use std::backtrace::Backtrace;
+
+use anyhow::{Context, Result};
+use charts_rs::{
+    Align, BarChart, Box, CandlestickChart, ChildChart, Color, LegendCategory, MultiChart, Series,
+    SeriesCategory, TableChart,
+};
+use itertools::Itertools;
+
 use crate::domain::entity::cross::CrossDirectionType;
 use crate::presenter::{
     trend_analysis_presenter::{
         DisplayCrossPattern, TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
-        vec_candle_stick::VecCandleStickExt, vec_cross::VecCrossExt, vec_sma::VecSMAExt,
-        vec_stock::VecStockExt, vec_trend_analysis::VecTrendAnalysisExt,
+        vec_candle_stick::VecCandleStickExt,
+        vec_close_cross_trend_analysis::VecCloseCrossTrendAnalysisExt, vec_cross::VecCrossExt,
+        vec_sma::VecSMAExt, vec_stock::VecStockExt,
+        vec_volume_cross_trend_analysis::VecVolumeCrossTrendAnalysisExt,
     },
 };
 use crate::utils::float;
-use anyhow::{Context, Result};
-use charts_rs::{
-    Align, Box, CandlestickChart, ChildChart, Color, LegendCategory, MultiChart, Series,
-    SeriesCategory, TableChart,
-};
-use std::backtrace::Backtrace;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Chart {
     theme: String,
     width: f32,
     height: f32,
+    date_format: String,
 }
 
 impl Chart {
-    pub fn new(theme: impl Into<String>, width: f32, height: f32) -> Self {
+    pub fn new(
+        theme: impl Into<String>,
+        width: f32,
+        height: f32,
+        date_format: impl Into<String>,
+    ) -> Self {
         Self {
             theme: theme.into(),
             width,
             height,
+            date_format: date_format.into(),
         }
     }
 }
@@ -38,57 +50,70 @@ impl TrendAnalysisPresenter for Chart {
         &self,
         output: TrendAnalysisOutput<N, M>,
     ) -> Result<TrendAnalysisResponse> {
+        let mut charts = MultiChart::new();
+        charts.margin = 5.0.into();
+
         let company = output.company;
-        let vec_sma_5_ave = output.vec_sma_5.collect_vec_ave();
-        let vec_sma_25_ave = output.vec_sma_25.collect_vec_ave();
-        let candlesticks = output.vec_stock.collect_vec_candlestick();
-        let min = float::min(&candlesticks) - 10.0;
-        let max = float::max(&candlesticks) + 10.0;
-        let x_axis_data = output.vec_stock.collect_vec_day();
+        let sma_5_averages = output.vec_sma_5.collect_average_close();
+        let sma_25_averages = output.vec_sma_25.collect_average_close();
+        let ohlcs: Vec<f32> = output
+            .vec_stock
+            .collect_ohlc()
+            .iter()
+            .map(|value| *value as _)
+            .collect_vec();
+        let min = float::min(&ohlcs) - 10.0;
+        let max = float::max(&ohlcs) + 10.0;
+
+        let x_axis_data_days = output
+            .vec_stock
+            .collect_date_string(self.date_format.as_str());
+
         let series_list = match output.display_cross_pattern {
             DisplayCrossPattern::All => {
                 let dead_crosses = output
                     .vec_cross
-                    .collect_vec_sma_25_ave(CrossDirectionType::Dead);
+                    .collect_vec_sma_25_close_average(CrossDirectionType::Dead);
                 let golden_crosses = output
                     .vec_cross
-                    .collect_vec_sma_25_ave(CrossDirectionType::Golden);
+                    .collect_vec_sma_25_close_average(CrossDirectionType::Golden);
                 vec![
-                    Series::from(("SMA5", vec_sma_5_ave)),
-                    Series::from(("SMA25", vec_sma_25_ave)),
+                    Series::from(("SMA5", sma_5_averages)),
+                    Series::from(("SMA25", sma_25_averages)),
                     Series::from(("Dead", dead_crosses)),
                     Series::from(("Golden", golden_crosses)),
-                    Series::from(("Daily", candlesticks)),
+                    Series::from(("OHLC", ohlcs)),
                 ]
             }
             DisplayCrossPattern::GoldenOnly => {
                 let golden_crosses = output
                     .vec_cross
-                    .collect_vec_sma_25_ave(CrossDirectionType::Golden);
+                    .collect_vec_sma_25_close_average(CrossDirectionType::Golden);
                 vec![
-                    Series::from(("SMA5", vec_sma_5_ave)),
-                    Series::from(("SMA25", vec_sma_25_ave)),
+                    Series::from(("SMA5", sma_5_averages)),
+                    Series::from(("SMA25", sma_25_averages)),
                     Series::from(("Golden", golden_crosses)),
-                    Series::from(("Daily", candlesticks)),
+                    Series::from(("OHLC", ohlcs)),
                 ]
             }
             DisplayCrossPattern::DeadOnly => {
                 let dead_crosses = output
                     .vec_cross
-                    .collect_vec_sma_25_ave(CrossDirectionType::Dead);
+                    .collect_vec_sma_25_close_average(CrossDirectionType::Dead);
                 vec![
-                    Series::from(("SMA5", vec_sma_5_ave)),
-                    Series::from(("SMA25", vec_sma_25_ave)),
+                    Series::from(("SMA5", sma_5_averages)),
+                    Series::from(("SMA25", sma_25_averages)),
                     Series::from(("Dead", dead_crosses)),
-                    Series::from(("Daily", candlesticks)),
+                    Series::from(("OHLC", ohlcs)),
                 ]
             }
         };
 
-        let mut charts = MultiChart::new();
-        charts.margin = 10.0.into();
-        let mut candlestick_chart =
-            CandlestickChart::new_with_theme(series_list, x_axis_data, self.theme.as_str());
+        let mut candlestick_chart = CandlestickChart::new_with_theme(
+            series_list,
+            x_axis_data_days.clone(),
+            self.theme.as_str(),
+        );
         candlestick_chart.title_text = format!("{}({})", &company.name, &company.code);
         candlestick_chart.width = self.width;
         candlestick_chart.height = self.height;
@@ -124,23 +149,102 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.candlestick_down_border_color = Color::from((0, 40, 143));
         charts.add(ChildChart::Candlestick(candlestick_chart, None));
 
-        let mut rows = vec![vec![
-            "date".to_string(),
-            "chance loss".to_string(),
-            "direction".to_string(),
-            "per inc/dec".to_string(),
-            "close at cross".to_string(),
-            format!("close after {} days", N),
-        ]];
+        let sma_5_averages = output.vec_sma_5.collect_average_volume();
+        let sma_25_averages = output.vec_sma_25.collect_average_volume();
+        let volumes: Vec<f32> = output
+            .vec_stock
+            .collect_volume()
+            .iter()
+            .map(|value| *value as _)
+            .collect_vec();
+
+        let series_list = match output.display_cross_pattern {
+            DisplayCrossPattern::All => {
+                let dead_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_volume_average(CrossDirectionType::Dead);
+                let golden_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_volume_average(CrossDirectionType::Golden);
+                vec![
+                    Series::from(("SMA5", sma_5_averages)),
+                    Series::from(("SMA25", sma_25_averages)),
+                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Volume", volumes)),
+                ]
+            }
+            DisplayCrossPattern::GoldenOnly => {
+                let golden_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_volume_average(CrossDirectionType::Golden);
+                vec![
+                    Series::from(("SMA5", sma_5_averages)),
+                    Series::from(("SMA25", sma_25_averages)),
+                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Volume", volumes)),
+                ]
+            }
+            DisplayCrossPattern::DeadOnly => {
+                let dead_crosses = output
+                    .vec_cross
+                    .collect_vec_sma_25_volume_average(CrossDirectionType::Dead);
+                vec![
+                    Series::from(("SMA5", sma_5_averages)),
+                    Series::from(("SMA25", sma_25_averages)),
+                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Volume", volumes)),
+                ]
+            }
+        };
+
+        let mut volume_chart =
+            BarChart::new_with_theme(series_list, x_axis_data_days, self.theme.as_str());
+        volume_chart.width = self.width;
+        volume_chart.height = self.height / 3.0;
+        volume_chart.series_list[0].category = Some(SeriesCategory::Line);
+        volume_chart.series_list[0].start_index = 5;
+        volume_chart.series_list[1].category = Some(SeriesCategory::Line);
+        volume_chart.series_list[1].start_index = 25;
+        match output.display_cross_pattern {
+            DisplayCrossPattern::All => {
+                volume_chart.series_list[2].category = Some(SeriesCategory::Line);
+                volume_chart.series_list[2].start_index = 6;
+                volume_chart.series_list[3].category = Some(SeriesCategory::Line);
+                volume_chart.series_list[3].start_index = 6;
+            }
+            DisplayCrossPattern::GoldenOnly => {
+                volume_chart.series_list[2].category = Some(SeriesCategory::Line);
+                volume_chart.series_list[2].start_index = 6;
+            }
+            DisplayCrossPattern::DeadOnly => {
+                volume_chart.series_list[2].category = Some(SeriesCategory::Line);
+                volume_chart.series_list[2].start_index = 6;
+            }
+        }
+        charts.add(ChildChart::Bar(volume_chart, None));
+
+        let mut rows = output.vec_close_cross_trend_analysis.table_chart_header();
         let mut body = output
-            .vec_trend
+            .vec_close_cross_trend_analysis
             .table_chart_rows(&output.display_cross_pattern);
         rows.append(&mut body);
         let mut summary = output
-            .vec_trend
+            .vec_close_cross_trend_analysis
             .table_chart_summary(&output.display_cross_pattern);
         rows.append(&mut summary);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
+        table_chart.title_text = "CloseCrossTrendAnalysis".to_string();
+        table_chart.width = self.width;
+        charts.add(ChildChart::Table(table_chart, None));
+
+        let mut rows = output.vec_volume_cross_trend_analysis.table_chart_header();
+        let mut body = output
+            .vec_volume_cross_trend_analysis
+            .table_chart_rows(&output.display_cross_pattern);
+        rows.append(&mut body);
+        let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
+        table_chart.title_text = "VolumeCrossTrendAnalysis".to_string();
         table_chart.width = self.width;
         charts.add(ChildChart::Table(table_chart, None));
 
@@ -155,8 +259,12 @@ impl TrendAnalysisPresenter for Chart {
         let mut body = output.vec_candle_stick.table_chart_rows();
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
+        table_chart.title_text = "Stocks".to_string();
         table_chart.width = self.width;
         charts.add(ChildChart::Table(table_chart, None));
+
+        // ECP1/ECP2の結果をテーブルで表示
+        // output.vec_ecp2
 
         Ok(TrendAnalysisResponse::Chart {
             company,
@@ -164,8 +272,8 @@ impl TrendAnalysisPresenter for Chart {
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
             display_cross_pattern: output.display_cross_pattern,
-            chance_rate: output.vec_trend.chance_rate,
-            latest_chance: output.vec_trend.latest_chance,
+            chance_rate: output.vec_close_cross_trend_analysis.chance_rate,
+            latest_chance: output.vec_close_cross_trend_analysis.latest_chance,
         })
     }
 }

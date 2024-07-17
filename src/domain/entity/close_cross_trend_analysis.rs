@@ -1,23 +1,28 @@
-use crate::domain::entity::chance_loss::{ChanceLoss, CrossDirectionChangePair};
-use crate::domain::entity::cross::{Cross, CrossDirection, CrossDirectionType};
-use crate::domain::entity::stock::Stock;
+use std::ops::{Mul, Sub};
+
 use chrono::NaiveDate;
 use itertools::Itertools;
-use std::ops::{Mul, Sub};
+
 use CrossDirectionType::{Dead, Golden, Neither};
 
-pub struct StockCrossPair<'a> {
-    pub stocks: &'a [Stock],
-    pub crosses: &'a [Cross],
-}
+use crate::domain::entity::chance_loss::{ChanceLoss, CrossDirectionChangePair};
+use crate::domain::entity::cross::CrossDirectionType;
+use crate::domain::entity::stocks_crosses_pair::StocksCrossesPair;
 
+/// 終値ベースのクロストレンド
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct CrossTrendAnalysis<const N: usize> {
-    pub cross_date: NaiveDate,
-    pub close_on_cross: f64,
-    pub close_after_n_days: f64,
-    pub cross_direction_5_25: CrossDirection<5, 25>,
-    pub change: f64,
+pub struct CloseCrossTrendAnalysis {
+    /// 判定日
+    pub date: NaiveDate,
+    /// 判定日の終値
+    pub value_on_cross: f64,
+    /// N日後の終値
+    pub value_after_n_days: f64,
+    /// クロス方向
+    pub r#type: CrossDirectionType,
+    /// 増減率
+    pub rate_of_change: f64,
+    /// チャンスロス
     pub chance_loss: ChanceLoss,
 }
 
@@ -77,60 +82,62 @@ impl From<LatestChance> for NaiveDate {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecCrossTrendAnalysis<const N: usize> {
-    pub vec_trend_analysis: Vec<CrossTrendAnalysis<N>>,
+pub struct VecCloseCrossTrendAnalysis<const N: usize> {
+    pub vec_close_cross_trend_analysis: Vec<CloseCrossTrendAnalysis>,
     pub chance_rate: ChanceRate,
     pub latest_chance: LatestChance,
 }
 
-impl<'a, const N: usize> From<StockCrossPair<'a>> for VecCrossTrendAnalysis<N> {
-    fn from(value: StockCrossPair<'a>) -> Self {
-        let StockCrossPair { stocks, crosses } = value;
-        let vec_trend_analysis = crosses
+impl<'a, const N: usize> From<&StocksCrossesPair<'a>> for VecCloseCrossTrendAnalysis<N> {
+    fn from(value: &StocksCrossesPair<'a>) -> Self {
+        let StocksCrossesPair { stocks, crosses } = value;
+        let vec_close_cross_trend_analysis = crosses
             .iter()
-            .filter(|cross| cross.cross_direction_5_25.0.ne(&Neither))
             .filter_map(|cross| {
+                if cross.cross_direction_5_25.close_average.eq(&Neither) {
+                    return None;
+                }
                 // Crossの発生した日を特定
-                stocks.iter().find_map(|stock| {
+                let Some((stock, cross)) = stocks.iter().find_map(|stock| {
                     if stock.date.eq(&cross.date) {
                         Some((stock, cross))
                     } else {
                         None
                     }
-                })
-            })
-            .filter_map(|(stock, cross)| {
+                }) else { return None };
                 // n日後のStockを取得。ただし営業日で並んでいる。
-                stocks
+                let Some((stock, cross, stock_after_n_days)) = stocks
                     .iter()
                     .find_position(|stock| stock.date.eq(&cross.date))
-                    .and_then(|(index, _)| stocks.get(index + N))
-                    .map(|stock_after_n_days| (stock, cross, stock_after_n_days))
-            })
-            .map(|(stock, cross, stock_after_n_days)| {
+                    .and_then(|(index, _)| {
+                        let Some(stock_after_n_days) = stocks.get(index + N) else {
+                            return None;
+                        };
+                        Some((stock, cross, stock_after_n_days))
+                    }) else { return None };
                 // 増減率を取得
-                let change = stock_after_n_days.close.sub(stock.close) / stock.close;
-                let change = change.mul(100.0);
+                let rate_of_change = stock_after_n_days.close.sub(stock.close) / stock.close;
+                let rate_of_change = rate_of_change.mul(100.0);
                 let cross_direction_chance_pair = CrossDirectionChangePair {
-                    cross_direction: cross.cross_direction_5_25.0,
-                    change,
+                    cross_direction: cross.cross_direction_5_25.close_average,
+                    rate_of_change,
                 };
                 let chance_loss = ChanceLoss::from(cross_direction_chance_pair);
-                CrossTrendAnalysis {
-                    cross_date: cross.date,
-                    close_on_cross: stock.close,
-                    close_after_n_days: stock_after_n_days.close,
-                    cross_direction_5_25: cross.cross_direction_5_25,
-                    change,
+                Some(CloseCrossTrendAnalysis {
+                    date: cross.date,
+                    value_on_cross: stock.close,
+                    value_after_n_days: stock_after_n_days.close,
+                    r#type: cross.cross_direction_5_25.close_average,
+                    rate_of_change,
                     chance_loss,
-                }
+                })
             })
             .collect_vec();
-        let golden_chance_count = vec_trend_analysis
+        let golden_chance_count = vec_close_cross_trend_analysis
             .iter()
             .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::GoldenChance))
             .count();
-        let golden_loss_count = vec_trend_analysis
+        let golden_loss_count = vec_close_cross_trend_analysis
             .iter()
             .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::GoldenLoss))
             .count();
@@ -142,18 +149,18 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecCrossTrendAnalysis<N> {
         } else {
             golden_only
         };
-        let dead_chance_count = vec_trend_analysis
+        let dead_chance_count = vec_close_cross_trend_analysis
             .iter()
             .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadChance))
             .count();
-        let dead_loss_count = vec_trend_analysis
+        let dead_loss_count = vec_close_cross_trend_analysis
             .iter()
             .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadLoss))
             .count();
         let dead_only =
             (dead_chance_count as f64 / (dead_chance_count + dead_loss_count) as f64).mul(100.0);
         let dead_only = if dead_only.is_nan() { 0.0 } else { dead_only };
-        let chance_count = vec_trend_analysis
+        let chance_count = vec_close_cross_trend_analysis
             .iter()
             .filter(|trend_analysis| match trend_analysis.chance_loss {
                 ChanceLoss::None => false,
@@ -163,29 +170,29 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecCrossTrendAnalysis<N> {
                 ChanceLoss::DeadLoss => false,
             })
             .count();
-        let all = (chance_count as f64 / vec_trend_analysis.len() as f64).mul(100.0);
+        let all = (chance_count as f64 / vec_close_cross_trend_analysis.len() as f64).mul(100.0);
         let all = if all.is_nan() { 0.0 } else { all };
         let chance_rate = ChanceRate {
             all,
             golden_only,
             dead_only,
         };
-        let latest_golden_chance = vec_trend_analysis
+        let latest_golden_chance = vec_close_cross_trend_analysis
             .iter()
             .rev()
             .find(|trend_analysis| trend_analysis.chance_loss.eq(&ChanceLoss::GoldenChance))
-            .map(|trend_analysis| trend_analysis.cross_date);
-        let latest_dead_chance = vec_trend_analysis
+            .map(|trend_analysis| trend_analysis.date);
+        let latest_dead_chance = vec_close_cross_trend_analysis
             .iter()
             .rev()
             .find(|trend_analysis| trend_analysis.chance_loss.eq(&ChanceLoss::DeadChance))
-            .map(|trend_analysis| trend_analysis.cross_date);
+            .map(|trend_analysis| trend_analysis.date);
         let latest_chance = LatestChance {
             latest_golden_chance,
             latest_dead_chance,
         };
-        VecCrossTrendAnalysis::<N> {
-            vec_trend_analysis,
+        VecCloseCrossTrendAnalysis::<N> {
+            vec_close_cross_trend_analysis,
             chance_rate,
             latest_chance,
         }
@@ -194,17 +201,19 @@ impl<'a, const N: usize> From<StockCrossPair<'a>> for VecCrossTrendAnalysis<N> {
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+
+    use crate::domain::entity::close_cross_trend_analysis::VecCloseCrossTrendAnalysis;
     use crate::domain::entity::cross::VecCross;
-    use crate::domain::entity::cross_trend_analysis::{StockCrossPair, VecCrossTrendAnalysis};
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
+    use crate::domain::entity::stocks_crosses_pair::StocksCrossesPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
-    use chrono::NaiveDate;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
     #[test]
-    fn vec_trend_analysis_test() {
+    fn vec_close_cross_trend_analysis_test() {
         let vec_stock = Csv::from_slice::<true>(CSV_8473);
         let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
         let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
@@ -213,18 +222,18 @@ mod tests {
             smas_o: smas_25.as_slice(),
         };
         let VecCross(crosses) = VecCross::from(sma_list_pair);
-        let stock_cross_pair = StockCrossPair {
+        let stocks_crosses_pair = StocksCrossesPair {
             stocks: vec_stock.as_slice(),
             crosses: crosses.as_slice(),
         };
         // 3日後トレンドを取得
-        let VecCrossTrendAnalysis {
-            vec_trend_analysis,
+        let VecCloseCrossTrendAnalysis {
+            vec_close_cross_trend_analysis,
             chance_rate,
             latest_chance,
-        } = VecCrossTrendAnalysis::<3>::from(stock_cross_pair);
+        } = VecCloseCrossTrendAnalysis::<3>::from(&stocks_crosses_pair);
         let actual = 11;
-        assert_eq!(actual, vec_trend_analysis.len());
+        assert_eq!(actual, vec_close_cross_trend_analysis.len());
         let actual = 45.45454545454545;
         assert_eq!(actual, chance_rate.all);
         let actual = 66.66666666666666;

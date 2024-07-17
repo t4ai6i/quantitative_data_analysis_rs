@@ -4,15 +4,16 @@ use strum::Display;
 
 use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::chance_loss::ChanceLoss;
+use crate::domain::entity::close_cross_trend_analysis::{
+    ChanceRate, LatestChance, VecCloseCrossTrendAnalysis,
+};
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::VecCross;
-use crate::domain::entity::cross_trend_analysis::{
-    ChanceRate, LatestChance, VecCrossTrendAnalysis,
-};
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
+use crate::domain::entity::volume_cross_trend_analysis::VecVolumeCrossTrendAnalysis;
 
 pub mod chart;
 pub mod json;
@@ -103,44 +104,17 @@ impl DisplayCrossPattern {
 }
 
 pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
-    company: Company,
-    vec_stock: VecStock,
-    vec_sma_5: VecSMA<5>,
-    vec_sma_25: VecSMA<25>,
-    vec_cross: VecCross,
-    vec_trend: VecCrossTrendAnalysis<N>,
-    vec_ecp1: VecECP1,
-    vec_ecp2: VecECP2,
-    vec_candle_stick: VecCandleStick<M>,
-    display_cross_pattern: DisplayCrossPattern,
-}
-
-impl<const N: usize, const M: usize> TrendAnalysisOutput<N, M> {
-    pub fn new(
-        company: Company,
-        vec_stock: VecStock,
-        vec_sma_5: VecSMA<5>,
-        vec_sma_25: VecSMA<25>,
-        vec_cross: VecCross,
-        vec_trend: VecCrossTrendAnalysis<N>,
-        vec_ecp1: VecECP1,
-        vec_ecp2: VecECP2,
-        vec_candle_stick: VecCandleStick<M>,
-        display_cross_pattern: DisplayCrossPattern,
-    ) -> Self {
-        Self {
-            company,
-            vec_stock,
-            vec_sma_5,
-            vec_sma_25,
-            vec_cross,
-            vec_trend,
-            vec_ecp1,
-            vec_ecp2,
-            vec_candle_stick,
-            display_cross_pattern,
-        }
-    }
+    pub company: Company,
+    pub vec_stock: VecStock,
+    pub vec_sma_5: VecSMA<5>,
+    pub vec_sma_25: VecSMA<25>,
+    pub vec_cross: VecCross,
+    pub vec_close_cross_trend_analysis: VecCloseCrossTrendAnalysis<N>,
+    pub vec_volume_cross_trend_analysis: VecVolumeCrossTrendAnalysis,
+    pub vec_ecp1: VecECP1,
+    pub vec_ecp2: VecECP2,
+    pub vec_candle_stick: VecCandleStick<M>,
+    pub display_cross_pattern: DisplayCrossPattern,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -174,7 +148,7 @@ mod tests {
     use anyhow::Result;
     use chrono::NaiveDate;
 
-    use crate::domain::entity::cross_trend_analysis::{ChanceRate, LatestChance};
+    use crate::domain::entity::close_cross_trend_analysis::{ChanceRate, LatestChance};
     use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 
     #[test]
