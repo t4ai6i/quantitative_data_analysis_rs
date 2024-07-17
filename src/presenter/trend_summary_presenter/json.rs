@@ -1,17 +1,12 @@
+use anyhow::Result;
+
 use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
 use crate::presenter::trend_summary_presenter::{
     TrendSummaryOutput, TrendSummaryPresenter, TrendSummaryResponse,
 };
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponseExt;
-use anyhow::Result;
 
 pub struct JSON;
-
-impl JSON {
-    pub fn new() -> Self {
-        Self
-    }
-}
 
 impl TrendSummaryPresenter for JSON {
     fn handle(

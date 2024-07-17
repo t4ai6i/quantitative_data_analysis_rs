@@ -3,9 +3,40 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 use simple_moving_average::{SumTreeSMA, SMA as OtherSMA};
 
+/// 終値、取引高の平均値
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
+pub struct Average<const N: usize> {
+    /// 終値
+    pub close: f64,
+    /// 取引高
+    pub volume: f64,
+}
+
+impl<const N: usize> From<&[Stock]> for Average<N> {
+    fn from(value: &[Stock]) -> Self {
+        // 終値のN日の単純移動平均
+        let mut ma = SumTreeSMA::<_, f64, { N }>::new();
+        for stock in value {
+            ma.add_sample(stock.close);
+        }
+        let close = ma.get_average();
+
+        // 取引高のN日の単純移動平均
+        let mut ma = SumTreeSMA::<_, f64, { N }>::new();
+        for stock in value {
+            ma.add_sample(stock.volume as _);
+        }
+        let volume = ma.get_average();
+        Self { close, volume }
+    }
+}
+
+/// 終値、取引高の単純移動平均
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct SMA<const N: usize> {
-    pub ave: f64,
+    /// 終値、取引高のN日単純移動平均
+    pub average: Average<N>,
+    /// N日目の日付
     pub date: NaiveDate,
 }
 
@@ -39,14 +70,9 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
     fn from(value: &[Stock]) -> Self {
         let smas = value
             .windows(N)
-            .map(|stocks| {
-                let mut ma = SumTreeSMA::<_, f64, { N }>::new();
-                for stock in stocks {
-                    ma.add_sample(stock.close);
-                }
-                let ave = ma.get_average();
-                let date = stocks.last().unwrap().date;
-                SMA { ave, date }
+            .map(|stocks| SMA {
+                average: Average::<N>::from(stocks),
+                date: stocks.last().unwrap().date,
             })
             .collect_vec();
         Self(smas)
