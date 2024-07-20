@@ -98,23 +98,21 @@ impl<'a, const N: usize> From<&StocksCrossesPair<'a>> for VecCloseCrossTrendAnal
                     return None;
                 }
                 // Crossの発生した日を特定
-                let Some((stock, cross)) = stocks.iter().find_map(|stock| {
+                let (stock, cross) = stocks.iter().find_map(|stock| {
                     if stock.date.eq(&cross.date) {
                         Some((stock, cross))
                     } else {
                         None
                     }
-                }) else { return None };
+                })?;
                 // n日後のStockを取得。ただし営業日で並んでいる。
-                let Some((stock, cross, stock_after_n_days)) = stocks
+                let (stock, cross, stock_after_n_days) = stocks
                     .iter()
                     .find_position(|stock| stock.date.eq(&cross.date))
                     .and_then(|(index, _)| {
-                        let Some(stock_after_n_days) = stocks.get(index + N) else {
-                            return None;
-                        };
+                        let stock_after_n_days = stocks.get(index + N)?;
                         Some((stock, cross, stock_after_n_days))
-                    }) else { return None };
+                    })?;
                 // 増減率を取得
                 let rate_of_change = stock_after_n_days.close.sub(stock.close) / stock.close;
                 let rate_of_change = rate_of_change.mul(100.0);

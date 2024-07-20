@@ -28,9 +28,7 @@ impl<'a> From<&StocksCrossesPair<'a>> for VecVolumeCrossTrendAnalysis {
                     return None;
                 }
                 // クロス発生日と同じ日の株価情報を取得
-                let Some(stock) = stocks.iter().find(|stock| {
-                    stock.date.eq(&cross.date)
-                }) else { return None };
+                let stock = stocks.iter().find(|stock| stock.date.eq(&cross.date))?;
                 Some(VolumeCrossTrendAnalysis {
                     date: stock.date,
                     value_on_cross: stock.volume,

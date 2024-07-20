@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
     }
 
     // このexampleではひとつの証券コードだが、運用ではJQuantsAPIで取得できる全証券コード毎のトレンド解析結果のサマリーを出力する
-    let interactor = TrendSummaryInteractor::new();
+    let interactor = TrendSummaryInteractor;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = TrendSummaryInteractor::new();
+    let interactor = TrendSummaryInteractor;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_summary_presenter::json::JSON;
@@ -153,7 +153,7 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = TrendSummaryInteractor::new();
+    let interactor = TrendSummaryInteractor;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     let presenter = trend_summary_presenter::json::JSON;
     let controller = TrendSummaryController::new(&interactor, &presenter);
