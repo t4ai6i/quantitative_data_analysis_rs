@@ -1,11 +1,11 @@
-use crate::presenter::trend_analysis_presenter::{
-    DisplayCrossPattern, TrendAnalysisPresenter, TrendAnalysisResponse,
-};
+use anyhow::Result;
+use chrono::NaiveDate;
+
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::trend_analysis_presenter::{TrendAnalysisPresenter, TrendAnalysisResponse};
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
 };
-use anyhow::Result;
-use chrono::NaiveDate;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysisController<'a, I, P> {

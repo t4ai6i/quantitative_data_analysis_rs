@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 use crate::presenter::trend_summary_presenter::{
     TrendSummaryOutput, TrendSummaryPresenter, TrendSummaryResponse,
 };

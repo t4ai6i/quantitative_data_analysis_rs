@@ -1,5 +1,5 @@
 use crate::domain::entity::close_cross_trend_analysis::ChanceRate;
-use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 
 impl ChanceRate {
     pub fn to_string(&self, display_cross_pattern: &DisplayCrossPattern) -> String {

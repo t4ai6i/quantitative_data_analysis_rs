@@ -1,8 +1,10 @@
-use crate::presenter::trend_analysis_presenter::{DisplayCrossPattern, TrendAnalysisResponse};
+use anyhow::Result;
+
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::trend_summary_presenter::{TrendSummaryPresenter, TrendSummaryResponse};
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
 use crate::use_case::interface::trend_summary_use_case::{TrendSummaryInput, TrendSummaryUseCase};
-use anyhow::Result;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendSummaryController<'a, I, P> {

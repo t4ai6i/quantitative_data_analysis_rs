@@ -2,8 +2,7 @@ use itertools::Itertools;
 
 use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::close_cross_trend_analysis::VecCloseCrossTrendAnalysis;
-use crate::domain::entity::cross::CrossDirectionType;
-use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 
 pub trait VecCloseCrossTrendAnalysisExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
@@ -26,14 +25,8 @@ impl<const N: usize> VecCloseCrossTrendAnalysisExt for VecCloseCrossTrendAnalysi
     fn table_chart_rows(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
         self.vec_close_cross_trend_analysis
             .iter()
-            .filter(|trend_analysis| match pattern {
-                DisplayCrossPattern::All => true,
-                DisplayCrossPattern::GoldenOnly => {
-                    trend_analysis.r#type.eq(&CrossDirectionType::Golden)
-                }
-                DisplayCrossPattern::DeadOnly => {
-                    trend_analysis.r#type.eq(&CrossDirectionType::Dead)
-                }
+            .filter(|trend_analysis| {
+                pattern.is_display_by_cross_direction_type(&trend_analysis.r#type)
             })
             .map(|trend_analysis| {
                 let chance_loss = match trend_analysis.chance_loss {
@@ -93,7 +86,7 @@ mod tests {
     use crate::domain::entity::stocks_crosses_pair::StocksCrossesPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
-    use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+    use crate::presenter::display_cross_pattern::DisplayCrossPattern;
     use crate::presenter::view_model::vec_close_cross_trend_analysis::VecCloseCrossTrendAnalysisExt;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");

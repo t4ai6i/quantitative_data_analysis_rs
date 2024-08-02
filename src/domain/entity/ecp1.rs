@@ -1,5 +1,6 @@
-use itertools::Itertools;
 use std::cmp::Ordering;
+
+use itertools::Itertools;
 
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
 use crate::domain::entity::stock::Stock;
@@ -51,7 +52,7 @@ impl From<&[Stock]> for VecECP1 {
         let vec = value
             .windows(2)
             .map(|stock| {
-                let prev = stock.get(0).unwrap();
+                let prev = stock.first().unwrap();
                 let today = stock.get(1).unwrap();
                 // 前日・当日それぞれの安値を比較する
                 let low_ordering = today.low.partial_cmp(&prev.low);
@@ -73,11 +74,12 @@ impl From<&[Stock]> for VecECP1 {
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+
     use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
     use crate::domain::entity::ecp1::VecECP1;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
-    use chrono::NaiveDate;
 
     const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
     #[test]

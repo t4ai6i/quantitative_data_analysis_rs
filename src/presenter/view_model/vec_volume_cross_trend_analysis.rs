@@ -1,8 +1,7 @@
 use itertools::Itertools;
 
-use crate::domain::entity::cross::CrossDirectionType;
 use crate::domain::entity::volume_cross_trend_analysis::VecVolumeCrossTrendAnalysis;
-use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 
 pub trait VecVolumeCrossTrendAnalysisExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
@@ -21,14 +20,8 @@ impl VecVolumeCrossTrendAnalysisExt for VecVolumeCrossTrendAnalysis {
     fn table_chart_rows(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
         self.0
             .iter()
-            .filter(|trend_analysis| match pattern {
-                DisplayCrossPattern::All => true,
-                DisplayCrossPattern::GoldenOnly => {
-                    trend_analysis.r#type.eq(&CrossDirectionType::Golden)
-                }
-                DisplayCrossPattern::DeadOnly => {
-                    trend_analysis.r#type.eq(&CrossDirectionType::Dead)
-                }
+            .filter(|trend_analysis| {
+                pattern.is_display_by_cross_direction_type(&trend_analysis.r#type)
             })
             .map(|trend_analysis| {
                 let date = trend_analysis.date.format("%Y/%m/%d").to_string();

@@ -1,11 +1,13 @@
-use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+use std::backtrace::Backtrace;
+
+use anyhow::{Context, Result};
+use charts_rs::TableChart;
+
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 use crate::presenter::trend_summary_presenter::{
     TrendSummaryOutput, TrendSummaryPresenter, TrendSummaryResponse,
 };
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponseExt;
-use anyhow::{Context, Result};
-use charts_rs::TableChart;
-use std::backtrace::Backtrace;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Chart {

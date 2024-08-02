@@ -1,5 +1,6 @@
-use itertools::Itertools;
 use std::cmp::Ordering;
+
+use itertools::Itertools;
 
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
 use crate::domain::entity::candle_stick::{BullishBearishType, CandleStick};
@@ -72,7 +73,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
         let vec = value
             .windows(2)
             .map(|candle_sticks| {
-                let prev = candle_sticks.get(0).unwrap();
+                let prev = candle_sticks.first().unwrap();
                 let today = candle_sticks.get(1).unwrap();
 
                 let body_high_ordering = today.body_high.partial_cmp(&prev.body_high);
@@ -94,12 +95,13 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+
     use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
     use crate::domain::entity::candle_stick::VecCandleStick;
     use crate::domain::entity::ecp2::VecECP2;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
-    use chrono::NaiveDate;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;

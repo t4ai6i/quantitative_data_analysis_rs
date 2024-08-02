@@ -7,10 +7,9 @@ use quantitative_data_analysis_rs::controller::trend_analysis_controller::TrendA
 use quantitative_data_analysis_rs::controller::trend_summary_controller::TrendSummaryController;
 use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
 use quantitative_data_analysis_rs::infrastructure::jquants_api::JQuantsAPI;
+use quantitative_data_analysis_rs::presenter::display_cross_pattern::DisplayCrossPattern;
 use quantitative_data_analysis_rs::presenter::trend_analysis_presenter;
-use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::{
-    DisplayCrossPattern, TrendAnalysisResponse,
-};
+use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter;
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter::TrendSummaryResponse;
 use quantitative_data_analysis_rs::presenter::view_model::analysis::Analysis;
@@ -54,7 +53,7 @@ async fn main() -> Result<()> {
     }
 
     // このexampleではひとつの証券コードだが、運用ではJQuantsAPIで取得できる全証券コード毎のトレンド解析結果のサマリーを出力する
-    let interactor = TrendSummaryInteractor::new();
+    let interactor = TrendSummaryInteractor;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
@@ -82,7 +81,7 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = TrendSummaryInteractor::new();
+    let interactor = TrendSummaryInteractor;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_summary_presenter::json::JSON;
@@ -97,27 +96,42 @@ async fn main() -> Result<()> {
                 let Analysis {
                     cross_analysis,
                     ecp1_analysis,
-                    ecp2_analysis,
+                    ecp2_buy_golden,
+                    ecp2_sell_dead,
                     ..
                 } = e;
-                (cross_analysis, ecp1_analysis, ecp2_analysis)
+                (
+                    cross_analysis,
+                    ecp1_analysis,
+                    ecp2_buy_golden,
+                    ecp2_sell_dead,
+                )
             })
             .collect_vec();
-        let (cross_analysis, ecp1_analysis, ecp2_analysis): (Vec<_>, Vec<_>, Vec<_>) =
-            multiunzip(vec);
+        let (cross_analysis, ecp1_analysis, ecp2_buy_golden, ecp2_sell_dead): (
+            Vec<_>,
+            Vec<_>,
+            Vec<_>,
+            Vec<_>,
+        ) = multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&cross_analysis)?;
         assert_eq!(
-            include_str!("../assets/8473.T.cross_analysis_summary.json"),
+            include_str!("../assets/8473.T.cross_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
-            include_str!("../assets/8473.T.ecp1_analysis_summary.json"),
+            include_str!("../assets/8473.T.ecp1_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&ecp2_analysis)?;
+        let json_str = serde_json::to_string_pretty(&ecp2_buy_golden)?;
         assert_eq!(
-            include_str!("../assets/8473.T.ecp2_analysis_summary.json"),
+            include_str!("../assets/8473.T.ecp2_buy_golden.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string_pretty(&ecp2_sell_dead)?;
+        assert_eq!(
+            include_str!("../assets/8473.T.ecp2_sell_dead.json"),
             &json_str
         );
     };
@@ -153,7 +167,7 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = TrendSummaryInteractor::new();
+    let interactor = TrendSummaryInteractor;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     let presenter = trend_summary_presenter::json::JSON;
     let controller = TrendSummaryController::new(&interactor, &presenter);
@@ -168,27 +182,20 @@ async fn main() -> Result<()> {
                 let Analysis {
                     cross_analysis,
                     ecp1_analysis,
-                    ecp2_analysis,
                     ..
                 } = e;
-                (cross_analysis, ecp1_analysis, ecp2_analysis)
+                (cross_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (cross_analysis, ecp1_analysis, ecp2_analysis): (Vec<_>, Vec<_>, Vec<_>) =
-            multiunzip(vec);
+        let (cross_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = vec.iter().cloned().unzip();
         let json_str = serde_json::to_string_pretty(&cross_analysis)?;
         assert_eq!(
-            include_str!("../assets/9223.T.cross_analysis_summary.json"),
+            include_str!("../assets/9223.T.cross_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
-            include_str!("../assets/9223.T.ecp1_analysis_summary.json"),
-            &json_str
-        );
-        let json_str = serde_json::to_string_pretty(&ecp2_analysis)?;
-        assert_eq!(
-            include_str!("../assets/9223.T.ecp2_analysis_summary.json"),
+            include_str!("../assets/9223.T.ecp1_analysis.json"),
             &json_str
         );
     };
