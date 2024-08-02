@@ -17,7 +17,8 @@ impl TrendAnalysisPresenter for JSON {
             chance_rate: output.vec_close_cross_trend_analysis.chance_rate,
             latest_chance: output.vec_close_cross_trend_analysis.latest_chance,
             vec_ecp1: output.vec_ecp1,
-            vec_ecp2: output.vec_ecp2,
+            candle_stick_pattern_cross_trend_analysis: output
+                .candle_stick_pattern_cross_trend_analysis,
         })
     }
 }

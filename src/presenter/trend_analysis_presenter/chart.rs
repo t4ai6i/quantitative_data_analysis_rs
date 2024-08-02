@@ -10,7 +10,7 @@ use itertools::Itertools;
 use crate::domain::entity::cross::CrossDirectionType;
 use crate::presenter::{
     trend_analysis_presenter::{
-        DisplayCrossPattern, TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
+        TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
         vec_candle_stick::VecCandleStickExt,
@@ -19,6 +19,7 @@ use crate::presenter::{
         vec_volume_cross_trend_analysis::VecVolumeCrossTrendAnalysisExt,
     },
 };
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 use crate::utils::float;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]

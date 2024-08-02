@@ -1,10 +1,12 @@
-use crate::domain::entity::ordering::{Ordering, OrderingPair};
-use crate::domain::entity::sma::{Average, SMAListPair, SMAPair};
+use std::cmp::Ordering as Ord;
+
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering as Ord;
 use strum::Display;
+
+use crate::domain::entity::ordering::{Ordering, OrderingPair};
+use crate::domain::entity::sma::{Average, SMAListPair, SMAPair};
 
 /// 移動平均線が交わったときの向き
 #[derive(
@@ -32,12 +34,12 @@ impl From<(Option<Ord>, Option<Ord>)> for CrossDirectionType {
 
 /// 移動平均線NとOが交わったときの向き
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct CrossDirection<const N: usize, const O: usize> {
+pub struct CrossDirection {
     pub close_average: CrossDirectionType,
     pub volume_average: CrossDirectionType,
 }
 
-impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection<N, O> {
+impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection {
     fn from(value: OrderingPair<N, O>) -> Self {
         // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
         // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
@@ -58,7 +60,7 @@ pub struct Cross {
     pub sma_5_average: Option<Average<5>>,
     pub sma_25_average: Option<Average<25>>,
     pub ordering_5_25: Ordering<5, 25>,
-    pub cross_direction_5_25: CrossDirection<5, 25>,
+    pub cross_direction_5_25: CrossDirection,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]

@@ -1,7 +1,9 @@
-use crate::presenter::trend_analysis_presenter::{DisplayCrossPattern, TrendAnalysisOutput};
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::NaiveDate;
+
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub struct TrendAnalysisInput {

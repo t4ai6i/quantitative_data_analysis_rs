@@ -1,11 +1,12 @@
+use chrono::NaiveDate;
+use itertools::Itertools;
+
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::CrossDirectionType;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::view_model::analysis::Analysis;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::cross_analysis::CrossAnalysis;
-use chrono::NaiveDate;
-use itertools::Itertools;
 
 pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysisResponse>);
 
@@ -55,7 +56,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     chance_rate,
                     latest_chance,
                     vec_ecp1,
-                    vec_ecp2,
+                    candle_stick_pattern_cross_trend_analysis,
                 } => {
                     let Company { code, symbol, .. } = company;
                     let latest_chance = display_cross_pattern.get_latest_chance(&latest_chance);
@@ -68,13 +69,15 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                         chance_rate,
                     };
                     let ecp1_analysis = BuySellSignalAnalysis::from(vec_ecp1.0.as_slice());
-                    let ecp2_analysis = BuySellSignalAnalysis::from(vec_ecp2.0.as_slice());
+                    let ecp2_buy_golden = candle_stick_pattern_cross_trend_analysis.ecp2_buy_golden;
+                    let ecp2_sell_dead = candle_stick_pattern_cross_trend_analysis.ecp2_sell_dead;
                     Some(Analysis {
                         code,
                         symbol,
                         cross_analysis,
                         ecp1_analysis,
-                        ecp2_analysis,
+                        ecp2_buy_golden,
+                        ecp2_sell_dead,
                     })
                 }
                 _ => None,

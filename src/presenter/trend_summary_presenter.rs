@@ -1,10 +1,11 @@
-pub mod chart;
-pub mod json;
+use anyhow::Result;
 
-use crate::presenter::trend_analysis_presenter::DisplayCrossPattern;
+use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 use crate::presenter::view_model::analysis::Analysis;
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
-use anyhow::Result;
+
+pub mod chart;
+pub mod json;
 
 pub struct TrendSummaryOutput {
     vec_trend_analysis_response: VecTrendAnalysisResponse,
