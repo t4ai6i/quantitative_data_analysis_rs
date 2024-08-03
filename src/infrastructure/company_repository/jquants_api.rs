@@ -24,7 +24,7 @@ impl CompanyRepository for JQuantsAPI {
             .as_array()
             .unwrap()
             .iter()
-            .map(Self::company_from_value)
+            .map(Company::from)
             .collect_vec();
         Ok(company)
     }
@@ -42,20 +42,21 @@ impl CompanyRepository for JQuantsAPI {
         let company = response["info"]
             .get(0)
             .with_context(|| format!("Not found company. {}", code))?;
-        let company = Self::company_from_value(company);
+        let company = Company::from(company);
         Ok(company)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+    use rstest::*;
+
     use crate::domain::entity::company::Company;
     use crate::domain::repository::company_repository::CompanyRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::utils::jquants_api::setup::Setup;
-    use anyhow::Result;
-    use rstest::*;
 
     #[fixture]
     async fn setup() -> Result<Token> {

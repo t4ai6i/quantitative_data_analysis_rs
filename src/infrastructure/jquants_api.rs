@@ -1,5 +1,6 @@
-use crate::domain::entity::company::Company;
-use crate::infrastructure::data_format::DataFormat;
+use std::collections::HashMap;
+use std::io;
+
 use anyhow::{bail, Result};
 use chrono::{Days, NaiveDateTime, Utc};
 use chrono_tz::Asia::Tokyo;
@@ -7,8 +8,8 @@ use itertools::Either;
 use query_string_builder::QueryString;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::io;
+
+use crate::infrastructure::data_format::DataFormat;
 
 const AUTH_USER_URL: &str = "https://api.jquants.com/v1/token/auth_user";
 const AUTH_REFRESH_URL: &str = "https://api.jquants.com/v1/token/auth_refresh";
@@ -149,23 +150,15 @@ impl JQuantsAPI {
             expires_in: now.checked_add_days(Days::new(1)).unwrap(),
         })
     }
-
-    pub fn company_from_value(value: &serde_json::Value) -> Company {
-        Company {
-            code: value["Code"].as_str().unwrap().to_string(),
-            name: value["CompanyNameEnglish"].as_str().unwrap().to_string(),
-            market: value["MarketCode"].as_str().unwrap().to_string(),
-            symbol: "".to_string(),
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use anyhow::Context;
     use chrono::Utc;
     use chrono_tz::Asia::Tokyo;
+
+    use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
 
     #[tokio::test]
     async fn jquants_api_test() -> anyhow::Result<()> {
