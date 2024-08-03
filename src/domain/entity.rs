@@ -1,6 +1,6 @@
 pub mod buy_sell_signal;
 pub mod candle_stick;
-pub(crate) mod candle_stick_pattern_cross_trend_analysis;
+pub mod candle_stick_pattern_cross_trend_analysis;
 pub mod candle_stick_patterns_crosses_set;
 pub mod chance_loss;
 pub mod close_cross_trend_analysis;
