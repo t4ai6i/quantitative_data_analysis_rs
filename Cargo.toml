@@ -1,6 +1,6 @@
 [package]
 name = "quantitative-data-analysis-rs"
-version = "0.26.2"
+version = "0.26.3"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -27,4 +27,4 @@ openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
 indoc = "2.0"
-rstest = "0.21.0"
+rstest = "0.22.0"
