@@ -17,7 +17,7 @@ use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
 };
-use crate::utils::iterator::get_vec_containing_number_from_end_of_array;
+use crate::utils::iterator::{FromEnd, VecT};
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysisInteractor<'a, SR, CR> {
@@ -42,7 +42,7 @@ where
 {
     async fn handle<
         const AFTER_DAYS: usize,
-        const FOR_DAYS: usize,
+        const FROM_END_DAYS: isize,
         const MARUBOZU_MIN_RATE: usize,
     >(
         &self,
@@ -72,7 +72,8 @@ where
         };
         let vec_cross = VecCross::from(sma_list_pair);
 
-        let stocks = get_vec_containing_number_from_end_of_array(vec_stock.0.as_slice(), FOR_DAYS);
+        let stocks = VecT(vec_stock.0.as_slice());
+        let stocks = stocks.from_end(FROM_END_DAYS);
         let vec_ecp1 = VecECP1::from(stocks.as_slice());
 
         let stock_cross_pair = StocksCrossesPair {
@@ -84,8 +85,8 @@ where
         let vec_volume_cross_trend_analysis = VecVolumeCrossTrendAnalysis::from(&stock_cross_pair);
 
         let vec_candle_stick = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.0.as_slice());
-        let candle_sticks =
-            get_vec_containing_number_from_end_of_array(vec_candle_stick.0.as_slice(), FOR_DAYS);
+        let candle_sticks = VecT(vec_candle_stick.0.as_slice());
+        let candle_sticks = candle_sticks.from_end(FROM_END_DAYS);
         let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
         let candle_stick_patterns_crosses_set = CandleStickPatternsCrossesSet {
             ecp2s: vec_ecp2.0.as_slice(),

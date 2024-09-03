@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::NaiveDate;
-use itertools::{Itertools, multiunzip};
+use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
 use quantitative_data_analysis_rs::controller::trend_analysis_controller::TrendAnalysisController;
@@ -17,8 +17,8 @@ use quantitative_data_analysis_rs::use_case::interactor::trend_analysis_interact
 use quantitative_data_analysis_rs::use_case::interactor::trend_summary_interactor::TrendSummaryInteractor;
 use quantitative_data_analysis_rs::utils::jquants_api::setup::Setup;
 
-const AFTER_5DAYS: usize = 5;
-const FOR_7DAYS: usize = 7;
+const AFTER_DAYS_5: usize = 5;
+const FROM_END_DAYS_7: isize = 7;
 const MARUBOZU_MIN_RATE: usize = 90;
 const DATE_FORMAT: &str = "%Y/%m/%d";
 
@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
     // 指定された証券コードのトレンド解析を行う
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let trend_analysis_response = controller
-        .analyze::<AFTER_5DAYS, FOR_7DAYS, MARUBOZU_MIN_RATE>(
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "8473",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
     let presenter = trend_analysis_presenter::json::JSON;
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let trend_analysis_response = controller
-        .analyze::<AFTER_5DAYS, FOR_7DAYS, MARUBOZU_MIN_RATE>(
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "8473",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
@@ -143,7 +143,7 @@ async fn main() -> Result<()> {
         trend_analysis_presenter::chart::Chart::new("chalk", 2560.0, 720.0, DATE_FORMAT);
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let trend_analysis_response = controller
-        .analyze::<AFTER_5DAYS, FOR_7DAYS, MARUBOZU_MIN_RATE>(
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "9223",
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
@@ -158,7 +158,7 @@ async fn main() -> Result<()> {
     let presenter = trend_analysis_presenter::json::JSON;
     let controller = TrendAnalysisController::new(&interactor, &presenter);
     let trend_analysis_response = controller
-        .analyze::<AFTER_5DAYS, FOR_7DAYS, MARUBOZU_MIN_RATE>(
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "9223",
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),

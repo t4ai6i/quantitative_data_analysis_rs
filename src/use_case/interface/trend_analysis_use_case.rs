@@ -36,7 +36,7 @@ impl TrendAnalysisInput {
 pub trait TrendAnalysisUseCase {
     async fn handle<
         const AFTER_DAYS: usize,
-        const FOR_DAYS: usize,
+        const FROM_END_DAYS: isize,
         const MARUBOZU_MIN_RATE: usize,
     >(
         &self,
