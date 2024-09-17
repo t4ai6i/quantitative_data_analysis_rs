@@ -76,112 +76,114 @@ impl From<&[Stock]> for VecECP1 {
 mod tests {
     use chrono::NaiveDate;
 
-    use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
+    use crate::domain::entity::buy_sell_signal::tests::TupleVecBuySellSignal;
+    use crate::domain::entity::buy_sell_signal::{
+        BuySellSignal,
+        BuySellSignalType::{Buy, Sell},
+    };
     use crate::domain::entity::ecp1::VecECP1;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
     const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+
     #[test]
     fn from_test() {
         let vec_stock = Csv::from_slice::<true>(CSV_9223);
         let vec_ecp1 = VecECP1::from(vec_stock.as_slice());
-        let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_ecp1
-            .0
-            .into_iter()
-            .filter(|signal| !signal.r#type.eq(&BuySellSignalType::Stay))
-            .partition(|signal| signal.r#type.eq(&BuySellSignalType::Buy));
-        let expected: (Vec<BuySellSignal>, Vec<BuySellSignal>) = (
+        let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
+            TupleVecBuySellSignal::from(vec_ecp1.0.as_slice()).0;
+        let (expected_buy, expected_sell): (Vec<BuySellSignal>, Vec<BuySellSignal>) = (
             vec![
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2023, 12, 28).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2024, 1, 4).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2024, 1, 19).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2024, 1, 30).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2024, 2, 2).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2024, 2, 5).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Buy,
+                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2024, 2, 14).unwrap(),
                 },
             ],
             vec![
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2023, 12, 27).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 10).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 11).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 16).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 18).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 23).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 24).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 25).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 1, 26).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 2, 7).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 2, 8).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 2, 15).unwrap(),
                 },
                 BuySellSignal {
-                    r#type: BuySellSignalType::Sell,
+                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
                 },
             ],
         );
-        assert_eq!(actual_buy, expected.0);
-        assert_eq!(actual_sell, expected.1);
+        assert_eq!(actual_buy, expected_buy);
+        assert_eq!(actual_sell, expected_sell);
     }
 }

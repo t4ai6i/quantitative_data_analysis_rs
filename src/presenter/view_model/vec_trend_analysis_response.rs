@@ -1,12 +1,12 @@
-use chrono::NaiveDate;
-use itertools::Itertools;
-
+use crate::domain::entity::candle_stick_pattern_date_set::CandleStickPatternDateSet;
 use crate::domain::entity::company::Company;
 use crate::domain::entity::cross::CrossDirectionType;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::view_model::analysis::Analysis;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::cross_analysis::CrossAnalysis;
+use chrono::NaiveDate;
+use itertools::Itertools;
 
 pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysisResponse>);
 
@@ -55,8 +55,13 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     display_cross_pattern,
                     chance_rate,
                     latest_chance,
+                    latest_golden_cross,
+                    latest_dead_cross,
+                    latest_ecp2_buy,
+                    latest_ecp2_sell,
+                    latest_msesp_buy,
+                    latest_msesp_sell,
                     vec_ecp1,
-                    candle_stick_pattern_cross_trend_analysis,
                 } => {
                     let Company { code, symbol, .. } = company;
                     let latest_chance = display_cross_pattern.get_latest_chance(&latest_chance);
@@ -69,15 +74,35 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                         chance_rate,
                     };
                     let ecp1_analysis = BuySellSignalAnalysis::from(vec_ecp1.0.as_slice());
-                    let ecp2_buy_golden = candle_stick_pattern_cross_trend_analysis.ecp2_buy_golden;
-                    let ecp2_sell_dead = candle_stick_pattern_cross_trend_analysis.ecp2_sell_dead;
+                    let golden_buy_ecp2_msesp =
+                        match (latest_golden_cross, latest_ecp2_buy, latest_msesp_buy) {
+                            (Some(cross_date), Some(ecp2_date), Some(msesp_date)) => {
+                                Some(CandleStickPatternDateSet {
+                                    cross_date,
+                                    ecp2_date,
+                                    msesp_date,
+                                })
+                            }
+                            _ => None,
+                        };
+                    let dead_sell_ecp2_msesp =
+                        match (latest_dead_cross, latest_ecp2_sell, latest_msesp_sell) {
+                            (Some(cross_date), Some(ecp2_date), Some(msesp_date)) => {
+                                Some(CandleStickPatternDateSet {
+                                    cross_date,
+                                    ecp2_date,
+                                    msesp_date,
+                                })
+                            }
+                            _ => None,
+                        };
                     Some(Analysis {
                         code,
                         symbol,
                         cross_analysis,
                         ecp1_analysis,
-                        ecp2_buy_golden,
-                        ecp2_sell_dead,
+                        buy_candle_stick_pattern: golden_buy_ecp2_msesp,
+                        sell_candle_stick_pattern: dead_sell_ecp2_msesp,
                     })
                 }
                 _ => None,
