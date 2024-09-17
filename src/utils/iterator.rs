@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
 pub trait FromEnd<T> {
-    fn from_end(&self, reverse_index: isize) -> Vec<T>;
+    fn get_from_end(&self, reverse_index: isize) -> Vec<T>;
 }
 
 pub struct VecT<'a, T>(pub &'a [T]);
@@ -24,15 +24,15 @@ where
     /// use quantitative_data_analysis_rs::utils::iterator::{FromEnd, VecT};
     /// let vec = vec![0, 1, 2, 3, 4];
     /// let vec = VecT(vec.as_slice());
-    /// let actual = vec.from_end(0);
+    /// let actual = vec.get_from_end(0);
     /// assert_eq!(actual, Vec::<i32>::new());
-    /// let actual = vec.from_end(-2);
+    /// let actual = vec.get_from_end(-2);
     /// assert_eq!(actual, vec![3, 4]);
-    /// let actual = vec.from_end(2);
+    /// let actual = vec.get_from_end(2);
     /// assert_eq!(actual, vec![3, 4]);
     ///
     /// ```
-    fn from_end(&self, reverse_index: isize) -> Vec<T> {
+    fn get_from_end(&self, reverse_index: isize) -> Vec<T> {
         let index = self.0.len().checked_sub(reverse_index.unsigned_abs());
         let index = index.unwrap_or_default();
         let range = index..;
@@ -49,31 +49,31 @@ mod tests {
         let vec = vec![0, 1, 2, 3, 4];
         let vec = VecT(vec.as_slice());
 
-        let actual = vec.from_end(0);
+        let actual = vec.get_from_end(0);
         assert_eq!(actual, Vec::<i32>::new());
 
-        let actual = vec.from_end(-1);
+        let actual = vec.get_from_end(-1);
         assert_eq!(actual, vec![4]);
 
-        let actual = vec.from_end(-2);
+        let actual = vec.get_from_end(-2);
         assert_eq!(actual, vec![3, 4]);
 
-        let actual = vec.from_end(-4);
+        let actual = vec.get_from_end(-4);
         assert_eq!(actual, vec![1, 2, 3, 4]);
 
-        let actual = vec.from_end(-5);
+        let actual = vec.get_from_end(-5);
         assert_eq!(actual, vec![0, 1, 2, 3, 4]);
 
-        let actual = vec.from_end(-6);
+        let actual = vec.get_from_end(-6);
         assert_eq!(actual, vec![0, 1, 2, 3, 4]);
 
-        let actual = vec.from_end(6);
+        let actual = vec.get_from_end(6);
         assert_eq!(actual, vec![0, 1, 2, 3, 4]);
 
-        let actual = vec.from_end(5);
+        let actual = vec.get_from_end(5);
         assert_eq!(actual, vec![0, 1, 2, 3, 4]);
 
-        let actual = vec.from_end(1);
+        let actual = vec.get_from_end(1);
         assert_eq!(actual, vec![4]);
     }
 }

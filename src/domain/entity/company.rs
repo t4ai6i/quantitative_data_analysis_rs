@@ -27,7 +27,7 @@ impl Company {
     pub fn symbol(code: &str, market: &str) -> String {
         let market = match market {
             "JPX" | "T" | "東証" | "東S" | "東P" | "東G" | "名N" => "T".to_string(),
-            x if x.is_empty() => "".to_string(),
+            "" => "".to_string(),
             _ => panic!("Unknown market: {}", market),
         };
         if market.is_empty() {

@@ -96,19 +96,19 @@ async fn main() -> Result<()> {
                 let Analysis {
                     cross_analysis,
                     ecp1_analysis,
-                    ecp2_buy_golden,
-                    ecp2_sell_dead,
+                    buy_candle_stick_pattern: golden_buy_ecp2_msesp,
+                    sell_candle_stick_pattern: dead_sell_ecp2_msesp,
                     ..
                 } = e;
                 (
                     cross_analysis,
                     ecp1_analysis,
-                    ecp2_buy_golden,
-                    ecp2_sell_dead,
+                    golden_buy_ecp2_msesp,
+                    dead_sell_ecp2_msesp,
                 )
             })
             .collect_vec();
-        let (cross_analysis, ecp1_analysis, ecp2_buy_golden, ecp2_sell_dead): (
+        let (cross_analysis, ecp1_analysis, golden_buy_ecp2_msesp, dead_sell_ecp2_msesp): (
             Vec<_>,
             Vec<_>,
             Vec<_>,
@@ -124,14 +124,14 @@ async fn main() -> Result<()> {
             include_str!("../assets/8473.T.ecp1_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&ecp2_buy_golden)?;
+        let json_str = serde_json::to_string_pretty(&golden_buy_ecp2_msesp)?;
         assert_eq!(
-            include_str!("../assets/8473.T.ecp2_buy_golden.json"),
+            include_str!("../assets/8473.T.golden_buy_ecp2_msesp.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&ecp2_sell_dead)?;
+        let json_str = serde_json::to_string_pretty(&dead_sell_ecp2_msesp)?;
         assert_eq!(
-            include_str!("../assets/8473.T.ecp2_sell_dead.json"),
+            include_str!("../assets/8473.T.dead_sell_ecp2_msesp.json"),
             &json_str
         );
     };

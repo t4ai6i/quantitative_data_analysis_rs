@@ -19,3 +19,21 @@ pub struct BuySellSignal {
     pub r#type: BuySellSignalType,
     pub date: NaiveDate,
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use crate::domain::entity::buy_sell_signal::BuySellSignal;
+    use crate::domain::entity::buy_sell_signal::BuySellSignalType::{Buy, Stay};
+
+    pub(crate) struct TupleVecBuySellSignal(pub(crate) (Vec<BuySellSignal>, Vec<BuySellSignal>));
+
+    impl From<&[BuySellSignal]> for TupleVecBuySellSignal {
+        fn from(value: &[BuySellSignal]) -> Self {
+            let tuple: (Vec<_>, Vec<_>) = value
+                .iter()
+                .filter(|s| !s.r#type.eq(&Stay))
+                .partition(|signal| signal.r#type.eq(&Buy));
+            TupleVecBuySellSignal(tuple)
+        }
+    }
+}

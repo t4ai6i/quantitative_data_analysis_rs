@@ -1,7 +1,5 @@
-use anyhow::Result;
-
 use crate::domain::entity::candle_stick::VecCandleStick;
-use crate::domain::entity::candle_stick_pattern_cross_trend_analysis::CandleStickPatternCrossTrendAnalysis;
+use crate::domain::entity::candle_stick_pattern_analysis::CandleStickPatternAnalysis;
 use crate::domain::entity::close_cross_trend_analysis::{
     ChanceRate, LatestChance, VecCloseCrossTrendAnalysis,
 };
@@ -12,6 +10,8 @@ use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
 use crate::domain::entity::volume_cross_trend_analysis::VecVolumeCrossTrendAnalysis;
 use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use anyhow::Result;
+use chrono::NaiveDate;
 
 pub mod chart;
 pub mod json;
@@ -26,7 +26,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_volume_cross_trend_analysis: VecVolumeCrossTrendAnalysis,
     pub vec_ecp1: VecECP1,
     pub vec_candle_stick: VecCandleStick<M>,
-    pub candle_stick_pattern_cross_trend_analysis: CandleStickPatternCrossTrendAnalysis,
+    pub candle_stick_pattern_analysis: CandleStickPatternAnalysis,
     pub display_cross_pattern: DisplayCrossPattern,
 }
 
@@ -44,8 +44,13 @@ pub enum TrendAnalysisResponse {
         display_cross_pattern: DisplayCrossPattern,
         chance_rate: ChanceRate,
         latest_chance: LatestChance,
+        latest_golden_cross: Option<NaiveDate>,
+        latest_dead_cross: Option<NaiveDate>,
+        latest_ecp2_buy: Option<NaiveDate>,
+        latest_ecp2_sell: Option<NaiveDate>,
+        latest_msesp_buy: Option<NaiveDate>,
+        latest_msesp_sell: Option<NaiveDate>,
         vec_ecp1: VecECP1,
-        candle_stick_pattern_cross_trend_analysis: CandleStickPatternCrossTrendAnalysis,
     },
 }
 
