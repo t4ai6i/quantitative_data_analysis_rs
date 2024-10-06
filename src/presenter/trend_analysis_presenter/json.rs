@@ -1,7 +1,7 @@
 use crate::domain::entity::candle_stick_pattern_analysis::CandleStickPatternAnalysis;
-use crate::domain::entity::close_cross_trend_analysis::VecCloseCrossTrendAnalysis;
-use crate::domain::entity::cross::CrossDirectionType;
-use crate::domain::entity::cross::CrossDirectionType::{Dead, Golden};
+use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
+use crate::domain::entity::macos::MACOSType;
+use crate::domain::entity::macos::MACOSType::{Dead, Golden};
 use crate::presenter::trend_analysis_presenter::{
     TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
 };
@@ -16,26 +16,26 @@ impl TrendAnalysisPresenter for JSON {
         &self,
         output: TrendAnalysisOutput<N, M>,
     ) -> Result<TrendAnalysisResponse> {
-        let latest_golden_cross = Self::get_latest_cross(&Golden, &output);
-        let latest_dead_cross = Self::get_latest_cross(&Dead, &output);
+        let latest_golden_macos = Self::get_latest_macos(&Golden, &output);
+        let latest_dead_macos = Self::get_latest_macos(&Dead, &output);
         let CandleStickPatternAnalysis {
             latest_ecp2_buy,
             latest_ecp2_sell,
             latest_msesp_buy,
             latest_msesp_sell,
         } = output.candle_stick_pattern_analysis;
-        let VecCloseCrossTrendAnalysis {
+        let VecCloseMACOSTrendAnalysis {
             chance_rate,
             latest_chance,
             ..
-        } = output.vec_close_cross_trend_analysis;
+        } = output.vec_close_macos_trend_analysis;
         Ok(TrendAnalysisResponse::Json {
             company: output.company,
-            display_cross_pattern: output.display_cross_pattern,
+            display_macos_pattern: output.display_macos_pattern,
             chance_rate,
             latest_chance,
-            latest_golden_cross,
-            latest_dead_cross,
+            latest_golden_macos,
+            latest_dead_macos,
             latest_ecp2_buy,
             latest_ecp2_sell,
             latest_msesp_buy,
@@ -46,16 +46,16 @@ impl TrendAnalysisPresenter for JSON {
 }
 
 impl JSON {
-    fn get_latest_cross<const N: usize, const M: usize>(
-        r#type: &CrossDirectionType,
+    fn get_latest_macos<const N: usize, const M: usize>(
+        r#type: &MACOSType,
         output: &TrendAnalysisOutput<{ N }, { M }>,
     ) -> Option<NaiveDate> {
         output
-            .vec_cross
+            .vec_macos
             .0
             .as_slice()
             .iter()
-            .filter(|cross| cross.cross_direction_5_25.close_average.eq(r#type))
+            .filter(|macos| macos.macos_set_5_25.close.eq(r#type))
             .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
             .rev()
             .last()

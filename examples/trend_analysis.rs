@@ -7,7 +7,7 @@ use quantitative_data_analysis_rs::controller::trend_analysis_controller::TrendA
 use quantitative_data_analysis_rs::controller::trend_summary_controller::TrendSummaryController;
 use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
 use quantitative_data_analysis_rs::infrastructure::jquants_api::JQuantsAPI;
-use quantitative_data_analysis_rs::presenter::display_cross_pattern::DisplayCrossPattern;
+use quantitative_data_analysis_rs::presenter::display_macos_pattern::DisplayMACOSPattern;
 use quantitative_data_analysis_rs::presenter::trend_analysis_presenter;
 use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter;
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
-            DisplayCrossPattern::All,
+            DisplayMACOSPattern::All,
         )
         .await?;
     if let TrendAnalysisResponse::Chart { ref body, .. } = trend_analysis_response {
@@ -59,7 +59,7 @@ async fn main() -> Result<()> {
     let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
     let controller = TrendSummaryController::new(&interactor, &presenter);
     if let TrendSummaryResponse::Chart { body } = controller
-        .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
+        .analyze(vec_trend_analysis_response, DisplayMACOSPattern::All)
         .await?
     {
         write("./examples/trend_summary.svg", &body).await?;
@@ -77,7 +77,7 @@ async fn main() -> Result<()> {
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
-            DisplayCrossPattern::All,
+            DisplayMACOSPattern::All,
         )
         .await?;
 
@@ -87,36 +87,36 @@ async fn main() -> Result<()> {
     let presenter = trend_summary_presenter::json::JSON;
     let controller = TrendSummaryController::new(&interactor, &presenter);
     if let TrendSummaryResponse::JSON { data } = controller
-        .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
+        .analyze(vec_trend_analysis_response, DisplayMACOSPattern::All)
         .await?
     {
         let vec = data
             .into_iter()
             .map(|e| {
                 let Analysis {
-                    cross_analysis,
+                    macos_analysis,
                     ecp1_analysis,
                     buy_candle_stick_pattern: golden_buy_ecp2_msesp,
                     sell_candle_stick_pattern: dead_sell_ecp2_msesp,
                     ..
                 } = e;
                 (
-                    cross_analysis,
+                    macos_analysis,
                     ecp1_analysis,
                     golden_buy_ecp2_msesp,
                     dead_sell_ecp2_msesp,
                 )
             })
             .collect_vec();
-        let (cross_analysis, ecp1_analysis, golden_buy_ecp2_msesp, dead_sell_ecp2_msesp): (
+        let (macos_analysis, ecp1_analysis, golden_buy_ecp2_msesp, dead_sell_ecp2_msesp): (
             Vec<_>,
             Vec<_>,
             Vec<_>,
             Vec<_>,
         ) = multiunzip(vec);
-        let json_str = serde_json::to_string_pretty(&cross_analysis)?;
+        let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
-            include_str!("../assets/8473.T.cross_analysis.json"),
+            include_str!("../assets/8473.T.macos_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
@@ -148,7 +148,7 @@ async fn main() -> Result<()> {
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
             NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
-            DisplayCrossPattern::All,
+            DisplayMACOSPattern::All,
         )
         .await?;
     if let TrendAnalysisResponse::Chart { body, .. } = trend_analysis_response {
@@ -163,7 +163,7 @@ async fn main() -> Result<()> {
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
             NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
-            DisplayCrossPattern::All,
+            DisplayMACOSPattern::All,
         )
         .await?;
 
@@ -173,24 +173,24 @@ async fn main() -> Result<()> {
     let controller = TrendSummaryController::new(&interactor, &presenter);
 
     if let TrendSummaryResponse::JSON { data } = controller
-        .analyze(vec_trend_analysis_response, DisplayCrossPattern::All)
+        .analyze(vec_trend_analysis_response, DisplayMACOSPattern::All)
         .await?
     {
         let vec = data
             .into_iter()
             .map(|e| {
                 let Analysis {
-                    cross_analysis,
+                    macos_analysis,
                     ecp1_analysis,
                     ..
                 } = e;
-                (cross_analysis, ecp1_analysis)
+                (macos_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (cross_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = vec.iter().cloned().unzip();
-        let json_str = serde_json::to_string_pretty(&cross_analysis)?;
+        let (macos_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = vec.iter().cloned().unzip();
+        let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
-            include_str!("../assets/9223.T.cross_analysis.json"),
+            include_str!("../assets/9223.T.macos_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;

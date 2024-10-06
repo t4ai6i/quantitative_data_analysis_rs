@@ -6,71 +6,70 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 
 use crate::domain::entity::ordering::{Ordering, OrderingPair};
-use crate::domain::entity::sma::{Average, SMAListPair, SMAPair};
+use crate::domain::entity::sma::{SMAListPair, SMAPair, SMASet};
 
-/// 移動平均線が交わったときの向き
+/// 各移動平均線が交わったときの向きタイプ
 #[derive(
     Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
 )]
-pub enum CrossDirectionType {
+pub enum MACOSType {
     /// ゴールデンクロス
     Golden,
     /// デッドクロス
     Dead,
     #[default]
-    /// 上記どちらでもない場合
+    /// どちらでもない場合
     Neither,
 }
 
-impl From<(Option<Ord>, Option<Ord>)> for CrossDirectionType {
+impl From<(Option<Ord>, Option<Ord>)> for MACOSType {
     fn from(value: (Option<Ord>, Option<Ord>)) -> Self {
         match value {
-            (Some(Ord::Less), Some(Ord::Greater)) => CrossDirectionType::Golden,
-            (Some(Ord::Greater), Some(Ord::Less)) => CrossDirectionType::Dead,
-            _ => CrossDirectionType::Neither,
+            (Some(Ord::Less), Some(Ord::Greater)) => MACOSType::Golden,
+            (Some(Ord::Greater), Some(Ord::Less)) => MACOSType::Dead,
+            _ => MACOSType::Neither,
         }
     }
 }
 
-/// 移動平均線NとOが交わったときの向き
+/// 終値・取引高における各移動平均線が交わったときの向きタイプの集合
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct CrossDirection {
-    pub close_average: CrossDirectionType,
-    pub volume_average: CrossDirectionType,
+pub struct MACOSSet {
+    /// 終値ベースのMovingAverageCrossoverStrategy
+    pub close: MACOSType,
+    /// 出来高ベースのMovingAverageCrossoverStrategy
+    pub volume: MACOSType,
 }
 
-impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for CrossDirection {
+impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for MACOSSet {
     fn from(value: OrderingPair<N, O>) -> Self {
         // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
         // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
         let OrderingPair { past, future } = value;
-        let close_average = CrossDirectionType::from((past.close_average, future.close_average));
-        let volume_average = CrossDirectionType::from((past.volume_average, future.volume_average));
-        CrossDirection {
-            close_average,
-            volume_average,
-        }
+        let close = MACOSType::from((past.close, future.close));
+        let volume = MACOSType::from((past.volume, future.volume));
+        MACOSSet { close, volume }
     }
 }
 
-/// 5日移動平均線と25日移動平均線の交わりの情報
+/// MovingAverageCrossoverStrategy
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct Cross {
+pub struct MACOS {
     pub date: NaiveDate,
-    pub sma_5_average: Option<Average<5>>,
-    pub sma_25_average: Option<Average<25>>,
+    pub sma_set_5: Option<SMASet<5>>,
+    pub sma_set_25: Option<SMASet<25>>,
     pub ordering_5_25: Ordering<5, 25>,
-    pub cross_direction_5_25: CrossDirection,
+    pub macos_set_5_25: MACOSSet,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecCross(pub Vec<Cross>);
+pub struct VecMACOS(pub Vec<MACOS>);
 
-impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
+impl<'a> From<SMAListPair<'a, 5, 25>> for VecMACOS {
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::entity::cross::VecCross;
+    /// use quantitative_data_analysis_rs::domain::entity::macos::VecMACOS;
     /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListPair, VecSMA};
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
@@ -84,15 +83,15 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
     ///     smas_n: smas_5.as_slice(),
     ///     smas_o: smas_25.as_slice(),
     /// };
-    /// let VecCross(crosses) = VecCross::from(sma_list_pair);
-    /// assert_eq!(crosses.len(), 241);
+    /// let VecMACOS(macoses) = VecMACOS::from(sma_list_pair);
+    /// assert_eq!(macoses.len(), 241);
     /// ```
     fn from(value: SMAListPair<'a, 5, 25>) -> Self {
         let SMAListPair {
             smas_n: smas_5,
             smas_o: smas_25,
         } = value;
-        let crosses = smas_5
+        let macoses = smas_5
             .iter()
             .map(|sma_5| {
                 let sma_25 = smas_25.iter().find(|sma_25| sma_5.date.eq(&sma_25.date));
@@ -101,10 +100,10 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
                     sma_o: sma_25,
                 };
                 let ordering_5_25 = Ordering::from(sma_pair);
-                Cross {
+                MACOS {
                     date: sma_5.date,
-                    sma_5_average: Some(sma_5.average),
-                    sma_25_average: sma_25.map(|sma_25| sma_25.average),
+                    sma_set_5: Some(sma_5.sma_n),
+                    sma_set_25: sma_25.map(|sma_25| sma_25.sma_n),
                     ordering_5_25,
                     ..Default::default()
                 }
@@ -118,16 +117,16 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecCross {
                     past: yesterday,
                     future: today,
                 };
-                let cross_direction_5_25 = CrossDirection::from(ordering_pair);
-                Cross {
+                let macs_5_25 = MACOSSet::from(ordering_pair);
+                MACOS {
                     date: x[1].date,
-                    sma_5_average: x[1].sma_5_average,
-                    sma_25_average: x[1].sma_25_average,
+                    sma_set_5: x[1].sma_set_5,
+                    sma_set_25: x[1].sma_set_25,
                     ordering_5_25: x[1].ordering_5_25,
-                    cross_direction_5_25,
+                    macos_set_5_25: macs_5_25,
                 }
             })
             .collect_vec();
-        Self(crosses)
+        Self(macoses)
     }
 }

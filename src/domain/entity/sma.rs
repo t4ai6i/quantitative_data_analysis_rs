@@ -3,16 +3,16 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 use simple_moving_average::{SumTreeSMA, SMA as OtherSMA};
 
-/// 終値、取引高の平均値
+/// 終値、取引高の単純移動平均のセット
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct Average<const N: usize> {
+pub struct SMASet<const N: usize> {
     /// 終値
     pub close: f64,
     /// 取引高
     pub volume: f64,
 }
 
-impl<const N: usize> From<&[Stock]> for Average<N> {
+impl<const N: usize> From<&[Stock]> for SMASet<N> {
     fn from(value: &[Stock]) -> Self {
         // 終値のN日の単純移動平均
         let mut ma = SumTreeSMA::<_, f64, { N }>::new();
@@ -35,7 +35,7 @@ impl<const N: usize> From<&[Stock]> for Average<N> {
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct SMA<const N: usize> {
     /// 終値、取引高のN日単純移動平均
-    pub average: Average<N>,
+    pub sma_n: SMASet<N>,
     /// N日目の日付
     pub date: NaiveDate,
 }
@@ -71,7 +71,7 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
         let smas = value
             .windows(N)
             .map(|stocks| SMA {
-                average: Average::<N>::from(stocks),
+                sma_n: SMASet::<N>::from(stocks),
                 date: stocks.last().unwrap().date,
             })
             .collect_vec();

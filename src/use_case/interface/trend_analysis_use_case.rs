@@ -2,7 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use chrono::NaiveDate;
 
-use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
@@ -11,7 +11,7 @@ pub struct TrendAnalysisInput {
     pub market: String,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
-    pub display_cross_pattern: DisplayCrossPattern,
+    pub display_macos_pattern: DisplayMACOSPattern,
 }
 
 impl TrendAnalysisInput {
@@ -20,14 +20,14 @@ impl TrendAnalysisInput {
         market: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
-        display_cross_pattern: DisplayCrossPattern,
+        display_macos_pattern: DisplayMACOSPattern,
     ) -> Self {
         Self {
             code: code.into(),
             market: market.into(),
             start_date,
             end_date,
-            display_cross_pattern,
+            display_macos_pattern,
         }
     }
 }

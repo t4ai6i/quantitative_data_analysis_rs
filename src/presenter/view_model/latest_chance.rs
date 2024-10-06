@@ -1,4 +1,4 @@
-use crate::domain::entity::close_cross_trend_analysis::LatestChance;
+use crate::domain::entity::close_macos_trend_analysis::LatestChance;
 use chrono::NaiveDate;
 use std::fmt;
 

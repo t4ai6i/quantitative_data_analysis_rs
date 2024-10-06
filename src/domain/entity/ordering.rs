@@ -6,9 +6,9 @@ use std::cmp::Ordering as Ord;
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct Ordering<const N: usize, const O: usize> {
     /// 終値平均の比較値
-    pub close_average: Option<Ord>,
+    pub close: Option<Ord>,
     /// 取引高平均の比較値
-    pub volume_average: Option<Ord>,
+    pub volume: Option<Ord>,
 }
 
 impl<'a, const N: usize, const O: usize> From<SMAPair<'a, N, O>> for Ordering<N, O> {
@@ -16,12 +16,9 @@ impl<'a, const N: usize, const O: usize> From<SMAPair<'a, N, O>> for Ordering<N,
         let SMAPair { sma_n, sma_o } = value;
         match (sma_n, sma_o) {
             (sma_n, Some(sma_o)) => {
-                let close = sma_n.average.close.partial_cmp(&sma_o.average.close);
-                let volume = sma_n.average.volume.partial_cmp(&sma_o.average.volume);
-                Ordering::<N, O> {
-                    close_average: close,
-                    volume_average: volume,
-                }
+                let close = sma_n.sma_n.close.partial_cmp(&sma_o.sma_n.close);
+                let volume = sma_n.sma_n.volume.partial_cmp(&sma_o.sma_n.volume);
+                Ordering::<N, O> { close, volume }
             }
             (_, _) => Ordering::<N, O>::default(),
         }
