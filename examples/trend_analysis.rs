@@ -95,6 +95,7 @@ async fn main() -> Result<()> {
             .map(|e| {
                 let Analysis {
                     macos_analysis,
+                    macps_analysis,
                     ecp1_analysis,
                     buy_candle_stick_pattern: golden_buy_ecp2_msesp,
                     sell_candle_stick_pattern: dead_sell_ecp2_msesp,
@@ -102,21 +103,28 @@ async fn main() -> Result<()> {
                 } = e;
                 (
                     macos_analysis,
+                    macps_analysis,
                     ecp1_analysis,
                     golden_buy_ecp2_msesp,
                     dead_sell_ecp2_msesp,
                 )
             })
             .collect_vec();
-        let (macos_analysis, ecp1_analysis, golden_buy_ecp2_msesp, dead_sell_ecp2_msesp): (
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-        ) = multiunzip(vec);
+        let (
+            macos_analysis,
+            macps_analysis,
+            ecp1_analysis,
+            golden_buy_ecp2_msesp,
+            dead_sell_ecp2_msesp,
+        ): (Vec<_>, Vec<_>, Vec<_>, Vec<_>, Vec<_>) = multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.macos_analysis.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string_pretty(&macps_analysis)?;
+        assert_eq!(
+            include_str!("../assets/8473.T.macps_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
@@ -181,16 +189,23 @@ async fn main() -> Result<()> {
             .map(|e| {
                 let Analysis {
                     macos_analysis,
+                    macps_analysis,
                     ecp1_analysis,
                     ..
                 } = e;
-                (macos_analysis, ecp1_analysis)
+                (macos_analysis, macps_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, ecp1_analysis): (Vec<_>, Vec<_>) = vec.iter().cloned().unzip();
+        let (macos_analysis, macps_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
+            multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.macos_analysis.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string_pretty(&macps_analysis)?;
+        assert_eq!(
+            include_str!("../assets/9223.T.macps_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;

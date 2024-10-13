@@ -15,17 +15,21 @@ pub struct SMASet<const N: usize> {
 impl<const N: usize> From<&[Stock]> for SMASet<N> {
     fn from(value: &[Stock]) -> Self {
         // 終値のN日の単純移動平均
-        let mut ma = SumTreeSMA::<_, f64, { N }>::new();
-        for stock in value {
-            ma.add_sample(stock.close);
-        }
+        let ma = value
+            .iter()
+            .fold(SumTreeSMA::<_, f64, { N }>::new(), |mut acc, stock| {
+                acc.add_sample(stock.close);
+                acc
+            });
         let close = ma.get_average();
 
         // 取引高のN日の単純移動平均
-        let mut ma = SumTreeSMA::<_, f64, { N }>::new();
-        for stock in value {
-            ma.add_sample(stock.volume as _);
-        }
+        let ma = value
+            .iter()
+            .fold(SumTreeSMA::<_, f64, { N }>::new(), |mut acc, stock| {
+                acc.add_sample(stock.volume as _);
+                acc
+            });
         let volume = ma.get_average();
         Self { close, volume }
     }
@@ -87,4 +91,10 @@ pub struct SMAPair<'a, const N: usize, const O: usize> {
 pub struct SMAListPair<'a, const N: usize, const O: usize> {
     pub smas_n: &'a [SMA<N>],
     pub smas_o: &'a [SMA<O>],
+}
+
+pub struct SMAListTrio<'a, const N: usize, const O: usize, const P: usize> {
+    pub smas_n: &'a [SMA<N>],
+    pub smas_o: &'a [SMA<O>],
+    pub smas_p: &'a [SMA<P>],
 }

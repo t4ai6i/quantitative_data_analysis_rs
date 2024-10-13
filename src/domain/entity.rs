@@ -9,6 +9,7 @@ pub mod company;
 pub mod ecp1;
 pub mod ecp2;
 pub mod macos;
+pub mod macps;
 pub mod msesp;
 mod ordering;
 pub mod sma;

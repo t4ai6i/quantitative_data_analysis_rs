@@ -5,6 +5,7 @@ use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::view_model::analysis::Analysis;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
+use crate::presenter::view_model::macps_analysis::MACPSAnalysis;
 use chrono::NaiveDate;
 use itertools::Itertools;
 
@@ -55,6 +56,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     latest_msesp_buy,
                     latest_msesp_sell,
                     vec_ecp1,
+                    macps,
                 } => {
                     let Company { code, symbol, .. } = company;
                     let latest_chance = display_macos_pattern.get_latest_chance(&latest_chance);
@@ -67,6 +69,10 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                         chance_rate,
                     };
                     let ecp1_analysis = BuySellSignalAnalysis::from(vec_ecp1.0.as_slice());
+                    let macps_analysis = MACPSAnalysis {
+                        r#type: macps.r#type,
+                        date: macps.date,
+                    };
                     let golden_buy_ecp2_msesp =
                         match (latest_golden_macos, latest_ecp2_buy, latest_msesp_buy) {
                             (Some(macos_date), Some(ecp2_date), Some(msesp_date)) => {
@@ -94,6 +100,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                         symbol,
                         macos_analysis,
                         ecp1_analysis,
+                        macps_analysis,
                         buy_candle_stick_pattern: golden_buy_ecp2_msesp,
                         sell_candle_stick_pattern: dead_sell_ecp2_msesp,
                     })

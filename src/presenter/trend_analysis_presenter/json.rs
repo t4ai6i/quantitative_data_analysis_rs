@@ -41,6 +41,7 @@ impl TrendAnalysisPresenter for JSON {
             latest_msesp_buy,
             latest_msesp_sell,
             vec_ecp1: output.vec_ecp1,
+            macps: output.macps,
         })
     }
 }

@@ -1,3 +1,4 @@
+use crate::domain::entity::buy_sell_signal::BuySellSignal;
 use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::candle_stick_pattern_analysis::CandleStickPatternAnalysis;
 use crate::domain::entity::close_macos_trend_analysis::{
@@ -22,6 +23,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_sma_5: VecSMA<5>,
     pub vec_sma_25: VecSMA<25>,
     pub vec_macos: VecMACOS,
+    pub macps: BuySellSignal,
     pub vec_close_macos_trend_analysis: VecCloseMACOSTrendAnalysis<N>,
     pub vec_volume_macos_trend_analysis: VecVolumeMACOSTrendAnalysis,
     pub vec_ecp1: VecECP1,
@@ -51,6 +53,7 @@ pub enum TrendAnalysisResponse {
         latest_msesp_buy: Option<NaiveDate>,
         latest_msesp_sell: Option<NaiveDate>,
         vec_ecp1: VecECP1,
+        macps: BuySellSignal,
     },
 }
 

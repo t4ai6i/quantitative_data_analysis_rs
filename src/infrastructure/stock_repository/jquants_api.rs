@@ -1,7 +1,8 @@
+use rayon::prelude::*;
+
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::NaiveDate;
-use itertools::Itertools;
 use num_traits::ToPrimitive;
 use query_string_builder::QueryString;
 use reqwest::Client;
@@ -37,7 +38,7 @@ impl StockRepository for JQuantsAPI {
         let stocks = response["daily_quotes"]
             .as_array()
             .with_context(|| format!("daily_quotes is empty. code = {}", code))?
-            .iter()
+            .par_iter()
             .filter_map(|value| {
                 let date = value["Date"].as_str();
                 let open = value["Open"].as_f64();
@@ -47,20 +48,24 @@ impl StockRepository for JQuantsAPI {
                 let adj_close = value["AdjustmentClose"].as_f64();
                 let volume = value["Volume"].as_f64();
                 match (date, open, high, low, close, adj_close, volume) {
-                    (Some(_), Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => {}
-                    _ => return None,
-                };
-                let date = date.unwrap();
-                let date = NaiveDate::from_str(date).unwrap();
-                let open = open.unwrap();
-                let high = high.unwrap();
-                let low = low.unwrap();
-                let close = close.unwrap();
-                let adj_close = adj_close.unwrap();
-                let volume = volume.unwrap().to_u64().unwrap();
-                Some(Stock::new(date, open, high, low, close, adj_close, volume))
+                    (
+                        Some(date),
+                        Some(open),
+                        Some(high),
+                        Some(low),
+                        Some(close),
+                        Some(adj_close),
+                        Some(volume),
+                    ) => {
+                        let date = NaiveDate::from_str(date)
+                            .unwrap_or(NaiveDate::from_ymd_opt(2000, 1, 1).unwrap());
+                        let volume = volume.to_u64().unwrap();
+                        Some(Stock::new(date, open, high, low, close, adj_close, volume))
+                    }
+                    _ => None,
+                }
             })
-            .collect_vec();
+            .collect();
         Ok(VecStock(stocks))
     }
 }

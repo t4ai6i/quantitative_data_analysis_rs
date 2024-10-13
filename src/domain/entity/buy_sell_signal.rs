@@ -31,7 +31,7 @@ pub(crate) mod tests {
         fn from(value: &[BuySellSignal]) -> Self {
             let tuple: (Vec<_>, Vec<_>) = value
                 .iter()
-                .filter(|s| !s.r#type.eq(&Stay))
+                .filter(|s| s.r#type.ne(&Stay))
                 .partition(|signal| signal.r#type.eq(&Buy));
             TupleVecBuySellSignal(tuple)
         }

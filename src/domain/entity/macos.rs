@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use std::cmp::Ordering as Ord;
 
 use chrono::NaiveDate;
@@ -56,10 +58,14 @@ impl<const N: usize, const O: usize> From<OrderingPair<N, O>> for MACOSSet {
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct MACOS {
     pub date: NaiveDate,
-    pub sma_set_5: Option<SMASet<5>>,
     pub sma_set_25: Option<SMASet<25>>,
-    pub ordering_5_25: Ordering<5, 25>,
     pub macos_set_5_25: MACOSSet,
+}
+
+struct MACOSIntermediate {
+    date: NaiveDate,
+    sma_set_25: Option<SMASet<25>>,
+    ordering_5_25: Ordering<5, 25>,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -91,24 +97,25 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecMACOS {
             smas_n: smas_5,
             smas_o: smas_25,
         } = value;
-        let macoses = smas_5
-            .iter()
+        let macoses: Vec<MACOSIntermediate> = smas_5
+            .par_iter()
             .map(|sma_5| {
-                let sma_25 = smas_25.iter().find(|sma_25| sma_5.date.eq(&sma_25.date));
+                let sma_25 = smas_25
+                    .par_iter()
+                    .find_first(|sma_25| sma_5.date.eq(&sma_25.date));
                 let sma_pair = SMAPair {
                     sma_n: sma_5,
                     sma_o: sma_25,
                 };
                 let ordering_5_25 = Ordering::from(sma_pair);
-                MACOS {
+                MACOSIntermediate {
                     date: sma_5.date,
-                    sma_set_5: Some(sma_5.sma_n),
                     sma_set_25: sma_25.map(|sma_25| sma_25.sma_n),
                     ordering_5_25,
-                    ..Default::default()
                 }
             })
-            .collect_vec()
+            .collect();
+        let macoses = macoses
             .windows(2)
             .map(|x| {
                 let yesterday = x[0].ordering_5_25;
@@ -117,13 +124,11 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for VecMACOS {
                     past: yesterday,
                     future: today,
                 };
-                let macs_5_25 = MACOSSet::from(ordering_pair);
+                let macos_set_5_25 = MACOSSet::from(ordering_pair);
                 MACOS {
                     date: x[1].date,
-                    sma_set_5: x[1].sma_set_5,
                     sma_set_25: x[1].sma_set_25,
-                    ordering_5_25: x[1].ordering_5_25,
-                    macos_set_5_25: macs_5_25,
+                    macos_set_5_25,
                 }
             })
             .collect_vec();

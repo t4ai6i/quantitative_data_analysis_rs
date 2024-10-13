@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::entity::candle_stick_pattern_date_set::CandleStickPatternDateSet;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
+use crate::presenter::view_model::macps_analysis::MACPSAnalysis;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Analysis {
@@ -10,6 +11,7 @@ pub struct Analysis {
     pub symbol: String,
     pub macos_analysis: MACOSAnalysis,
     pub ecp1_analysis: BuySellSignalAnalysis,
+    pub macps_analysis: MACPSAnalysis,
     pub buy_candle_stick_pattern: Option<CandleStickPatternDateSet>,
     pub sell_candle_stick_pattern: Option<CandleStickPatternDateSet>,
 }
@@ -26,6 +28,7 @@ mod tests {
     use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
     use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
     use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
+    use crate::presenter::view_model::macps_analysis::MACPSAnalysis;
 
     #[test]
     fn serde_test() {
@@ -44,6 +47,10 @@ mod tests {
                   "date": "2017-02-16"
                 }
               ],
+              "macps_analysis": {
+                "type": "Buy",
+                "date": "2017-08-06"
+              },
               "buy_candle_stick_pattern": {
                 "macos_date": "2023-08-15",
                 "ecp2_date": "2023-06-01",
@@ -60,6 +67,10 @@ mod tests {
             r#type: BuySellSignalType::Stay,
             date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
         }]);
+        let macps_analysis = MACPSAnalysis {
+            r#type: BuySellSignalType::Buy,
+            date: NaiveDate::from_ymd_opt(2017, 8, 6).unwrap(),
+        };
         let buy_candle_stick_pattern = Some(CandleStickPatternDateSet {
             macos_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
             ecp2_date: NaiveDate::from_ymd_opt(2023, 6, 1).unwrap(),
@@ -70,6 +81,7 @@ mod tests {
             symbol: "8473.T".to_string(),
             macos_analysis,
             ecp1_analysis,
+            macps_analysis,
             buy_candle_stick_pattern,
             sell_candle_stick_pattern: None,
         };
