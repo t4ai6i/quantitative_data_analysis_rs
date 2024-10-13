@@ -102,7 +102,7 @@ mod tests {
         let VecMSESP(vec_msesp) = VecMSESP::from(vec_candle_stick.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_msesp
             .into_iter()
-            .filter(|signal| !signal.r#type.eq(&Stay))
+            .filter(|signal| signal.r#type.ne(&Stay))
             .partition(|signal| signal.r#type.eq(&Buy));
         let (expected_buy, expected_sell): (Vec<BuySellSignal>, Vec<BuySellSignal>) = (
             vec![

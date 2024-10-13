@@ -1,16 +1,16 @@
 use itertools::Itertools;
 
 use crate::domain::entity::chance_loss::ChanceLoss;
-use crate::domain::entity::close_cross_trend_analysis::VecCloseCrossTrendAnalysis;
-use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 
-pub trait VecCloseCrossTrendAnalysisExt {
+pub trait VecCloseMACOSTrendAnalysisExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
-    fn table_chart_rows(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>>;
-    fn table_chart_summary(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>>;
+    fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>>;
+    fn table_chart_summary(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>>;
 }
 
-impl<const N: usize> VecCloseCrossTrendAnalysisExt for VecCloseCrossTrendAnalysis<N> {
+impl<const N: usize> VecCloseMACOSTrendAnalysisExt for VecCloseMACOSTrendAnalysis<N> {
     fn table_chart_header(&self) -> Vec<Vec<String>> {
         vec![vec![
             "date".to_string(),
@@ -22,12 +22,10 @@ impl<const N: usize> VecCloseCrossTrendAnalysisExt for VecCloseCrossTrendAnalysi
         ]]
     }
 
-    fn table_chart_rows(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
-        self.vec_close_cross_trend_analysis
+    fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
+        self.vec_close_macos_trend_analysis
             .iter()
-            .filter(|trend_analysis| {
-                pattern.is_display_by_cross_direction_type(&trend_analysis.r#type)
-            })
+            .filter(|trend_analysis| pattern.is_display_by_macos_type(&trend_analysis.r#type))
             .map(|trend_analysis| {
                 let chance_loss = match trend_analysis.chance_loss {
                     ChanceLoss::None => "❔".to_string(),
@@ -36,32 +34,32 @@ impl<const N: usize> VecCloseCrossTrendAnalysisExt for VecCloseCrossTrendAnalysi
                     ChanceLoss::GoldenLoss => "❌".to_string(),
                     ChanceLoss::DeadLoss => "❌".to_string(),
                 };
-                let cross_date = trend_analysis.date.format("%Y/%m/%d").to_string();
-                let cross_direction_5_25 = trend_analysis.r#type.to_string();
+                let macos_date = trend_analysis.date.format("%Y/%m/%d").to_string();
+                let macos_5_25 = trend_analysis.r#type.to_string();
                 let change = format!("{:+.3}%", trend_analysis.rate_of_change);
-                let value_on_cross = trend_analysis.value_on_cross.to_string();
-                let value_after_n_days = trend_analysis.value_after_n_days.to_string();
+                let close_on_macos = trend_analysis.close_on_macos.to_string();
+                let close_after_n_days = trend_analysis.close_after_n_days.to_string();
                 vec![
-                    cross_date,
+                    macos_date,
                     chance_loss,
-                    cross_direction_5_25,
+                    macos_5_25,
                     change,
-                    value_on_cross,
-                    value_after_n_days,
+                    close_on_macos,
+                    close_after_n_days,
                 ]
             })
             .collect_vec()
     }
 
-    fn table_chart_summary(&self, pattern: &DisplayCrossPattern) -> Vec<Vec<String>> {
+    fn table_chart_summary(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
         let chance_rate = match pattern {
-            DisplayCrossPattern::All => {
+            DisplayMACOSPattern::All => {
                 format!("{:.0}%", self.chance_rate.all)
             }
-            DisplayCrossPattern::GoldenOnly => {
+            DisplayMACOSPattern::GoldenOnly => {
                 format!("{:.0}%", self.chance_rate.golden_only)
             }
-            DisplayCrossPattern::DeadOnly => {
+            DisplayMACOSPattern::DeadOnly => {
                 format!("{:.0}%", self.chance_rate.dead_only)
             }
         };
@@ -80,14 +78,14 @@ impl<const N: usize> VecCloseCrossTrendAnalysisExt for VecCloseCrossTrendAnalysi
 mod tests {
     use anyhow::Result;
 
-    use crate::domain::entity::close_cross_trend_analysis::VecCloseCrossTrendAnalysis;
-    use crate::domain::entity::cross::VecCross;
+    use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
+    use crate::domain::entity::macos::VecMACOS;
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
-    use crate::domain::entity::stocks_crosses_pair::StocksCrossesPair;
+    use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
-    use crate::presenter::display_cross_pattern::DisplayCrossPattern;
-    use crate::presenter::view_model::vec_close_cross_trend_analysis::VecCloseCrossTrendAnalysisExt;
+    use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+    use crate::presenter::view_model::vec_close_macos_trend_analysis::VecCloseMACOSTrendAnalysisExt;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
 
@@ -100,14 +98,14 @@ mod tests {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
-        let VecCross(crosses) = VecCross::from(sma_list_pair);
-        let stocks_crosses_pair = StocksCrossesPair {
+        let VecMACOS(macoses) = VecMACOS::from(sma_list_pair);
+        let stocks_macoses_pair = StocksMACOSESPair {
             stocks: vec_stock.as_slice(),
-            crosses: crosses.as_slice(),
+            macoses: macoses.as_slice(),
         };
-        let vec_close_cross_trend_analysis =
-            VecCloseCrossTrendAnalysis::<5>::from(&stocks_crosses_pair);
-        let summary = vec_close_cross_trend_analysis.table_chart_summary(&DisplayCrossPattern::All);
+        let vec_close_macos_trend_analysis =
+            VecCloseMACOSTrendAnalysis::<5>::from(&stocks_macoses_pair);
+        let summary = vec_close_macos_trend_analysis.table_chart_summary(&DisplayMACOSPattern::All);
         assert_eq!(
             summary,
             vec![vec![
@@ -120,7 +118,7 @@ mod tests {
             ]]
         );
         let summary =
-            vec_close_cross_trend_analysis.table_chart_summary(&DisplayCrossPattern::GoldenOnly);
+            vec_close_macos_trend_analysis.table_chart_summary(&DisplayMACOSPattern::GoldenOnly);
         assert_eq!(
             summary,
             vec![vec![
@@ -133,7 +131,7 @@ mod tests {
             ]]
         );
         let summary =
-            vec_close_cross_trend_analysis.table_chart_summary(&DisplayCrossPattern::DeadOnly);
+            vec_close_macos_trend_analysis.table_chart_summary(&DisplayMACOSPattern::DeadOnly);
         assert_eq!(
             summary,
             vec![vec![

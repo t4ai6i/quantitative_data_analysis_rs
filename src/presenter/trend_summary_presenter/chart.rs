@@ -3,7 +3,7 @@ use std::backtrace::Backtrace;
 use anyhow::{Context, Result};
 use charts_rs::TableChart;
 
-use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::presenter::trend_summary_presenter::{
     TrendSummaryOutput, TrendSummaryPresenter, TrendSummaryResponse,
 };
@@ -30,13 +30,13 @@ impl TrendSummaryPresenter for Chart {
     fn handle(
         &self,
         output: TrendSummaryOutput,
-        display_cross_pattern: DisplayCrossPattern,
+        display_macos_pattern: DisplayMACOSPattern,
     ) -> Result<TrendSummaryResponse> {
-        let chance_rate = format!("chance rate({})", display_cross_pattern);
+        let chance_rate = format!("chance rate({})", display_macos_pattern);
         let mut rows = vec![vec![
             "code".to_string(),
             "symbol".to_string(),
-            "cross direction".to_string(),
+            "macos type".to_string(),
             "latest".to_string(),
             chance_rate,
         ]];

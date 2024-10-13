@@ -33,15 +33,12 @@ impl StockRepository for FileSystem {
         _: NaiveDate,
         _: NaiveDate,
     ) -> Result<VecStock> {
-        let file_path = match self.data_format {
-            DataFormat::CSV { ref file_path, .. } => file_path,
-            _ => {
-                bail!(format!(
-                    "Unsupported data format: {:?}\n{}",
-                    self.data_format,
-                    Backtrace::force_capture()
-                ));
-            }
+        let DataFormat::CSV { ref file_path, .. } = self.data_format else {
+            bail!(format!(
+                "Unsupported data format: {:?}\n{}",
+                self.data_format,
+                Backtrace::force_capture()
+            ));
         };
         let file = read(file_path).await.with_context(|| {
             format!(
@@ -51,12 +48,11 @@ impl StockRepository for FileSystem {
             )
         })?;
         let vec_stock = match self.data_format {
-            DataFormat::CSV { has_headers, .. } => {
-                if has_headers {
-                    Csv::from_slice::<true>(file.as_slice())
-                } else {
-                    Csv::from_slice::<false>(file.as_slice())
-                }
+            DataFormat::CSV { has_headers, .. } if has_headers => {
+                Csv::from_slice::<true>(file.as_slice())
+            }
+            DataFormat::CSV { has_headers, .. } if !has_headers => {
+                Csv::from_slice::<false>(file.as_slice())
             }
             _ => vec![],
         };

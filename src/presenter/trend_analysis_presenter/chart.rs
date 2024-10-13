@@ -7,19 +7,19 @@ use charts_rs::{
 };
 use itertools::Itertools;
 
-use crate::domain::entity::cross::CrossDirectionType;
+use crate::domain::entity::macos::MACOSType;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::presenter::{
     trend_analysis_presenter::{
         TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
         vec_candle_stick::VecCandleStickExt,
-        vec_close_cross_trend_analysis::VecCloseCrossTrendAnalysisExt, vec_cross::VecCrossExt,
+        vec_close_macos_trend_analysis::VecCloseMACOSTrendAnalysisExt, vec_macos::VecMACOSExt,
         vec_sma::VecSMAExt, vec_stock::VecStockExt,
-        vec_volume_cross_trend_analysis::VecVolumeCrossTrendAnalysisExt,
+        vec_volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysisExt,
     },
 };
-use crate::presenter::display_cross_pattern::DisplayCrossPattern;
 use crate::utils::float;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -70,41 +70,41 @@ impl TrendAnalysisPresenter for Chart {
             .vec_stock
             .collect_date_string(self.date_format.as_str());
 
-        let series_list = match output.display_cross_pattern {
-            DisplayCrossPattern::All => {
-                let dead_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_close_average(CrossDirectionType::Dead);
-                let golden_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_close_average(CrossDirectionType::Golden);
+        let series_list = match output.display_macos_pattern {
+            DisplayMACOSPattern::All => {
+                let dead_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_close_macos(MACOSType::Dead);
+                let golden_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_close_macos(MACOSType::Golden);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Dead", dead_crosses)),
-                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Dead", dead_macoses)),
+                    Series::from(("Golden", golden_macoses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
-            DisplayCrossPattern::GoldenOnly => {
-                let golden_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_close_average(CrossDirectionType::Golden);
+            DisplayMACOSPattern::GoldenOnly => {
+                let golden_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_close_macos(MACOSType::Golden);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Golden", golden_macoses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
-            DisplayCrossPattern::DeadOnly => {
-                let dead_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_close_average(CrossDirectionType::Dead);
+            DisplayMACOSPattern::DeadOnly => {
+                let dead_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_close_macos(MACOSType::Dead);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Dead", dead_macoses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
@@ -125,18 +125,18 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.series_list[0].start_index = 5;
         candlestick_chart.series_list[1].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[1].start_index = 25;
-        match output.display_cross_pattern {
-            DisplayCrossPattern::All => {
+        match output.display_macos_pattern {
+            DisplayMACOSPattern::All => {
                 candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[2].start_index = 6;
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
             }
-            DisplayCrossPattern::GoldenOnly => {
+            DisplayMACOSPattern::GoldenOnly => {
                 candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[2].start_index = 6;
             }
-            DisplayCrossPattern::DeadOnly => {
+            DisplayMACOSPattern::DeadOnly => {
                 candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[2].start_index = 6;
             }
@@ -159,41 +159,41 @@ impl TrendAnalysisPresenter for Chart {
             .map(|value| *value as _)
             .collect_vec();
 
-        let series_list = match output.display_cross_pattern {
-            DisplayCrossPattern::All => {
-                let dead_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_volume_average(CrossDirectionType::Dead);
-                let golden_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_volume_average(CrossDirectionType::Golden);
+        let series_list = match output.display_macos_pattern {
+            DisplayMACOSPattern::All => {
+                let dead_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_volume_macos(MACOSType::Dead);
+                let golden_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_volume_macos(MACOSType::Golden);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Dead", dead_crosses)),
-                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Dead", dead_macoses)),
+                    Series::from(("Golden", golden_macoses)),
                     Series::from(("Volume", volumes)),
                 ]
             }
-            DisplayCrossPattern::GoldenOnly => {
-                let golden_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_volume_average(CrossDirectionType::Golden);
+            DisplayMACOSPattern::GoldenOnly => {
+                let golden_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_volume_macos(MACOSType::Golden);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Golden", golden_crosses)),
+                    Series::from(("Golden", golden_macoses)),
                     Series::from(("Volume", volumes)),
                 ]
             }
-            DisplayCrossPattern::DeadOnly => {
-                let dead_crosses = output
-                    .vec_cross
-                    .collect_vec_sma_25_volume_average(CrossDirectionType::Dead);
+            DisplayMACOSPattern::DeadOnly => {
+                let dead_macoses = output
+                    .vec_macos
+                    .collect_vec_sma_25_volume_macos(MACOSType::Dead);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Dead", dead_macoses)),
                     Series::from(("Volume", volumes)),
                 ]
             }
@@ -207,42 +207,42 @@ impl TrendAnalysisPresenter for Chart {
         volume_chart.series_list[0].start_index = 5;
         volume_chart.series_list[1].category = Some(SeriesCategory::Line);
         volume_chart.series_list[1].start_index = 25;
-        match output.display_cross_pattern {
-            DisplayCrossPattern::All => {
+        match output.display_macos_pattern {
+            DisplayMACOSPattern::All => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
                 volume_chart.series_list[3].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[3].start_index = 6;
             }
-            DisplayCrossPattern::GoldenOnly => {
+            DisplayMACOSPattern::GoldenOnly => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
             }
-            DisplayCrossPattern::DeadOnly => {
+            DisplayMACOSPattern::DeadOnly => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
             }
         }
         charts.add(ChildChart::Bar(volume_chart, None));
 
-        let mut rows = output.vec_close_cross_trend_analysis.table_chart_header();
+        let mut rows = output.vec_close_macos_trend_analysis.table_chart_header();
         let mut body = output
-            .vec_close_cross_trend_analysis
-            .table_chart_rows(&output.display_cross_pattern);
+            .vec_close_macos_trend_analysis
+            .table_chart_rows(&output.display_macos_pattern);
         rows.append(&mut body);
         let mut summary = output
-            .vec_close_cross_trend_analysis
-            .table_chart_summary(&output.display_cross_pattern);
+            .vec_close_macos_trend_analysis
+            .table_chart_summary(&output.display_macos_pattern);
         rows.append(&mut summary);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "CloseCrossTrendAnalysis".to_string();
         table_chart.width = self.width;
         charts.add(ChildChart::Table(table_chart, None));
 
-        let mut rows = output.vec_volume_cross_trend_analysis.table_chart_header();
+        let mut rows = output.vec_volume_macos_trend_analysis.table_chart_header();
         let mut body = output
-            .vec_volume_cross_trend_analysis
-            .table_chart_rows(&output.display_cross_pattern);
+            .vec_volume_macos_trend_analysis
+            .table_chart_rows(&output.display_macos_pattern);
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "VolumeCrossTrendAnalysis".to_string();
@@ -272,9 +272,9 @@ impl TrendAnalysisPresenter for Chart {
             body: charts
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
-            display_cross_pattern: output.display_cross_pattern,
-            chance_rate: output.vec_close_cross_trend_analysis.chance_rate,
-            latest_chance: output.vec_close_cross_trend_analysis.latest_chance,
+            display_macos_pattern: output.display_macos_pattern,
+            chance_rate: output.vec_close_macos_trend_analysis.chance_rate,
+            latest_chance: output.vec_close_macos_trend_analysis.latest_chance,
         })
     }
 }

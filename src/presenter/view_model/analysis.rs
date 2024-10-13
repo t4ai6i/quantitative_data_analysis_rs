@@ -2,14 +2,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::entity::candle_stick_pattern_date_set::CandleStickPatternDateSet;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
-use crate::presenter::view_model::cross_analysis::CrossAnalysis;
+use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
+use crate::presenter::view_model::macps_analysis::MACPSAnalysis;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Analysis {
     pub code: String,
     pub symbol: String,
-    pub cross_analysis: CrossAnalysis,
+    pub macos_analysis: MACOSAnalysis,
     pub ecp1_analysis: BuySellSignalAnalysis,
+    pub macps_analysis: MACPSAnalysis,
     pub buy_candle_stick_pattern: Option<CandleStickPatternDateSet>,
     pub sell_candle_stick_pattern: Option<CandleStickPatternDateSet>,
 }
@@ -21,11 +23,12 @@ mod tests {
 
     use crate::domain::entity::buy_sell_signal::BuySellSignalType;
     use crate::domain::entity::candle_stick_pattern_date_set::CandleStickPatternDateSet;
-    use crate::domain::entity::cross::CrossDirectionType;
+    use crate::domain::entity::macos::MACOSType;
     use crate::presenter::view_model::analysis::Analysis;
     use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
     use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
-    use crate::presenter::view_model::cross_analysis::CrossAnalysis;
+    use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
+    use crate::presenter::view_model::macps_analysis::MACPSAnalysis;
 
     #[test]
     fn serde_test() {
@@ -33,8 +36,8 @@ mod tests {
             {
               "code": "8473",
               "symbol": "8473.T",
-              "cross_analysis": {
-                "cross_direction": "Neither",
+              "macos_analysis": {
+                "type": "Neither",
                 "latest_chance": "2017-02-16",
                 "chance_rate": 32.7
               },
@@ -44,15 +47,19 @@ mod tests {
                   "date": "2017-02-16"
                 }
               ],
+              "macps_analysis": {
+                "type": "Buy",
+                "date": "2017-08-06"
+              },
               "buy_candle_stick_pattern": {
-                "cross_date": "2023-08-15",
+                "macos_date": "2023-08-15",
                 "ecp2_date": "2023-06-01",
                 "msesp_date": "2023-07-26"
               },
               "sell_candle_stick_pattern": null
             }"#};
-        let cross_analysis = CrossAnalysis {
-            cross_direction: CrossDirectionType::Neither,
+        let macos_analysis = MACOSAnalysis {
+            r#type: MACOSType::Neither,
             latest_chance: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
             chance_rate: 32.7,
         };
@@ -60,16 +67,21 @@ mod tests {
             r#type: BuySellSignalType::Stay,
             date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
         }]);
+        let macps_analysis = MACPSAnalysis {
+            r#type: BuySellSignalType::Buy,
+            date: NaiveDate::from_ymd_opt(2017, 8, 6).unwrap(),
+        };
         let buy_candle_stick_pattern = Some(CandleStickPatternDateSet {
-            cross_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
+            macos_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
             ecp2_date: NaiveDate::from_ymd_opt(2023, 6, 1).unwrap(),
             msesp_date: NaiveDate::from_ymd_opt(2023, 7, 26).unwrap(),
         });
         let analysis = Analysis {
             code: "8473".to_string(),
             symbol: "8473.T".to_string(),
-            cross_analysis,
+            macos_analysis,
             ecp1_analysis,
+            macps_analysis,
             buy_candle_stick_pattern,
             sell_candle_stick_pattern: None,
         };

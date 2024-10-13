@@ -1,17 +1,15 @@
-use anyhow::Result;
-use async_trait::async_trait;
-
+use crate::domain::entity::buy_sell_signal::BuySellSignal;
 use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::candle_stick_pattern_analysis::CandleStickPatternAnalysis;
 use crate::domain::entity::candle_stick_pattern_set::CandleStickPatternSet;
-use crate::domain::entity::close_cross_trend_analysis::VecCloseCrossTrendAnalysis;
-use crate::domain::entity::cross::VecCross;
+use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
+use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::msesp::VecMSESP;
-use crate::domain::entity::sma::{SMAListPair, VecSMA};
-use crate::domain::entity::stocks_crosses_pair::StocksCrossesPair;
-use crate::domain::entity::volume_cross_trend_analysis::VecVolumeCrossTrendAnalysis;
+use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
+use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
+use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
@@ -19,6 +17,8 @@ use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
 };
 use crate::utils::iterator::{FromEnd, VecT};
+use anyhow::Result;
+use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysisInteractor<'a, SR, CR> {
@@ -71,23 +71,31 @@ where
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
         };
-        let vec_cross = VecCross::from(sma_list_pair);
+        let vec_macos = VecMACOS::from(sma_list_pair);
 
-        let stocks = VecT(vec_stock.0.as_slice());
-        let stocks = stocks.get_from_end(FROM_END_DAYS);
+        let vec_sma_50 = VecSMA::<50>::from(vec_stock.0.as_slice());
+        let vec_sma_200 = VecSMA::<200>::from(vec_stock.0.as_slice());
+        let sma_list_trio = SMAListTrio {
+            smas_n: vec_sma_25.0.as_slice(),
+            smas_o: vec_sma_50.0.as_slice(),
+            smas_p: vec_sma_200.0.as_slice(),
+        };
+        let macps = BuySellSignal::from((vec_stock.0.as_slice(), sma_list_trio));
+
+        let stocks = VecT(vec_stock.0.as_slice()).get_from_end(FROM_END_DAYS);
         let vec_ecp1 = VecECP1::from(stocks.as_slice());
 
-        let stock_cross_pair = StocksCrossesPair {
+        let stocks_macoses_pair = StocksMACOSESPair {
             stocks: vec_stock.0.as_slice(),
-            crosses: vec_cross.0.as_slice(),
+            macoses: vec_macos.0.as_slice(),
         };
-        let vec_close_cross_trend_analysis =
-            VecCloseCrossTrendAnalysis::<AFTER_DAYS>::from(&stock_cross_pair);
-        let vec_volume_cross_trend_analysis = VecVolumeCrossTrendAnalysis::from(&stock_cross_pair);
+        let vec_close_macos_trend_analysis =
+            VecCloseMACOSTrendAnalysis::<AFTER_DAYS>::from(&stocks_macoses_pair);
+        let vec_volume_macos_trend_analysis =
+            VecVolumeMACOSTrendAnalysis::from(&stocks_macoses_pair);
 
         let vec_candle_stick = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.0.as_slice());
-        let candle_sticks = VecT(vec_candle_stick.0.as_slice());
-        let candle_sticks = candle_sticks.get_from_end(FROM_END_DAYS);
+        let candle_sticks = VecT(vec_candle_stick.0.as_slice()).get_from_end(FROM_END_DAYS);
         let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
         let vec_msesp = VecMSESP::from(candle_sticks.as_slice());
         let candle_stick_pattern_set = CandleStickPatternSet {
@@ -102,13 +110,14 @@ where
             vec_stock,
             vec_sma_5,
             vec_sma_25,
-            vec_cross,
-            vec_close_cross_trend_analysis,
-            vec_volume_cross_trend_analysis,
+            vec_macos,
+            macps,
+            vec_close_macos_trend_analysis,
+            vec_volume_macos_trend_analysis,
             vec_ecp1,
             vec_candle_stick,
             candle_stick_pattern_analysis,
-            display_cross_pattern: input.display_cross_pattern,
+            display_macos_pattern: input.display_macos_pattern,
         };
         Ok(output)
     }

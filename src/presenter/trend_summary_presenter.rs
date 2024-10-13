@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::presenter::view_model::analysis::Analysis;
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
 
@@ -29,6 +29,6 @@ pub trait TrendSummaryPresenter {
     fn handle(
         &self,
         output: TrendSummaryOutput,
-        display_cross_pattern: DisplayCrossPattern,
+        display_macos_pattern: DisplayMACOSPattern,
     ) -> Result<TrendSummaryResponse>;
 }

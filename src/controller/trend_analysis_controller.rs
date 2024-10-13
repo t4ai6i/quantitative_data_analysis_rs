@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::NaiveDate;
 
-use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::presenter::trend_analysis_presenter::{TrendAnalysisPresenter, TrendAnalysisResponse};
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
@@ -35,10 +35,10 @@ where
         market: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
-        display_cross_pattern: DisplayCrossPattern,
+        display_macos_pattern: DisplayMACOSPattern,
     ) -> Result<TrendAnalysisResponse> {
         let input =
-            TrendAnalysisInput::new(code, market, start_date, end_date, display_cross_pattern);
+            TrendAnalysisInput::new(code, market, start_date, end_date, display_macos_pattern);
         let output = self
             .interactor
             .handle::<AFTER_DAYS, FROM_END_DAYS, MARUBOZU_MIN_RATE>(input)

@@ -1,6 +1,6 @@
 [
   {
-    "cross_direction": "Neither",
+    "type": "Neither",
     "latest_chance": "1970-01-01",
     "chance_rate": 0.0
   }

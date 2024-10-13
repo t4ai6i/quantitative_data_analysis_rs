@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::presenter::display_cross_pattern::DisplayCrossPattern;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::presenter::trend_summary_presenter::{
     TrendSummaryOutput, TrendSummaryPresenter, TrendSummaryResponse,
 };
@@ -12,7 +12,7 @@ impl TrendSummaryPresenter for JSON {
     fn handle(
         &self,
         output: TrendSummaryOutput,
-        _display_cross_pattern: DisplayCrossPattern,
+        _: DisplayMACOSPattern,
     ) -> Result<TrendSummaryResponse> {
         let data = output.vec_trend_analysis_response.vec_json();
         Ok(TrendSummaryResponse::JSON { data })

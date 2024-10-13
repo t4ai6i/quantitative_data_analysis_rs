@@ -3,29 +3,33 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 use simple_moving_average::{SumTreeSMA, SMA as OtherSMA};
 
-/// 終値、取引高の平均値
+/// 終値、取引高の単純移動平均のセット
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct Average<const N: usize> {
+pub struct SMASet<const N: usize> {
     /// 終値
     pub close: f64,
     /// 取引高
     pub volume: f64,
 }
 
-impl<const N: usize> From<&[Stock]> for Average<N> {
+impl<const N: usize> From<&[Stock]> for SMASet<N> {
     fn from(value: &[Stock]) -> Self {
         // 終値のN日の単純移動平均
-        let mut ma = SumTreeSMA::<_, f64, { N }>::new();
-        for stock in value {
-            ma.add_sample(stock.close);
-        }
+        let ma = value
+            .iter()
+            .fold(SumTreeSMA::<_, f64, { N }>::new(), |mut acc, stock| {
+                acc.add_sample(stock.close);
+                acc
+            });
         let close = ma.get_average();
 
         // 取引高のN日の単純移動平均
-        let mut ma = SumTreeSMA::<_, f64, { N }>::new();
-        for stock in value {
-            ma.add_sample(stock.volume as _);
-        }
+        let ma = value
+            .iter()
+            .fold(SumTreeSMA::<_, f64, { N }>::new(), |mut acc, stock| {
+                acc.add_sample(stock.volume as _);
+                acc
+            });
         let volume = ma.get_average();
         Self { close, volume }
     }
@@ -35,7 +39,7 @@ impl<const N: usize> From<&[Stock]> for Average<N> {
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct SMA<const N: usize> {
     /// 終値、取引高のN日単純移動平均
-    pub average: Average<N>,
+    pub sma_n: SMASet<N>,
     /// N日目の日付
     pub date: NaiveDate,
 }
@@ -71,7 +75,7 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
         let smas = value
             .windows(N)
             .map(|stocks| SMA {
-                average: Average::<N>::from(stocks),
+                sma_n: SMASet::<N>::from(stocks),
                 date: stocks.last().unwrap().date,
             })
             .collect_vec();
@@ -87,4 +91,10 @@ pub struct SMAPair<'a, const N: usize, const O: usize> {
 pub struct SMAListPair<'a, const N: usize, const O: usize> {
     pub smas_n: &'a [SMA<N>],
     pub smas_o: &'a [SMA<O>],
+}
+
+pub struct SMAListTrio<'a, const N: usize, const O: usize, const P: usize> {
+    pub smas_n: &'a [SMA<N>],
+    pub smas_o: &'a [SMA<O>],
+    pub smas_p: &'a [SMA<P>],
 }
