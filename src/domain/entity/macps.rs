@@ -3,12 +3,19 @@ use rayon::prelude::*;
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
 use crate::domain::entity::sma::SMAListTrio;
 use crate::domain::entity::stock::Stock;
+use chrono::NaiveDate;
 use itertools::Itertools;
 use std::cmp::Ordering;
 
 /// MovingAverageComparisonStrategy
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
+pub struct MACPS {
+    pub buy: Option<NaiveDate>,
+    pub sell: Option<NaiveDate>,
+}
+
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecMACPS(pub Vec<BuySellSignal>);
+pub struct VecMACPS(pub Vec<MACPS>);
 
 impl From<(Option<Ordering>, Option<Ordering>, Option<Ordering>)> for BuySellSignalType {
     fn from(value: (Option<Ordering>, Option<Ordering>, Option<Ordering>)) -> Self {
@@ -27,13 +34,13 @@ impl From<(Option<Ordering>, Option<Ordering>, Option<Ordering>)> for BuySellSig
     }
 }
 
-impl<'a> From<(&[Stock], SMAListTrio<'a, 25, 50, 200>)> for BuySellSignal {
+impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     ///
     /// # Examples
     /// ```
     /// use chrono::NaiveDate;
     /// use quantitative_data_analysis_rs::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
-    /// use quantitative_data_analysis_rs::domain::entity::macps::VecMACPS;
+    /// use quantitative_data_analysis_rs::domain::entity::macps::{VecMACPS, MACPS};
     /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListTrio, VecSMA};
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
@@ -41,18 +48,18 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 25, 50, 200>)> for BuySellSignal {
     /// const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
+    /// let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
     /// let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
     /// let VecSMA(smas_50) = VecSMA::<50>::from(vec_stock.as_slice());
-    /// let VecSMA(smas_200) = VecSMA::<200>::from(vec_stock.as_slice());
     /// let sma_list_trio = SMAListTrio {
-    ///     smas_n: smas_25.as_slice(),
-    ///     smas_o: smas_50.as_slice(),
-    ///     smas_p: smas_200.as_slice(),
+    ///     smas_n: smas_5.as_slice(),
+    ///     smas_o: smas_25.as_slice(),
+    ///     smas_p: smas_50.as_slice(),
     /// };
-    /// let buy_sell_signal = BuySellSignal::from((vec_stock.as_slice(), sma_list_trio));
-    /// assert_eq!(buy_sell_signal, BuySellSignal { r#type: BuySellSignalType::Sell, date: NaiveDate::from_ymd_opt(2023, 7, 4).unwrap()});
+    /// let macps = MACPS::from((vec_stock.as_slice(), sma_list_trio));
+    /// assert_eq!(macps, MACPS { buy: NaiveDate::from_ymd_opt(2023, 4, 10), sell: NaiveDate::from_ymd_opt(2023, 9, 8) });
     /// ```
-    fn from(value: (&[Stock], SMAListTrio<'a, 25, 50, 200>)) -> Self {
+    fn from(value: (&[Stock], SMAListTrio<'a, 5, 25, 50>)) -> Self {
         let (
             stocks,
             SMAListTrio {
@@ -76,44 +83,16 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 25, 50, 200>)> for BuySellSignal {
                 Some(BuySellSignal { date, r#type })
             })
             .partition(|buy_sell_signal| buy_sell_signal.r#type.eq(&BuySellSignalType::Buy));
-        // 最も古いものが、シグナルが変化したとみなす
-        let buy = buys.iter().sorted().nth(0);
-        let sell = sells.iter().sorted().nth(0);
-        match (buy, sell) {
-            // 買いシグナルの日付が新しいほうを買いトレンドとみなす
-            (
-                Some(&BuySellSignal { date: buy_date, .. }),
-                Some(&BuySellSignal {
-                    date: sell_date, ..
-                }),
-            ) if buy_date.ge(&sell_date) => BuySellSignal {
-                r#type: BuySellSignalType::Buy,
-                date: buy_date,
-            },
-            // 売りシグナルの日付が新しいほうを売りトレンドとみなす
-            (
-                Some(&BuySellSignal { date: buy_date, .. }),
-                Some(&BuySellSignal {
-                    date: sell_date, ..
-                }),
-            ) if sell_date.ge(&buy_date) => BuySellSignal {
-                r#type: BuySellSignalType::Sell,
-                date: sell_date,
-            },
-            (Some(&BuySellSignal { date: buy_date, .. }), None) => BuySellSignal {
-                r#type: BuySellSignalType::Buy,
-                date: buy_date,
-            },
-            (
-                None,
-                Some(&BuySellSignal {
-                    date: sell_date, ..
-                }),
-            ) => BuySellSignal {
-                r#type: BuySellSignalType::Sell,
-                date: sell_date,
-            },
-            _ => BuySellSignal::default(),
-        }
+        let buy = buys
+            .iter()
+            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
+            .last()
+            .map(|buy| buy.date);
+        let sell = sells
+            .iter()
+            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
+            .last()
+            .map(|sell| sell.date);
+        Self { buy, sell }
     }
 }

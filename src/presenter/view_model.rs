@@ -5,6 +5,7 @@ pub mod chance_rate;
 pub mod latest_chance;
 pub mod macos_analysis;
 pub mod macps_analysis;
+pub mod trend_reversal_analysis;
 pub mod vec_candle_stick;
 pub mod vec_close_macos_trend_analysis;
 pub mod vec_macos;

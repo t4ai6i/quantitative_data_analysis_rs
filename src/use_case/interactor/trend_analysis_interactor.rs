@@ -1,14 +1,14 @@
-use crate::domain::entity::buy_sell_signal::BuySellSignal;
 use crate::domain::entity::candle_stick::VecCandleStick;
-use crate::domain::entity::candle_stick_pattern_analysis::CandleStickPatternAnalysis;
-use crate::domain::entity::candle_stick_pattern_set::CandleStickPatternSet;
 use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::macos::VecMACOS;
+use crate::domain::entity::macps::MACPS;
 use crate::domain::entity::msesp::VecMSESP;
 use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
+use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
+use crate::domain::entity::trend_reversal_analysis_set::TrendReversalAnalysisSet;
 use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::stock_repository::StockRepository;
@@ -74,13 +74,12 @@ where
         let vec_macos = VecMACOS::from(sma_list_pair);
 
         let vec_sma_50 = VecSMA::<50>::from(vec_stock.0.as_slice());
-        let vec_sma_200 = VecSMA::<200>::from(vec_stock.0.as_slice());
         let sma_list_trio = SMAListTrio {
-            smas_n: vec_sma_25.0.as_slice(),
-            smas_o: vec_sma_50.0.as_slice(),
-            smas_p: vec_sma_200.0.as_slice(),
+            smas_n: vec_sma_5.0.as_slice(),
+            smas_o: vec_sma_25.0.as_slice(),
+            smas_p: vec_sma_50.0.as_slice(),
         };
-        let macps = BuySellSignal::from((vec_stock.0.as_slice(), sma_list_trio));
+        let macps = MACPS::from((vec_stock.0.as_slice(), sma_list_trio));
 
         let stocks = VecT(vec_stock.0.as_slice()).get_from_end(FROM_END_DAYS);
         let vec_ecp1 = VecECP1::from(stocks.as_slice());
@@ -98,25 +97,28 @@ where
         let candle_sticks = VecT(vec_candle_stick.0.as_slice()).get_from_end(FROM_END_DAYS);
         let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
         let vec_msesp = VecMSESP::from(candle_sticks.as_slice());
-        let candle_stick_pattern_set = CandleStickPatternSet {
+        // 相場転換を分析
+        let trend_reversal_analysis_set = TrendReversalAnalysisSet {
             ecp2s: vec_ecp2.0.as_slice(),
             msesps: vec_msesp.0.as_slice(),
+            macps: &macps,
+            macoses: &vec_macos,
         };
-        let candle_stick_pattern_analysis =
-            CandleStickPatternAnalysis::from(&candle_stick_pattern_set);
+
+        let trend_reversal_analysis = TrendReversalAnalysis::from(&trend_reversal_analysis_set);
 
         let output = TrendAnalysisOutput {
             company,
             vec_stock,
             vec_sma_5,
             vec_sma_25,
+            vec_sma_50,
             vec_macos,
-            macps,
             vec_close_macos_trend_analysis,
             vec_volume_macos_trend_analysis,
             vec_ecp1,
             vec_candle_stick,
-            candle_stick_pattern_analysis,
+            trend_reversal_analysis,
             display_macos_pattern: input.display_macos_pattern,
         };
         Ok(output)

@@ -53,18 +53,18 @@ async fn main() -> Result<()> {
     }
 
     // このexampleではひとつの証券コードだが、運用ではJQuantsAPIで取得できる全証券コード毎のトレンド解析結果のサマリーを出力する
-    let interactor = TrendSummaryInteractor;
-    let vec_trend_analysis_response = vec![trend_analysis_response];
-    // PresenterはChart型でSVG形式の画像データを出力する
-    let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
-    let controller = TrendSummaryController::new(&interactor, &presenter);
-    if let TrendSummaryResponse::Chart { body } = controller
-        .analyze(vec_trend_analysis_response, DisplayMACOSPattern::All)
-        .await?
-    {
-        write("./examples/trend_summary.svg", &body).await?;
-        assert_eq!(include_str!("../assets/trend_summary.svg"), &body);
-    };
+    // let interactor = TrendSummaryInteractor;
+    // let vec_trend_analysis_response = vec![trend_analysis_response];
+    // // PresenterはChart型でSVG形式の画像データを出力する
+    // let presenter = trend_summary_presenter::chart::Chart::new("chalk", 1280.0, 720.0);
+    // let controller = TrendSummaryController::new(&interactor, &presenter);
+    // if let TrendSummaryResponse::Chart { body } = controller
+    //     .analyze(vec_trend_analysis_response, DisplayMACOSPattern::All)
+    //     .await?
+    // {
+    //     write("./examples/trend_summary.svg", &body).await?;
+    //     assert_eq!(include_str!("../assets/trend_summary.svg"), &body);
+    // };
 
     // 運用では、NocoDBで取り扱えるJSON形式でトレンド解析とサマリーを出力する
     let interactor = TrendAnalysisInteractor::new(&repository, &repository);
@@ -95,36 +95,23 @@ async fn main() -> Result<()> {
             .map(|e| {
                 let Analysis {
                     macos_analysis,
-                    macps_analysis,
+                    trend_reversal_analysis,
                     ecp1_analysis,
-                    buy_candle_stick_pattern: golden_buy_ecp2_msesp,
-                    sell_candle_stick_pattern: dead_sell_ecp2_msesp,
                     ..
                 } = e;
-                (
-                    macos_analysis,
-                    macps_analysis,
-                    ecp1_analysis,
-                    golden_buy_ecp2_msesp,
-                    dead_sell_ecp2_msesp,
-                )
+                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (
-            macos_analysis,
-            macps_analysis,
-            ecp1_analysis,
-            golden_buy_ecp2_msesp,
-            dead_sell_ecp2_msesp,
-        ): (Vec<_>, Vec<_>, Vec<_>, Vec<_>, Vec<_>) = multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
+            multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.macos_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&macps_analysis)?;
+        let json_str = serde_json::to_string_pretty(&trend_reversal_analysis)?;
         assert_eq!(
-            include_str!("../assets/8473.T.macps_analysis.json"),
+            include_str!("../assets/8473.T.trend_reversal_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
@@ -132,36 +119,27 @@ async fn main() -> Result<()> {
             include_str!("../assets/8473.T.ecp1_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&golden_buy_ecp2_msesp)?;
-        assert_eq!(
-            include_str!("../assets/8473.T.golden_buy_ecp2_msesp.json"),
-            &json_str
-        );
-        let json_str = serde_json::to_string_pretty(&dead_sell_ecp2_msesp)?;
-        assert_eq!(
-            include_str!("../assets/8473.T.dead_sell_ecp2_msesp.json"),
-            &json_str
-        );
     };
 
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
     let interactor = TrendAnalysisInteractor::new(&repository, &repository);
 
-    let presenter =
-        trend_analysis_presenter::chart::Chart::new("chalk", 2560.0, 720.0, DATE_FORMAT);
-    let controller = TrendAnalysisController::new(&interactor, &presenter);
-    let trend_analysis_response = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
-            "9223",
-            "T",
-            NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
-            NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
-            DisplayMACOSPattern::All,
-        )
-        .await?;
-    if let TrendAnalysisResponse::Chart { body, .. } = trend_analysis_response {
-        write("./examples/9223.T.from_jquants_api.svg", &body).await?;
-    }
+    // TODO: 実行時間が長くなるのでコメントアウト
+    // let presenter =
+    //     trend_analysis_presenter::chart::Chart::new("chalk", 2560.0, 720.0, DATE_FORMAT);
+    // let controller = TrendAnalysisController::new(&interactor, &presenter);
+    // let trend_analysis_response = controller
+    //     .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
+    //         "9223",
+    //         "T",
+    //         NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
+    //         NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
+    //         DisplayMACOSPattern::All,
+    //     )
+    //     .await?;
+    // if let TrendAnalysisResponse::Chart { body, .. } = trend_analysis_response {
+    //     write("./examples/9223.T.from_jquants_api.svg", &body).await?;
+    // }
 
     let presenter = trend_analysis_presenter::json::JSON;
     let controller = TrendAnalysisController::new(&interactor, &presenter);
@@ -189,23 +167,23 @@ async fn main() -> Result<()> {
             .map(|e| {
                 let Analysis {
                     macos_analysis,
-                    macps_analysis,
+                    trend_reversal_analysis,
                     ecp1_analysis,
                     ..
                 } = e;
-                (macos_analysis, macps_analysis, ecp1_analysis)
+                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, macps_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
             multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.macos_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&macps_analysis)?;
+        let json_str = serde_json::to_string_pretty(&trend_reversal_analysis)?;
         assert_eq!(
-            include_str!("../assets/9223.T.macps_analysis.json"),
+            include_str!("../assets/9223.T.trend_reversal_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;

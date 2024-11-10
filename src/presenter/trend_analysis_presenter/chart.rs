@@ -57,6 +57,7 @@ impl TrendAnalysisPresenter for Chart {
         let company = output.company;
         let sma_5_averages = output.vec_sma_5.collect_average_close();
         let sma_25_averages = output.vec_sma_25.collect_average_close();
+        let sma_50_averages = output.vec_sma_50.collect_average_close();
         let ohlcs: Vec<f32> = output
             .vec_stock
             .collect_ohlc()
@@ -81,6 +82,7 @@ impl TrendAnalysisPresenter for Chart {
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
+                    Series::from(("SMA50", sma_50_averages)),
                     Series::from(("Dead", dead_macoses)),
                     Series::from(("Golden", golden_macoses)),
                     Series::from(("OHLC", ohlcs)),
@@ -93,6 +95,7 @@ impl TrendAnalysisPresenter for Chart {
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
+                    Series::from(("SMA50", sma_50_averages)),
                     Series::from(("Golden", golden_macoses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
@@ -104,6 +107,7 @@ impl TrendAnalysisPresenter for Chart {
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
+                    Series::from(("SMA50", sma_50_averages)),
                     Series::from(("Dead", dead_macoses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
@@ -125,20 +129,22 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.series_list[0].start_index = 5;
         candlestick_chart.series_list[1].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[1].start_index = 25;
+        candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
+        candlestick_chart.series_list[2].start_index = 50;
         match output.display_macos_pattern {
             DisplayMACOSPattern::All => {
-                candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
-                candlestick_chart.series_list[2].start_index = 6;
+                candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
+                candlestick_chart.series_list[3].start_index = 6;
+                candlestick_chart.series_list[4].category = Some(SeriesCategory::Line);
+                candlestick_chart.series_list[4].start_index = 6;
+            }
+            DisplayMACOSPattern::GoldenOnly => {
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
             }
-            DisplayMACOSPattern::GoldenOnly => {
-                candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
-                candlestick_chart.series_list[2].start_index = 6;
-            }
             DisplayMACOSPattern::DeadOnly => {
-                candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
-                candlestick_chart.series_list[2].start_index = 6;
+                candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
+                candlestick_chart.series_list[3].start_index = 6;
             }
         }
         candlestick_chart.y_axis_configs[0].axis_min = Some(min);

@@ -1,7 +1,5 @@
 use rayon::prelude::*;
 
-use std::cmp::Ordering as Ord;
-
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -24,11 +22,13 @@ pub enum MACOSType {
     Neither,
 }
 
-impl From<(Option<Ord>, Option<Ord>)> for MACOSType {
-    fn from(value: (Option<Ord>, Option<Ord>)) -> Self {
+impl From<(Option<std::cmp::Ordering>, Option<std::cmp::Ordering>)> for MACOSType {
+    fn from(value: (Option<std::cmp::Ordering>, Option<std::cmp::Ordering>)) -> Self {
         match value {
-            (Some(Ord::Less), Some(Ord::Greater)) => MACOSType::Golden,
-            (Some(Ord::Greater), Some(Ord::Less)) => MACOSType::Dead,
+            (Some(std::cmp::Ordering::Less), Some(std::cmp::Ordering::Greater)) => {
+                MACOSType::Golden
+            }
+            (Some(std::cmp::Ordering::Greater), Some(std::cmp::Ordering::Less)) => MACOSType::Dead,
             _ => MACOSType::Neither,
         }
     }
@@ -70,6 +70,27 @@ struct MACOSIntermediate {
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct VecMACOS(pub Vec<MACOS>);
+
+impl VecMACOS {
+    pub fn latest_based_on_close(&self, r#type: &MACOSType) -> Option<NaiveDate> {
+        let filtered: Vec<MACOS> = self
+            .0
+            .par_iter()
+            .filter_map(|macos| {
+                if macos.macos_set_5_25.close.eq(r#type) {
+                    Some(*macos)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        filtered
+            .iter()
+            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
+            .last()
+            .map(|x| x.date)
+    }
+}
 
 impl<'a> From<SMAListPair<'a, 5, 25>> for VecMACOS {
     ///
