@@ -1,8 +1,6 @@
 pub mod buy_sell_signal;
 pub mod candle_stick;
-pub mod candle_stick_pattern_analysis;
 pub mod candle_stick_pattern_date_set;
-pub mod candle_stick_pattern_set;
 pub mod chance_loss;
 pub mod close_macos_trend_analysis;
 pub mod company;
@@ -15,4 +13,6 @@ mod ordering;
 pub mod sma;
 pub mod stock;
 pub mod stocks_macoses_pair;
+pub mod trend_reversal_analysis;
+pub mod trend_reversal_analysis_set;
 pub mod volume_macos_trend_analysis;
