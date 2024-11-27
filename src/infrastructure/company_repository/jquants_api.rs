@@ -71,11 +71,14 @@ mod tests {
         let market = "T";
         let data_format = DataFormat::JQuantsAPI;
         let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
-        let company = repository.get_company(code, market).await?;
-        assert_eq!(
-            company,
-            Company::new("84730", "SBI Holdings,Inc.", "0111", "")
-        );
+        let actual = repository.get_company(code, market).await?;
+        let expected = Company {
+            code: "84730".to_string(),
+            name: "SBI Holdings,Inc.".to_string(),
+            market: "0111".to_string(),
+            symbol: "".to_string(),
+        };
+        assert_eq!(actual, expected);
         Ok(())
     }
 

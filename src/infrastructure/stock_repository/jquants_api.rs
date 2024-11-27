@@ -57,10 +57,18 @@ impl StockRepository for JQuantsAPI {
                         Some(adj_close),
                         Some(volume),
                     ) => {
-                        let date = NaiveDate::from_str(date)
-                            .unwrap_or(NaiveDate::from_ymd_opt(2000, 1, 1).unwrap());
+                        let date = NaiveDate::from_str(date).unwrap_or(NaiveDate::default());
                         let volume = volume.to_u64().unwrap();
-                        Some(Stock::new(date, open, high, low, close, adj_close, volume))
+                        let stock = Stock {
+                            date,
+                            open,
+                            high,
+                            low,
+                            close,
+                            adj_close,
+                            volume,
+                        };
+                        Some(stock)
                     }
                     _ => None,
                 }

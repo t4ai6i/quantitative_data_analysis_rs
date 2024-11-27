@@ -10,20 +10,6 @@ pub struct Company {
 }
 
 impl Company {
-    pub fn new(
-        code: impl Into<String>,
-        name: impl Into<String>,
-        market: impl Into<String>,
-        symbol: impl Into<String>,
-    ) -> Self {
-        Self {
-            code: code.into(),
-            name: name.into(),
-            market: market.into(),
-            symbol: symbol.into(),
-        }
-    }
-
     pub fn symbol(code: &str, market: &str) -> String {
         let market = match market {
             "JPX" | "T" | "東証" | "東S" | "東P" | "東G" | "名N" => "T".to_string(),

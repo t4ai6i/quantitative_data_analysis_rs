@@ -34,7 +34,15 @@ impl From<Csv> for Stock {
             adj_close,
             volume,
         } = value;
-        Self::new(date, open, high, low, close, adj_close, volume)
+        Self {
+            date,
+            open,
+            high,
+            low,
+            close,
+            adj_close,
+            volume,
+        }
     }
 }
 
