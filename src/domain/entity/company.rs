@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use serde_json::Value;
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct Company {
@@ -20,17 +19,6 @@ impl Company {
             code.to_string()
         } else {
             format!("{}.{}", code, &market)
-        }
-    }
-}
-
-impl From<&Value> for Company {
-    fn from(value: &Value) -> Self {
-        Self {
-            code: value["Code"].as_str().unwrap().to_string(),
-            name: value["CompanyNameEnglish"].as_str().unwrap().to_string(),
-            market: value["MarketCode"].as_str().unwrap().to_string(),
-            symbol: "".to_string(),
         }
     }
 }
