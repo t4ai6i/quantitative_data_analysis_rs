@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use serde_json::Value;
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct Company {
@@ -10,20 +9,6 @@ pub struct Company {
 }
 
 impl Company {
-    pub fn new(
-        code: impl Into<String>,
-        name: impl Into<String>,
-        market: impl Into<String>,
-        symbol: impl Into<String>,
-    ) -> Self {
-        Self {
-            code: code.into(),
-            name: name.into(),
-            market: market.into(),
-            symbol: symbol.into(),
-        }
-    }
-
     pub fn symbol(code: &str, market: &str) -> String {
         let market = match market {
             "JPX" | "T" | "東証" | "東S" | "東P" | "東G" | "名N" => "T".to_string(),
@@ -34,17 +19,6 @@ impl Company {
             code.to_string()
         } else {
             format!("{}.{}", code, &market)
-        }
-    }
-}
-
-impl From<&Value> for Company {
-    fn from(value: &Value) -> Self {
-        Self {
-            code: value["Code"].as_str().unwrap().to_string(),
-            name: value["CompanyNameEnglish"].as_str().unwrap().to_string(),
-            market: value["MarketCode"].as_str().unwrap().to_string(),
-            symbol: "".to_string(),
         }
     }
 }

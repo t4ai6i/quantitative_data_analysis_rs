@@ -40,58 +40,6 @@ pub struct CandleStick<const N: usize> {
 }
 
 impl<const N: usize> CandleStick<N> {
-    pub fn new(stock: &Stock) -> Self {
-        assert!(
-            N <= 100,
-            "Minimum Body Percent must be less than 100 for Marubozu (<=100%)."
-        );
-        assert!(
-            N >= 80,
-            "Minimum Body Percent must at least 80% for Marubozu and is usually greater than 90%."
-        );
-        let min_body_pct = N.to_f64().unwrap().div(100.0);
-
-        let Stock {
-            date,
-            open,
-            high,
-            low,
-            close,
-            ..
-        } = stock;
-        let size = Self::get_size(*high, *low);
-        let body = Self::get_body(*open, *close);
-        let body_high = open.max(*close);
-        let body_low = open.min(*close);
-        let upper_wick = Self::get_upper_wick(*high, body_high);
-        let lower_wick = Self::get_lower_wick(*low, body_low);
-        let body_pct = Self::get_percentage(size, body);
-        let upper_wick_pct = Self::get_percentage(size, upper_wick);
-        let lower_wick_pct = Self::get_percentage(size, lower_wick);
-        let bullish_bearish = Self::get_bullish_bearish_type(*open, *close);
-        let is_marubozu = Self::is_marubozu(body_pct, min_body_pct);
-        let is_doji = Self::is_doji(body, upper_wick, lower_wick);
-        Self {
-            date: *date,
-            open: *open,
-            high: *high,
-            low: *low,
-            close: *close,
-            size,
-            body,
-            body_high,
-            body_low,
-            upper_wick,
-            lower_wick,
-            body_pct,
-            upper_wick_pct,
-            lower_wick_pct,
-            bullish_bearish,
-            is_marubozu,
-            is_doji,
-        }
-    }
-
     fn get_size(high: f64, low: f64) -> f64 {
         high - low
     }
@@ -135,7 +83,55 @@ impl<const N: usize> CandleStick<N> {
 
 impl<const N: usize> From<&Stock> for CandleStick<N> {
     fn from(value: &Stock) -> Self {
-        Self::new(value)
+        assert!(
+            N <= 100,
+            "Minimum Body Percent must be less than 100 for Marubozu (<=100%)."
+        );
+        assert!(
+            N >= 80,
+            "Minimum Body Percent must at least 80% for Marubozu and is usually greater than 90%."
+        );
+        let min_body_pct = N.to_f64().unwrap().div(100.0);
+
+        let Stock {
+            date,
+            open,
+            high,
+            low,
+            close,
+            ..
+        } = value;
+        let size = Self::get_size(*high, *low);
+        let body = Self::get_body(*open, *close);
+        let body_high = open.max(*close);
+        let body_low = open.min(*close);
+        let upper_wick = Self::get_upper_wick(*high, body_high);
+        let lower_wick = Self::get_lower_wick(*low, body_low);
+        let body_pct = Self::get_percentage(size, body);
+        let upper_wick_pct = Self::get_percentage(size, upper_wick);
+        let lower_wick_pct = Self::get_percentage(size, lower_wick);
+        let bullish_bearish = Self::get_bullish_bearish_type(*open, *close);
+        let is_marubozu = Self::is_marubozu(body_pct, min_body_pct);
+        let is_doji = Self::is_doji(body, upper_wick, lower_wick);
+        Self {
+            date: *date,
+            open: *open,
+            high: *high,
+            low: *low,
+            close: *close,
+            size,
+            body,
+            body_high,
+            body_low,
+            upper_wick,
+            lower_wick,
+            body_pct,
+            upper_wick_pct,
+            lower_wick_pct,
+            bullish_bearish,
+            is_marubozu,
+            is_doji,
+        }
     }
 }
 
@@ -167,20 +163,19 @@ impl<const N: usize> From<&[Stock]> for VecCandleStick<N> {
 mod tests {
     use crate::domain::entity::candle_stick::{BullishBearishType, CandleStick};
     use crate::domain::entity::stock::Stock;
-    use chrono::NaiveDate;
 
     #[test]
     fn new_test() {
-        let stock = Stock::new(
-            NaiveDate::default(),
-            1000.0,
-            1500.0,
-            500.0,
-            1000.0,
-            1000.0,
-            10000,
-        );
-        let actual = CandleStick::<90>::new(&stock);
+        let stock = Stock {
+            date: Default::default(),
+            open: 1000.0,
+            high: 1500.0,
+            low: 500.0,
+            close: 1000.0,
+            adj_close: 1000.0,
+            volume: 10000,
+        };
+        let actual = CandleStick::<90>::from(&stock);
         let expected = CandleStick::<90> {
             size: 1000.0,
             open: 1000.0,

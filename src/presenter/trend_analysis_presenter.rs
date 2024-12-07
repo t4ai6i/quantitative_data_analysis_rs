@@ -4,6 +4,7 @@ use crate::domain::entity::close_macos_trend_analysis::{
 };
 use crate::domain::entity::company::Company;
 use crate::domain::entity::ecp1::VecECP1;
+use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
 use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::stock::VecStock;
@@ -27,6 +28,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_ecp1: VecECP1,
     pub vec_candle_stick: VecCandleStick<M>,
     pub trend_reversal_analysis: TrendReversalAnalysis,
+    pub indicator_analysis: IndicatorAnalysis,
     pub display_macos_pattern: DisplayMACOSPattern,
 }
 
@@ -46,6 +48,7 @@ pub enum TrendAnalysisResponse {
         latest_chance: LatestChance,
         vec_ecp1: VecECP1,
         trend_reversal_analysis: TrendReversalAnalysis,
+        indicator_analysis: IndicatorAnalysis,
     },
 }
 

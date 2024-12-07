@@ -13,7 +13,12 @@ impl From<Tsv> for Company {
         let Tsv { code, name } = value;
         let market = "T".to_string();
         let symbol = Self::symbol(&code, &market);
-        Self::new(code, name, market, symbol)
+        Self {
+            code,
+            name,
+            market,
+            symbol,
+        }
     }
 }
 

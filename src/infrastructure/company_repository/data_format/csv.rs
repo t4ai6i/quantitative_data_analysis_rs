@@ -22,7 +22,12 @@ impl From<Csv> for Company {
             code, name, market, ..
         } = value;
         let symbol = Self::symbol(&code, &market);
-        Self::new(code, name, market, symbol)
+        Self {
+            code,
+            name,
+            market,
+            symbol,
+        }
     }
 }
 
