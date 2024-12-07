@@ -49,6 +49,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     latest_chance,
                     vec_ecp1,
                     trend_reversal_analysis,
+                    indicator_analysis,
                 } => {
                     let Company { code, symbol, .. } = company;
                     let macos_analysis =
@@ -62,6 +63,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                         macos_analysis,
                         ecp1_analysis,
                         trend_reversal_analysis,
+                        indicator_analysis,
                     })
                 }
                 _ => None,

@@ -3,7 +3,8 @@ use rayon::prelude::*;
 use crate::domain::entity::buy_sell_signal::BuySellSignalType::{Buy, Sell, Stay};
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
 use crate::domain::entity::macos::MACOSType::{Dead, Golden};
-use crate::domain::entity::trend_reversal_analysis_set::TrendReversalAnalysisSet;
+use crate::domain::entity::macos::VecMACOS;
+use crate::domain::entity::macps::MACPS;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -35,6 +36,28 @@ impl TrendReversalAnalysis {
     }
 }
 
+pub struct TrendReversalAnalysisSet<'a> {
+    pub ecp2s: &'a [BuySellSignal],
+    pub msesps: &'a [BuySellSignal],
+    pub macps: &'a MACPS,
+    pub macoses: &'a VecMACOS,
+}
+
+impl TrendReversalAnalysis {
+    fn cmp(
+        buy_date: Option<NaiveDate>,
+        sell_date: Option<NaiveDate>,
+    ) -> Option<(NaiveDate, BuySellSignalType)> {
+        match (buy_date, sell_date) {
+            (Some(buy), Some(sell)) if buy.ge(&sell) => Some((buy, Buy)),
+            (Some(buy), Some(sell)) if sell.ge(&buy) => Some((sell, Sell)),
+            (Some(buy), None) => Some((buy, Buy)),
+            (None, Some(sell)) => Some((sell, Sell)),
+            _ => None,
+        }
+    }
+}
+
 impl<'a> From<&TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
     fn from(value: &TrendReversalAnalysisSet<'a>) -> Self {
         let TrendReversalAnalysisSet {
@@ -44,40 +67,16 @@ impl<'a> From<&TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
             msesps,
         } = value;
 
-        let macps = match (macps.buy, macps.sell) {
-            (Some(buy), Some(sell)) if buy.ge(&sell) => Some((buy, Buy)),
-            (Some(buy), Some(sell)) if sell.ge(&buy) => Some((sell, Sell)),
-            (Some(buy), None) => Some((buy, Buy)),
-            (None, Some(sell)) => Some((sell, Sell)),
-            _ => None,
-        };
+        let macps = Self::cmp(macps.buy, macps.sell);
         let macos_close_golden = macoses.latest_based_on_close(&Golden);
         let macos_close_dead = macoses.latest_based_on_close(&Dead);
-        let macos = match (macos_close_golden, macos_close_dead) {
-            (Some(golden), Some(dead)) if golden.ge(&dead) => Some((golden, Buy)),
-            (Some(golden), Some(dead)) if dead.ge(&golden) => Some((dead, Sell)),
-            (Some(golden), None) => Some((golden, Buy)),
-            (None, Some(dead)) => Some((dead, Sell)),
-            _ => None,
-        };
+        let macos = Self::cmp(macos_close_golden, macos_close_dead);
         let ecp2_buy = Self::latest_buy_sell_signal_date(ecp2s, &Buy);
         let ecp2_sell = Self::latest_buy_sell_signal_date(ecp2s, &Sell);
-        let ecp2 = match (ecp2_buy, ecp2_sell) {
-            (Some(buy), Some(sell)) if buy.ge(&sell) => Some((buy, Buy)),
-            (Some(buy), Some(sell)) if sell.ge(&buy) => Some((sell, Sell)),
-            (Some(buy), None) => Some((buy, Buy)),
-            (None, Some(sell)) => Some((sell, Sell)),
-            _ => None,
-        };
+        let ecp2 = Self::cmp(ecp2_buy, ecp2_sell);
         let msesp_buy = Self::latest_buy_sell_signal_date(msesps, &Buy);
         let msesp_sell = Self::latest_buy_sell_signal_date(msesps, &Sell);
-        let msesp = match (msesp_buy, msesp_sell) {
-            (Some(buy), Some(sell)) if buy.ge(&sell) => Some((buy, Buy)),
-            (Some(buy), Some(sell)) if sell.ge(&buy) => Some((sell, Sell)),
-            (Some(buy), None) => Some((buy, Buy)),
-            (None, Some(sell)) => Some((sell, Sell)),
-            _ => None,
-        };
+        let msesp = Self::cmp(msesp_buy, msesp_sell);
         // 終値のGoldenCross/ECP2 Buy/MSESP Buy/MACPS Buy が揃っていれば Buy
         // 終値のDeadCross/ECP2 Sell/MSESP Sell/MACPS Sell が揃っていれば Sell
         // それ以外はStay
@@ -117,7 +116,7 @@ mod tests {
     use crate::domain::entity::msesp::VecMSESP;
     use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
-    use crate::domain::entity::trend_reversal_analysis_set::TrendReversalAnalysisSet;
+    use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;

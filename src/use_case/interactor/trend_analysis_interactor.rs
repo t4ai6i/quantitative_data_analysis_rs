@@ -2,15 +2,18 @@ use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
+use crate::domain::entity::indicator::Indicator;
+use crate::domain::entity::indicator_analysis::{IndicatorAnalysis, IndicatorAnalysisSet};
 use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::macps::MACPS;
 use crate::domain::entity::msesp::VecMSESP;
 use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
-use crate::domain::entity::trend_reversal_analysis_set::TrendReversalAnalysisSet;
+use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
 use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
 use crate::domain::repository::company_repository::CompanyRepository;
+use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use crate::use_case::interface::trend_analysis_use_case::{
@@ -21,25 +24,32 @@ use anyhow::Result;
 use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct TrendAnalysisInteractor<'a, SR, CR> {
-    stock_repository: &'a SR,
+pub struct TrendAnalysisInteractor<'a, SCR, CR, SMR> {
+    stock_repository: &'a SCR,
     company_repository: &'a CR,
+    statement_repository: &'a SMR,
 }
 
-impl<'a, SR, CR> TrendAnalysisInteractor<'a, SR, CR> {
-    pub fn new(stock_repository: &'a SR, company_repository: &'a CR) -> Self {
+impl<'a, SCR, CR, SMR> TrendAnalysisInteractor<'a, SCR, CR, SMR> {
+    pub fn new(
+        stock_repository: &'a SCR,
+        company_repository: &'a CR,
+        statement_repository: &'a SMR,
+    ) -> Self {
         Self {
             stock_repository,
             company_repository,
+            statement_repository,
         }
     }
 }
 
 #[async_trait]
-impl<'a, SR, CR> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, SR, CR>
+impl<'a, SCR, CR, SMR> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, SCR, CR, SMR>
 where
-    SR: StockRepository + Sync,
+    SCR: StockRepository + Sync,
     CR: CompanyRepository + Sync,
+    SMR: StatementRepository + Sync,
 {
     async fn handle<
         const AFTER_DAYS: usize,
@@ -62,6 +72,11 @@ where
                 input.start_date,
                 input.end_date,
             )
+            .await?;
+
+        let statement = self
+            .statement_repository
+            .get_statement(input.code.as_str())
             .await?;
 
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());
@@ -107,6 +122,10 @@ where
 
         let trend_reversal_analysis = TrendReversalAnalysis::from(&trend_reversal_analysis_set);
 
+        let indicator = Indicator::from((vec_stock.0.as_slice(), &statement));
+        let indicator_analysis_set = IndicatorAnalysisSet { indicator };
+        let indicator_analysis = IndicatorAnalysis::from(indicator_analysis_set);
+
         let output = TrendAnalysisOutput {
             company,
             vec_stock,
@@ -119,6 +138,7 @@ where
             vec_ecp1,
             vec_candle_stick,
             trend_reversal_analysis,
+            indicator_analysis,
             display_macos_pattern: input.display_macos_pattern,
         };
         Ok(output)

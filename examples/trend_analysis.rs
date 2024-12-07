@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
     let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
 
     // StockRepositoryとCompanyRepositoryは、JQuantsAPIを用いる
-    let interactor = TrendAnalysisInteractor::new(&repository, &repository);
+    let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter =
         trend_analysis_presenter::chart::Chart::new("chalk", 2560.0, 720.0, DATE_FORMAT);
@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
     // };
 
     // 運用では、NocoDBで取り扱えるJSON形式でトレンド解析とサマリーを出力する
-    let interactor = TrendAnalysisInteractor::new(&repository, &repository);
+    let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_analysis_presenter::json::JSON;
     let controller = TrendAnalysisController::new(&interactor, &presenter);
@@ -97,13 +97,23 @@ async fn main() -> Result<()> {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
+                    indicator_analysis,
                     ..
                 } = e;
-                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
+                (
+                    macos_analysis,
+                    trend_reversal_analysis,
+                    ecp1_analysis,
+                    indicator_analysis,
+                )
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
-            multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis, indicator_analysis): (
+            Vec<_>,
+            Vec<_>,
+            Vec<_>,
+            Vec<_>,
+        ) = multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.macos_analysis.json"),
@@ -119,10 +129,15 @@ async fn main() -> Result<()> {
             include_str!("../assets/8473.T.ecp1_analysis.json"),
             &json_str
         );
+        let json_str = serde_json::to_string_pretty(&indicator_analysis)?;
+        assert_eq!(
+            include_str!("../assets/8473.T.indicator_analysis.json"),
+            &json_str
+        );
     };
 
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
-    let interactor = TrendAnalysisInteractor::new(&repository, &repository);
+    let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);
 
     // TODO: 実行時間が長くなるのでコメントアウト
     // let presenter =
@@ -169,13 +184,23 @@ async fn main() -> Result<()> {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
+                    indicator_analysis,
                     ..
                 } = e;
-                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
+                (
+                    macos_analysis,
+                    trend_reversal_analysis,
+                    ecp1_analysis,
+                    indicator_analysis,
+                )
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
-            multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis, indicator_analysis): (
+            Vec<_>,
+            Vec<_>,
+            Vec<_>,
+            Vec<_>,
+        ) = multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.macos_analysis.json"),
@@ -189,6 +214,11 @@ async fn main() -> Result<()> {
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.ecp1_analysis.json"),
+            &json_str
+        );
+        let json_str = serde_json::to_string_pretty(&indicator_analysis)?;
+        assert_eq!(
+            include_str!("../assets/9223.T.indicator_analysis.json"),
             &json_str
         );
     };

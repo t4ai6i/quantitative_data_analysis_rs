@@ -23,6 +23,7 @@ impl TrendAnalysisPresenter for JSON {
             latest_chance,
             vec_ecp1: output.vec_ecp1,
             trend_reversal_analysis: output.trend_reversal_analysis,
+            indicator_analysis: output.indicator_analysis,
         })
     }
 }
