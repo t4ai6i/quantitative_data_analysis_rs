@@ -64,7 +64,7 @@ where
             .get_company(input.code.as_str(), input.market.as_str())
             .await?;
 
-        let vec_stock = self
+        let stocks = self
             .stock_repository
             .get_vec_stock(
                 input.code.as_str(),
@@ -79,8 +79,8 @@ where
             .get_statement(input.code.as_str())
             .await?;
 
-        let vec_sma_5 = VecSMA::<5>::from(vec_stock.0.as_slice());
-        let vec_sma_25 = VecSMA::<25>::from(vec_stock.0.as_slice());
+        let vec_sma_5 = VecSMA::<5>::from(stocks.as_slice());
+        let vec_sma_25 = VecSMA::<25>::from(stocks.as_slice());
 
         let sma_list_pair = SMAListPair {
             smas_n: vec_sma_5.0.as_slice(),
@@ -88,19 +88,19 @@ where
         };
         let vec_macos = VecMACOS::from(sma_list_pair);
 
-        let vec_sma_50 = VecSMA::<50>::from(vec_stock.0.as_slice());
+        let vec_sma_50 = VecSMA::<50>::from(stocks.as_slice());
         let sma_list_trio = SMAListTrio {
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
             smas_p: vec_sma_50.0.as_slice(),
         };
-        let macps = MACPS::from((vec_stock.0.as_slice(), sma_list_trio));
+        let macps = MACPS::from((stocks.as_slice(), sma_list_trio));
 
-        let stocks = VecT(vec_stock.0.as_slice()).get_from_end(FROM_END_DAYS);
-        let vec_ecp1 = VecECP1::from(stocks.as_slice());
+        let stocks_from_end_days = VecT(stocks.as_slice()).get_from_end(FROM_END_DAYS);
+        let vec_ecp1 = VecECP1::from(stocks_from_end_days.as_slice());
 
         let stocks_macoses_pair = StocksMACOSESPair {
-            stocks: vec_stock.0.as_slice(),
+            stocks: stocks_from_end_days.as_slice(),
             macoses: vec_macos.0.as_slice(),
         };
         let vec_close_macos_trend_analysis =
@@ -108,7 +108,8 @@ where
         let vec_volume_macos_trend_analysis =
             VecVolumeMACOSTrendAnalysis::from(&stocks_macoses_pair);
 
-        let vec_candle_stick = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.0.as_slice());
+        let vec_candle_stick =
+            VecCandleStick::<MARUBOZU_MIN_RATE>::from(stocks_from_end_days.as_slice());
         let candle_sticks = VecT(vec_candle_stick.0.as_slice()).get_from_end(FROM_END_DAYS);
         let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
         let vec_msesp = VecMSESP::from(candle_sticks.as_slice());
@@ -122,13 +123,13 @@ where
 
         let trend_reversal_analysis = TrendReversalAnalysis::from(&trend_reversal_analysis_set);
 
-        let indicator = Indicator::from((vec_stock.0.as_slice(), &statement));
+        let indicator = Indicator::from((stocks_from_end_days.as_slice(), &statement));
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };
         let indicator_analysis = IndicatorAnalysis::from(indicator_analysis_set);
 
         let output = TrendAnalysisOutput {
             company,
-            vec_stock,
+            vec_stock: stocks,
             vec_sma_5,
             vec_sma_25,
             vec_sma_50,

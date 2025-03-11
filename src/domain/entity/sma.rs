@@ -1,4 +1,4 @@
-use crate::domain::entity::stock::Stock;
+use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use simple_moving_average::{SumTreeSMA, SMA as OtherSMA};
@@ -54,7 +54,7 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     /// use quantitative_data_analysis_rs::domain::entity::sma::VecSMA;
-    /// use quantitative_data_analysis_rs::domain::entity::stock::VecStock;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     ///
     /// const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
     /// const DAYS_5: usize = 5;
@@ -67,7 +67,7 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
     /// let VecSMA(smas_25) = VecSMA::<DAYS_25>::from(stocks.as_slice());
     /// assert_eq!(smas_25.len(), 222);
     ///
-    /// let VecStock(stocks) = VecStock(vec![]);
+    /// let Stocks(stocks) = Stocks(vec![]);
     /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(stocks.as_slice());
     /// assert_eq!(smas_5.len(), 0);
     /// ```

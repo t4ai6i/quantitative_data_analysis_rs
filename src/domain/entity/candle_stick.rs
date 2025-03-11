@@ -1,4 +1,4 @@
-use crate::domain::entity::stock::Stock;
+use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use num_traits::ToPrimitive;
@@ -143,7 +143,7 @@ impl<const N: usize> From<&[Stock]> for VecCandleStick<N> {
     /// # Examples
     /// ```
     /// use quantitative_data_analysis_rs::domain::entity::candle_stick::VecCandleStick;
-    /// use quantitative_data_analysis_rs::domain::entity::stock::VecStock;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
@@ -162,7 +162,7 @@ impl<const N: usize> From<&[Stock]> for VecCandleStick<N> {
 #[cfg(test)]
 mod tests {
     use crate::domain::entity::candle_stick::{BullishBearishType, CandleStick};
-    use crate::domain::entity::stock::Stock;
+    use crate::domain::models::stock::model::Stock;
 
     #[test]
     fn new_test() {

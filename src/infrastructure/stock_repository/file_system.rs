@@ -1,4 +1,4 @@
-use crate::domain::entity::stock::VecStock;
+use crate::domain::models::stock::model::Stocks;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
@@ -26,13 +26,7 @@ impl StockRepository for FileSystem {
     /// let repository = FileSystem::new(data_format);
     /// let vec_stock = repository.get_vec_stock(code, start_date, end_date).await?;
     /// assert_eq!(vec_stock.0.len(), 246);
-    async fn get_vec_stock(
-        &self,
-        _: &str,
-        _: &str,
-        _: NaiveDate,
-        _: NaiveDate,
-    ) -> Result<VecStock> {
+    async fn get_vec_stock(&self, _: &str, _: &str, _: NaiveDate, _: NaiveDate) -> Result<Stocks> {
         let DataFormat::CSV { ref file_path, .. } = self.data_format else {
             bail!(format!(
                 "Unsupported data format: {:?}\n{}",
@@ -56,7 +50,10 @@ impl StockRepository for FileSystem {
             }
             _ => vec![],
         };
-        Ok(VecStock(vec_stock))
+        let mut stocks = Stocks::new();
+        stocks.extend(vec_stock);
+
+        Ok(stocks)
     }
 }
 
@@ -81,10 +78,10 @@ mod tests {
             file_path,
         };
         let repository = FileSystem::new(data_format);
-        let vec_stock = repository
+        let stocks = repository
             .get_vec_stock(code, market, start_date, end_date)
             .await?;
-        assert_eq!(vec_stock.0.len(), 246);
+        assert_eq!(stocks.len(), 246);
         Ok(())
     }
 }

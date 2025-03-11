@@ -7,9 +7,9 @@ use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
 use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::sma::VecSMA;
-use crate::domain::entity::stock::VecStock;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
+use crate::domain::models::stock::model::Stocks;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use anyhow::Result;
 
@@ -18,7 +18,7 @@ pub mod json;
 
 pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub company: Company,
-    pub vec_stock: VecStock,
+    pub vec_stock: Stocks,
     pub vec_sma_5: VecSMA<5>,
     pub vec_sma_25: VecSMA<25>,
     pub vec_sma_50: VecSMA<50>,

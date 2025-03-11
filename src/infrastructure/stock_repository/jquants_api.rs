@@ -8,7 +8,7 @@ use query_string_builder::QueryString;
 use reqwest::Client;
 use std::str::FromStr;
 
-use crate::domain::entity::stock::{Stock, VecStock};
+use crate::domain::models::stock::model::{Stock, Stocks};
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
@@ -22,7 +22,7 @@ impl StockRepository for JQuantsAPI {
         _market: &str,
         start_date: NaiveDate,
         end_date: NaiveDate,
-    ) -> anyhow::Result<VecStock> {
+    ) -> anyhow::Result<Stocks> {
         let qs = QueryString::dynamic()
             .with_value("code", code)
             .with_value("from", start_date.to_string())
@@ -35,7 +35,7 @@ impl StockRepository for JQuantsAPI {
             .send()
             .await?;
         let response = &mut response.json::<serde_json::Value>().await?;
-        let stocks = response["daily_quotes"]
+        let vec_stock: Vec<Stock> = response["daily_quotes"]
             .as_array()
             .with_context(|| format!("daily_quotes is empty. code = {}", code))?
             .par_iter()
@@ -74,7 +74,9 @@ impl StockRepository for JQuantsAPI {
                 }
             })
             .collect();
-        Ok(VecStock(stocks))
+        let mut stocks = Stocks::new();
+        stocks.extend(vec_stock);
+        Ok(stocks)
     }
 }
 #[cfg(test)]
@@ -101,10 +103,10 @@ mod tests {
         let end_date = NaiveDate::from_ymd_opt(2023, 12, 31).unwrap();
         let data_format = DataFormat::JQuantsAPI;
         let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
-        let vec_stock = repository
+        let stocks = repository
             .get_vec_stock(code, market, start_date, end_date)
             .await?;
-        assert_eq!(vec_stock.0.len(), 246);
+        assert_eq!(stocks.len(), 246);
         Ok(())
     }
 }

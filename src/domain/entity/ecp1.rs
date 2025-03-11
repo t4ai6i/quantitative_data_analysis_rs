@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use itertools::Itertools;
 
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
-use crate::domain::entity::stock::Stock;
+use crate::domain::models::stock::model::Stock;
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct ECP1 {

@@ -11,7 +11,7 @@ impl<const N: usize> VecCandleStickExt for VecCandleStick<N> {
     /// # Examples
     /// ```
     /// use quantitative_data_analysis_rs::domain::entity::candle_stick::VecCandleStick;
-    /// use quantitative_data_analysis_rs::domain::entity::stock::VecStock;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     /// use crate::quantitative_data_analysis_rs::presenter::view_model::vec_candle_stick::VecCandleStickExt;

@@ -1,5 +1,5 @@
 use crate::domain::entity::company::Company;
-use crate::domain::entity::stock::VecStock;
+use crate::domain::models::stock::model::Stocks;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
@@ -16,7 +16,7 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
         market: &str,
         start_date: NaiveDate,
         end_date: NaiveDate,
-    ) -> Result<VecStock> {
+    ) -> Result<Stocks> {
         if let DataFormat::YahooFinanceAPI = self.data_format {
             let symbol = Company::symbol(code, market);
             let start_date = OffsetDateTimeWrapper::from(start_date);
@@ -31,7 +31,7 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
             .with_context(|| format!("Failed fetching symbol: {}", &symbol))?;
             let vec_stock = y_response
                 .quotes()
-                .map(VecStock::from)
+                .map(Stocks::from)
                 .with_context(|| format!("Failed mapping quotes into VecStock: {}", &symbol))?;
             Ok(vec_stock)
         } else {

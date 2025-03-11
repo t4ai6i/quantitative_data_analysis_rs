@@ -1,5 +1,5 @@
 use crate::domain::entity::macos::MACOS;
-use crate::domain::entity::stock::Stock;
+use crate::domain::models::stock::model::Stock;
 
 pub struct StocksMACOSESPair<'a> {
     pub stocks: &'a [Stock],

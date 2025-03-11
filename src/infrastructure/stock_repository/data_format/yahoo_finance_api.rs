@@ -1,9 +1,9 @@
-use crate::domain::entity::stock::{Stock, VecStock};
+use crate::domain::models::stock::model::{Stock, Stocks};
 use chrono::NaiveDateTime;
 use itertools::Itertools;
 use yahoo_finance_api::Quote;
 
-impl From<Vec<Quote>> for VecStock {
+impl From<Vec<Quote>> for Stocks {
     fn from(value: Vec<Quote>) -> Self {
         let vec_stock = value
             .iter()
@@ -21,6 +21,8 @@ impl From<Vec<Quote>> for VecStock {
                 }
             })
             .collect_vec();
-        Self(vec_stock)
+        let mut stocks = Stocks::new();
+        stocks.extend(vec_stock);
+        stocks
     }
 }

@@ -1,4 +1,4 @@
-use crate::domain::entity::stock::Stock;
+use crate::domain::models::stock::model::Stock;
 use crate::infrastructure::from_slice;
 use crate::infrastructure::from_slice::FromSlice;
 use chrono::NaiveDate;

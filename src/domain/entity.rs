@@ -14,7 +14,6 @@ pub mod msesp;
 mod ordering;
 pub mod sma;
 pub mod statement;
-pub mod stock;
 pub mod stocks_macoses_pair;
 pub mod trend_reversal_analysis;
 pub mod volume_macos_trend_analysis;

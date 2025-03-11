@@ -2,7 +2,7 @@ use rayon::prelude::*;
 
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
 use crate::domain::entity::sma::SMAListTrio;
-use crate::domain::entity::stock::Stock;
+use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use std::cmp::Ordering;

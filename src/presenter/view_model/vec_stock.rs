@@ -1,4 +1,4 @@
-use crate::domain::entity::stock::VecStock;
+use crate::domain::models::stock::model::Stocks;
 use itertools::Itertools;
 
 pub trait VecStockExt {
@@ -7,29 +7,20 @@ pub trait VecStockExt {
     fn collect_volume(&self) -> Vec<u64>;
 }
 
-impl VecStockExt for VecStock {
+impl VecStockExt for Stocks {
     fn collect_date_string(&self, date_format: &str) -> Vec<String> {
-        self.0
-            .iter()
+        self.iter()
             .map(|stock| stock.date.format(date_format).to_string())
             .collect_vec()
     }
 
     fn collect_ohlc(&self) -> Vec<f64> {
-        self.0
-            .iter()
-            .flat_map(|stock| {
-                vec![
-                    stock.open,
-                    stock.close,
-                    stock.low,
-                    stock.high,
-                ]
-            })
+        self.iter()
+            .flat_map(|stock| vec![stock.open, stock.close, stock.low, stock.high])
             .collect_vec()
     }
 
     fn collect_volume(&self) -> Vec<u64> {
-        self.0.iter().map(|stock| stock.volume).collect_vec()
+        self.iter().map(|stock| stock.volume).collect_vec()
     }
 }

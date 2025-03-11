@@ -1,5 +1,5 @@
 use crate::domain::entity::statement::Statement;
-use crate::domain::entity::stock::Stock;
+use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use std::ops::{Div, Mul};
 
@@ -46,7 +46,7 @@ impl From<(&[Stock], &Statement)> for Indicator {
 mod tests {
     use crate::domain::entity::indicator::Indicator;
     use crate::domain::entity::statement::Statement;
-    use crate::domain::entity::stock::Stock;
+    use crate::domain::models::stock::model::Stock;
 
     #[test]
     fn indicator_test() {
