@@ -60,14 +60,14 @@ impl<const N: usize> From<&[Stock]> for VecSMA<N> {
     /// const DAYS_5: usize = 5;
     /// const DAYS_25: usize = 25;
     ///
-    /// let stocks = Csv::from_slice::<true>(CSV_8473);
-    /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(stocks.as_slice());
+    /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
+    /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(vec_stock.as_slice());
     /// assert_eq!(smas_5.len(), 242);
     ///
-    /// let VecSMA(smas_25) = VecSMA::<DAYS_25>::from(stocks.as_slice());
+    /// let VecSMA(smas_25) = VecSMA::<DAYS_25>::from(vec_stock.as_slice());
     /// assert_eq!(smas_25.len(), 222);
     ///
-    /// let Stocks(stocks) = Stocks(vec![]);
+    /// let stocks = Stocks::default();
     /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(stocks.as_slice());
     /// assert_eq!(smas_5.len(), 0);
     /// ```

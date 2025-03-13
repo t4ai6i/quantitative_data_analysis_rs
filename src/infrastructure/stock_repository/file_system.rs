@@ -28,6 +28,7 @@ impl StockRepository for FileSystem {
     /// let repository = FileSystem::new(data_format);
     /// let stocks = repository.get_stocks(code, market, start_date, end_date).await?;
     /// assert_eq!(stocks.len(), 246);
+    /// ```
     async fn get_stocks(&self, _: &str, _: &str, _: NaiveDate, _: NaiveDate) -> Result<Stocks> {
         let DataFormat::CSV { ref file_path, .. } = self.data_format else {
             bail!(format!(
