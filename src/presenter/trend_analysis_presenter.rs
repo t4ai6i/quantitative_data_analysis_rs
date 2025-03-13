@@ -18,7 +18,7 @@ pub mod json;
 
 pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub company: Company,
-    pub vec_stock: Stocks,
+    pub stocks: Stocks,
     pub vec_sma_5: VecSMA<5>,
     pub vec_sma_25: VecSMA<25>,
     pub vec_sma_50: VecSMA<50>,

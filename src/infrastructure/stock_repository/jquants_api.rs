@@ -16,7 +16,7 @@ const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
 
 #[async_trait]
 impl StockRepository for JQuantsAPI {
-    async fn get_vec_stock(
+    async fn get_stocks(
         &self,
         code: &str,
         _market: &str,
@@ -74,7 +74,7 @@ impl StockRepository for JQuantsAPI {
                 }
             })
             .collect();
-        let mut stocks = Stocks::new();
+        let mut stocks = Stocks::default();
         stocks.extend(vec_stock);
         Ok(stocks)
     }
@@ -95,7 +95,7 @@ mod tests {
     }
     #[rstest]
     #[tokio::test]
-    async fn get_vec_stock_test(#[future] setup: anyhow::Result<Token>) -> anyhow::Result<()> {
+    async fn get_stocks_test(#[future] setup: anyhow::Result<Token>) -> anyhow::Result<()> {
         let token = setup.await?;
         let code = "84730";
         let market = "";
@@ -104,7 +104,7 @@ mod tests {
         let data_format = DataFormat::JQuantsAPI;
         let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
         let stocks = repository
-            .get_vec_stock(code, market, start_date, end_date)
+            .get_stocks(code, market, start_date, end_date)
             .await?;
         assert_eq!(stocks.len(), 246);
         Ok(())

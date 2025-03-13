@@ -66,7 +66,7 @@ where
 
         let stocks = self
             .stock_repository
-            .get_vec_stock(
+            .get_stocks(
                 input.code.as_str(),
                 input.market.as_str(),
                 input.start_date,
@@ -129,7 +129,7 @@ where
 
         let output = TrendAnalysisOutput {
             company,
-            vec_stock: stocks,
+            stocks,
             vec_sma_5,
             vec_sma_25,
             vec_sma_50,

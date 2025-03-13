@@ -10,7 +10,7 @@ use chrono::NaiveDate;
 
 #[async_trait]
 impl<'a> StockRepository for YahooFinanceAPI<'a> {
-    async fn get_vec_stock(
+    async fn get_stocks(
         &self,
         code: &str,
         market: &str,
@@ -65,18 +65,18 @@ mod tests {
         let data_format = DataFormat::YahooFinanceAPI;
         let provider = YahooConnector::new();
         let repository = YahooFinanceAPI::new(&provider, data_format);
-        let vec_stock = repository
-            .get_vec_stock(code, market, start_date, end_date)
+        let stocks = repository
+            .get_stocks(code, market, start_date, end_date)
             .await?;
-        assert_eq!(vec_stock.0.len(), 244);
+        assert_eq!(stocks.len(), 244);
         let code = "V";
         let market = "";
         let data_format = DataFormat::YahooFinanceAPI;
         let repository = YahooFinanceAPI::new(&provider, data_format);
-        let vec_stock = repository
-            .get_vec_stock(code, market, start_date, end_date)
+        let stocks = repository
+            .get_stocks(code, market, start_date, end_date)
             .await?;
-        assert_eq!(vec_stock.0.len(), 251);
+        assert_eq!(stocks.len(), 251);
         Ok(())
     }
 
@@ -91,7 +91,7 @@ mod tests {
         let data_format = DataFormat::YahooFinanceAPI;
         let repository = YahooFinanceAPI::new(&provider, data_format);
         let _ = repository
-            .get_vec_stock(code, market, start_date, end_date)
+            .get_stocks(code, market, start_date, end_date)
             .await
             .unwrap();
     }

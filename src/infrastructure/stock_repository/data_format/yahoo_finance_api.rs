@@ -21,7 +21,7 @@ impl From<Vec<Quote>> for Stocks {
                 }
             })
             .collect_vec();
-        let mut stocks = Stocks::new();
+        let mut stocks = Stocks::default();
         stocks.extend(vec_stock);
         stocks
     }

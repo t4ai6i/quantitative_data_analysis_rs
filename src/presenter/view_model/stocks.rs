@@ -1,13 +1,14 @@
 use crate::domain::models::stock::model::Stocks;
 use itertools::Itertools;
 
-pub trait VecStockExt {
+pub trait StocksExt {
     fn collect_date_string(&self, date_format: &str) -> Vec<String>;
     fn collect_ohlc(&self) -> Vec<f64>;
     fn collect_volume(&self) -> Vec<u64>;
 }
 
-impl VecStockExt for Stocks {
+// TODO: rayonを使って並列化
+impl StocksExt for Stocks {
     fn collect_date_string(&self, date_format: &str) -> Vec<String> {
         self.iter()
             .map(|stock| stock.date.format(date_format).to_string())

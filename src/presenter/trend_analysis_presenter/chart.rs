@@ -14,10 +14,9 @@ use crate::presenter::{
         TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
-        vec_candle_stick::VecCandleStickExt,
+        stocks::StocksExt, vec_candle_stick::VecCandleStickExt,
         vec_close_macos_trend_analysis::VecCloseMACOSTrendAnalysisExt, vec_macos::VecMACOSExt,
-        vec_sma::VecSMAExt, vec_stock::VecStockExt,
-        vec_volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysisExt,
+        vec_sma::VecSMAExt, vec_volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysisExt,
     },
 };
 use crate::utils::float;
@@ -59,7 +58,7 @@ impl TrendAnalysisPresenter for Chart {
         let sma_25_averages = output.vec_sma_25.collect_average_close();
         let sma_50_averages = output.vec_sma_50.collect_average_close();
         let ohlcs: Vec<f32> = output
-            .vec_stock
+            .stocks
             .collect_ohlc()
             .iter()
             .map(|value| *value as _)
@@ -67,9 +66,7 @@ impl TrendAnalysisPresenter for Chart {
         let min = float::min(&ohlcs) - 10.0;
         let max = float::max(&ohlcs) + 10.0;
 
-        let x_axis_data_days = output
-            .vec_stock
-            .collect_date_string(self.date_format.as_str());
+        let x_axis_data_days = output.stocks.collect_date_string(self.date_format.as_str());
 
         let series_list = match output.display_macos_pattern {
             DisplayMACOSPattern::All => {
@@ -159,7 +156,7 @@ impl TrendAnalysisPresenter for Chart {
         let sma_5_averages = output.vec_sma_5.collect_average_volume();
         let sma_25_averages = output.vec_sma_25.collect_average_volume();
         let volumes: Vec<f32> = output
-            .vec_stock
+            .stocks
             .collect_volume()
             .iter()
             .map(|value| *value as _)

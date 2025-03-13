@@ -24,6 +24,7 @@ tryhard = "0.5"
 reqwest = { version = "0.12.2", features = ["json"] }
 query-string-builder = "0.6.0"
 rayon = "1.10.0"
+deref-derive = "0.1.0"
 
 [dev-dependencies]
 indoc = "2.0"

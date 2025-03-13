@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use std::ops::{Deref, DerefMut};
+use deref_derive::{Deref, DerefMut};
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct Stock {
@@ -12,25 +12,5 @@ pub struct Stock {
     pub volume: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
 pub struct Stocks(Vec<Stock>);
-
-impl Stocks {
-    pub fn new() -> Self {
-        Self(vec![])
-    }
-}
-
-impl Deref for Stocks {
-    type Target = Vec<Stock>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Stocks {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}

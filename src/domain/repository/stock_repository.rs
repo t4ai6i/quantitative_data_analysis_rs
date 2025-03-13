@@ -13,7 +13,7 @@ pub struct Params<'a> {
 
 #[async_trait]
 pub trait StockRepository {
-    async fn get_vec_stock(
+    async fn get_stocks(
         &self,
         code: &str,
         market: &str,

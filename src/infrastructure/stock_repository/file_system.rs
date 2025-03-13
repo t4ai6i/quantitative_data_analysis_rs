@@ -14,8 +14,10 @@ use tokio::fs::read;
 impl StockRepository for FileSystem {
     ///
     /// # Examples
+    ///
     /// ```ignore
-    /// let code = "8473.T";
+    /// let code = "8473";
+    /// let market = "T";
     /// let start_date = NaiveDate::default();
     /// let end_date = NaiveDate::default();
     /// let file_path = PathBuf::from(format!("./assets/{}.csv", code));
@@ -24,9 +26,9 @@ impl StockRepository for FileSystem {
     ///     file_path,
     /// };
     /// let repository = FileSystem::new(data_format);
-    /// let vec_stock = repository.get_vec_stock(code, start_date, end_date).await?;
-    /// assert_eq!(vec_stock.0.len(), 246);
-    async fn get_vec_stock(&self, _: &str, _: &str, _: NaiveDate, _: NaiveDate) -> Result<Stocks> {
+    /// let stocks = repository.get_stocks(code, market, start_date, end_date).await?;
+    /// assert_eq!(stocks.len(), 246);
+    async fn get_stocks(&self, _: &str, _: &str, _: NaiveDate, _: NaiveDate) -> Result<Stocks> {
         let DataFormat::CSV { ref file_path, .. } = self.data_format else {
             bail!(format!(
                 "Unsupported data format: {:?}\n{}",
@@ -50,7 +52,7 @@ impl StockRepository for FileSystem {
             }
             _ => vec![],
         };
-        let mut stocks = Stocks::new();
+        let mut stocks = Stocks::default();
         stocks.extend(vec_stock);
 
         Ok(stocks)
@@ -67,7 +69,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[tokio::test]
-    async fn get_vec_stock_test() -> Result<()> {
+    async fn get_stocks_test() -> Result<()> {
         let code = "8473";
         let market = "T";
         let start_date = NaiveDate::default();
@@ -79,7 +81,7 @@ mod tests {
         };
         let repository = FileSystem::new(data_format);
         let stocks = repository
-            .get_vec_stock(code, market, start_date, end_date)
+            .get_stocks(code, market, start_date, end_date)
             .await?;
         assert_eq!(stocks.len(), 246);
         Ok(())
