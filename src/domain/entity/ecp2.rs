@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use itertools::Itertools;
 
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
-use crate::domain::entity::candle_stick::{BullishBearishType, CandleStick};
+use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct ECP2 {
@@ -58,7 +58,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::entity::candle_stick::VecCandleStick;
+    /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::entity::ecp2::VecECP2;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
@@ -67,8 +67,8 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_9223);
-    /// let VecCandleStick(vec_candle_stick) = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.as_slice());
-    /// let _ = VecECP2::from(vec_candle_stick.as_slice());
+    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+    /// let _ = VecECP2::from(candle_sticks.as_slice());
     /// ```
     fn from(value: &[CandleStick<N>]) -> Self {
         let vec = value
@@ -103,8 +103,8 @@ mod tests {
         BuySellSignal,
         BuySellSignalType::{Buy, Sell},
     };
-    use crate::domain::entity::candle_stick::VecCandleStick;
     use crate::domain::entity::ecp2::VecECP2;
+    use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
@@ -114,9 +114,9 @@ mod tests {
     #[test]
     fn from_test() {
         let vec_stock = Csv::from_slice::<true>(CSV_8473);
-        let VecCandleStick(vec_candle_stick) =
-            VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.as_slice());
-        let vec_ecp2 = VecECP2::from(vec_candle_stick.as_slice());
+        let candle_sticks =
+            CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+        let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
             TupleVecBuySellSignal::from(vec_ecp2.0.as_slice()).0;
         let (expected_buy, expected_sell): (Vec<BuySellSignal>, Vec<BuySellSignal>) = (

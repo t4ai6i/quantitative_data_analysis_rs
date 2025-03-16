@@ -1,4 +1,3 @@
-use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::close_macos_trend_analysis::{
     ChanceRate, LatestChance, VecCloseMACOSTrendAnalysis,
 };
@@ -9,6 +8,7 @@ use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
+use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::stock::model::Stocks;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use anyhow::Result;
@@ -26,7 +26,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_close_macos_trend_analysis: VecCloseMACOSTrendAnalysis<N>,
     pub vec_volume_macos_trend_analysis: VecVolumeMACOSTrendAnalysis,
     pub vec_ecp1: VecECP1,
-    pub vec_candle_stick: VecCandleStick<M>,
+    pub candle_sticks: CandleSticks<M>,
     pub trend_reversal_analysis: TrendReversalAnalysis,
     pub indicator_analysis: IndicatorAnalysis,
     pub display_macos_pattern: DisplayMACOSPattern,

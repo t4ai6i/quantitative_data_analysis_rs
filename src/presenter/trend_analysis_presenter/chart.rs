@@ -14,7 +14,7 @@ use crate::presenter::{
         TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
-        stocks::StocksExt, vec_candle_stick::VecCandleStickExt,
+        candle_sticks::CandleSticksExt, stocks::StocksExt,
         vec_close_macos_trend_analysis::VecCloseMACOSTrendAnalysisExt, vec_macos::VecMACOSExt,
         vec_sma::VecSMAExt, vec_volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysisExt,
     },
@@ -260,7 +260,7 @@ impl TrendAnalysisPresenter for Chart {
             "UpperWick(%), LowerWick(%)".to_string(),
             "Doji".to_string(),
         ]];
-        let mut body = output.vec_candle_stick.table_chart_rows();
+        let mut body = output.candle_sticks.table_chart_rows();
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "Stocks".to_string();

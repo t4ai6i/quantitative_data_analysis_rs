@@ -15,19 +15,29 @@ impl StockRepository for FileSystem {
     ///
     /// # Examples
     ///
-    /// ```ignore
-    /// let code = "8473";
-    /// let market = "T";
-    /// let start_date = NaiveDate::default();
-    /// let end_date = NaiveDate::default();
-    /// let file_path = PathBuf::from(format!("./assets/{}.csv", code));
-    /// let data_format = DataFormat::CSV {
-    ///     has_headers: true,
-    ///     file_path,
-    /// };
-    /// let repository = FileSystem::new(data_format);
-    /// let stocks = repository.get_stocks(code, market, start_date, end_date).await?;
-    /// assert_eq!(stocks.len(), 246);
+    /// ```
+    /// use std::path::PathBuf;
+    /// use chrono::NaiveDate;
+    /// use quantitative_data_analysis_rs::domain::repository::stock_repository::StockRepository;
+    /// use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
+    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
+    ///
+    /// #[tokio::main] // Add an async runtime for executing asynchronous code
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let code = "8473";
+    ///     let market = "T";
+    ///     let start_date = NaiveDate::default();
+    ///     let end_date = NaiveDate::default();
+    ///     let file_path = PathBuf::from(format!("./assets/{}.{}.csv", code, market));
+    ///     let data_format = DataFormat::CSV {
+    ///         has_headers: true,
+    ///         file_path,
+    ///     };
+    ///     let repository = FileSystem::new(data_format);
+    ///     let stocks = repository.get_stocks(code, market, start_date, end_date).await?;
+    ///     assert_eq!(stocks.len(), 246);
+    ///     Ok(())
+    /// }
     /// ```
     async fn get_stocks(&self, _: &str, _: &str, _: NaiveDate, _: NaiveDate) -> Result<Stocks> {
         let DataFormat::CSV { ref file_path, .. } = self.data_format else {

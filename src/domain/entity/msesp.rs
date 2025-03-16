@@ -1,5 +1,5 @@
 use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
-use crate::domain::entity::candle_stick::{BullishBearishType, CandleStick};
+use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
 use itertools::Itertools;
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -41,7 +41,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecMSESP {
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::entity::candle_stick::VecCandleStick;
+    /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::entity::msesp::VecMSESP;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
@@ -50,8 +50,8 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecMSESP {
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_9223);
-    /// let VecCandleStick(vec_candle_stick) = VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.as_slice());
-    /// let _ = VecMSESP::from(vec_candle_stick.as_slice());
+    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+    /// let _ = VecMSESP::from(candle_sticks.as_slice());
     /// ```
     fn from(value: &[CandleStick<N>]) -> Self {
         let vec = value
@@ -85,8 +85,8 @@ mod tests {
         BuySellSignal,
         BuySellSignalType::{Buy, Stay},
     };
-    use crate::domain::entity::candle_stick::VecCandleStick;
     use crate::domain::entity::msesp::VecMSESP;
+    use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
@@ -97,9 +97,9 @@ mod tests {
     #[test]
     fn from_test() {
         let vec_stock = Csv::from_slice::<true>(CSV_8473);
-        let VecCandleStick(vec_candle_stick) =
-            VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.as_slice());
-        let VecMSESP(vec_msesp) = VecMSESP::from(vec_candle_stick.as_slice());
+        let candle_sticks =
+            CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+        let VecMSESP(vec_msesp) = VecMSESP::from(candle_sticks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_msesp
             .into_iter()
             .filter(|signal| signal.r#type.ne(&Stay))

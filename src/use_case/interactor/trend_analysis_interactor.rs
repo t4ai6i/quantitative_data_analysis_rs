@@ -1,4 +1,3 @@
-use crate::domain::entity::candle_stick::VecCandleStick;
 use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
@@ -12,6 +11,7 @@ use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
 use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
+use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;
@@ -108,11 +108,12 @@ where
         let vec_volume_macos_trend_analysis =
             VecVolumeMACOSTrendAnalysis::from(&stocks_macoses_pair);
 
-        let vec_candle_stick =
-            VecCandleStick::<MARUBOZU_MIN_RATE>::from(stocks_from_end_days.as_slice());
-        let candle_sticks = VecT(vec_candle_stick.0.as_slice()).get_from_end(FROM_END_DAYS);
-        let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
-        let vec_msesp = VecMSESP::from(candle_sticks.as_slice());
+        let candle_sticks =
+            CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks_from_end_days.as_slice())?;
+        let candle_sticks_from_end_days =
+            VecT(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
+        let vec_ecp2 = VecECP2::from(candle_sticks_from_end_days.as_slice());
+        let vec_msesp = VecMSESP::from(candle_sticks_from_end_days.as_slice());
         // 相場転換を分析
         let trend_reversal_analysis_set = TrendReversalAnalysisSet {
             ecp2s: vec_ecp2.0.as_slice(),
@@ -137,7 +138,7 @@ where
             vec_close_macos_trend_analysis,
             vec_volume_macos_trend_analysis,
             vec_ecp1,
-            vec_candle_stick,
+            candle_sticks,
             trend_reversal_analysis,
             indicator_analysis,
             display_macos_pattern: input.display_macos_pattern,

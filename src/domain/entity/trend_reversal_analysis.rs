@@ -109,7 +109,6 @@ impl<'a> From<&TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 #[cfg(test)]
 mod tests {
     use crate::domain::entity::buy_sell_signal::BuySellSignalType::{Buy, Sell, Stay};
-    use crate::domain::entity::candle_stick::VecCandleStick;
     use crate::domain::entity::ecp2::VecECP2;
     use crate::domain::entity::macos::VecMACOS;
     use crate::domain::entity::macps::MACPS;
@@ -117,6 +116,7 @@ mod tests {
     use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
+    use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
@@ -127,8 +127,8 @@ mod tests {
     #[test]
     fn trend_reversal_analysis_test() {
         let vec_stock = Csv::from_slice::<true>(CSV_8473);
-        let VecCandleStick(candle_sticks) =
-            VecCandleStick::<MARUBOZU_MIN_RATE>::from(vec_stock.as_slice());
+        let candle_sticks =
+            CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
         let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
         let vec_msesp = VecMSESP::from(candle_sticks.as_slice());
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.as_slice());

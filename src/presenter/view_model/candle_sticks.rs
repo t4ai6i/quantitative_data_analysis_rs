@@ -1,30 +1,30 @@
-use crate::domain::entity::candle_stick::{BullishBearishType, VecCandleStick};
+use crate::domain::models::candle_stick::model::{BullishBearishType, CandleSticks};
 use itertools::Itertools;
 use std::ops::Mul;
 
-pub trait VecCandleStickExt {
+pub trait CandleSticksExt {
     fn table_chart_rows(&self) -> Vec<Vec<String>>;
 }
 
-impl<const N: usize> VecCandleStickExt for VecCandleStick<N> {
+impl<const N: usize> CandleSticksExt for CandleSticks<N> {
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::entity::candle_stick::VecCandleStick;
+    /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
-    /// use crate::quantitative_data_analysis_rs::presenter::view_model::vec_candle_stick::VecCandleStickExt;
+    /// use crate::quantitative_data_analysis_rs::presenter::view_model::candle_sticks::CandleSticksExt;
     ///
     /// const CSV: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let stocks  = Csv::from_slice::<true>(CSV);
-    /// let vec_candle_stick = VecCandleStick::<90>::from(stocks.as_slice());
-    /// let _ = vec_candle_stick.table_chart_rows();
+    /// let vec_stock  = Csv::from_slice::<true>(CSV);
+    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+    /// let _ = candle_sticks.table_chart_rows();
     /// ```
     fn table_chart_rows(&self) -> Vec<Vec<String>> {
-        self.0
-            .iter()
+        self.iter()
             .map(|candle_stick| {
                 let date = candle_stick.date.format("%Y/%m/%d").to_string();
                 let bullish_bearish = match candle_stick.bullish_bearish {

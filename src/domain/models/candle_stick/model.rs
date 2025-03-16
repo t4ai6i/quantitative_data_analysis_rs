@@ -1,5 +1,6 @@
 use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
+use deref_derive::{Deref, DerefMut};
 use itertools::Itertools;
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
@@ -83,14 +84,6 @@ impl<const N: usize> CandleStick<N> {
 
 impl<const N: usize> From<&Stock> for CandleStick<N> {
     fn from(value: &Stock) -> Self {
-        assert!(
-            N <= 100,
-            "Minimum Body Percent must be less than 100 for Marubozu (<=100%)."
-        );
-        assert!(
-            N >= 80,
-            "Minimum Body Percent must at least 80% for Marubozu and is usually greater than 90%."
-        );
         let min_body_pct = N.to_f64().unwrap().div(100.0);
 
         let Stock {
@@ -135,34 +128,56 @@ impl<const N: usize> From<&Stock> for CandleStick<N> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecCandleStick<const N: usize>(pub Vec<CandleStick<N>>);
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
+pub struct CandleSticks<const N: usize>(Vec<CandleStick<N>>);
 
-impl<const N: usize> From<&[Stock]> for VecCandleStick<N> {
+#[derive(thiserror::Error, Debug)]
+pub enum MarubozuMinimumBodyPercentError<const N: usize> {
+    #[error("Minimum Body Percent must be less than 100 for Marubozu. but specified {N}")]
+    LessThan100Percent,
+
+    #[error(
+        "Minimum Body Percent must at least 80% for Marubozu and is usually greater than 90%. but specified {N}"
+    )]
+    AtLeast80Percent,
+}
+
+impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
+    type Error = MarubozuMinimumBodyPercentError<N>;
+
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::entity::candle_stick::VecCandleStick;
+    /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
-    /// const CSV: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    /// const CSV_9233: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
+    /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let stocks  = Csv::from_slice::<true>(CSV);
-    /// let VecCandleStick(candle_sticks) = VecCandleStick::<90>::from(stocks.as_slice());
+    /// let stocks  = Csv::from_slice::<true>(CSV_9233);
+    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
     /// assert_eq!(candle_sticks.len(), 35);
     /// ```
-    fn from(value: &[Stock]) -> Self {
+    fn try_from(value: &[Stock]) -> Result<Self, Self::Error> {
+        if N > 100 {
+            return Err(MarubozuMinimumBodyPercentError::LessThan100Percent);
+        }
+        if N < 80 {
+            return Err(MarubozuMinimumBodyPercentError::AtLeast80Percent);
+        }
         let candle_sticks = value.iter().map(CandleStick::<N>::from).collect_vec();
-        VecCandleStick(candle_sticks)
+        Ok(CandleSticks(candle_sticks))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::candle_stick::{BullishBearishType, CandleStick};
+    use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
     use crate::domain::models::stock::model::Stock;
+
+    const MARUBOZU_MIN_RATE: usize = 90;
 
     #[test]
     fn new_test() {
@@ -175,8 +190,8 @@ mod tests {
             adj_close: 1000.0,
             volume: 10000,
         };
-        let actual = CandleStick::<90>::from(&stock);
-        let expected = CandleStick::<90> {
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::from(&stock);
+        let expected = CandleStick::<MARUBOZU_MIN_RATE> {
             size: 1000.0,
             open: 1000.0,
             high: 1500.0,
@@ -192,95 +207,95 @@ mod tests {
             bullish_bearish: BullishBearishType::Neither,
             is_marubozu: false,
             is_doji: true,
-            ..CandleStick::<90>::default()
+            ..CandleStick::<MARUBOZU_MIN_RATE>::default()
         };
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn get_size_test() {
-        let actual = CandleStick::<90>::get_size(1000.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_size(1000.0, 500.0);
         assert_eq!(actual, 500.0);
     }
 
     #[test]
     fn get_body_test() {
-        let actual = CandleStick::<90>::get_body(1000.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_body(1000.0, 500.0);
         assert_eq!(actual, 500.0);
 
-        let actual = CandleStick::<90>::get_body(500.0, 1000.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_body(500.0, 1000.0);
         assert_eq!(actual, 500.0);
     }
 
     #[test]
     fn get_upper_wick_test() {
-        let actual = CandleStick::<90>::get_upper_wick(1000.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_upper_wick(1000.0, 500.0);
         assert_eq!(actual, 500.0);
 
-        let actual = CandleStick::<90>::get_upper_wick(1000.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_upper_wick(1000.0, 500.0);
         assert_eq!(actual, 500.0);
     }
 
     #[test]
     fn get_lower_wick_test() {
-        let actual = CandleStick::<90>::get_lower_wick(500.0, 600.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_lower_wick(500.0, 600.0);
         assert_eq!(actual, 100.0);
 
-        let actual = CandleStick::<90>::get_lower_wick(100.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_lower_wick(100.0, 500.0);
         assert_eq!(actual, 400.0);
     }
 
     #[test]
     fn get_percentage_in_size_test() {
-        let actual = CandleStick::<90>::get_percentage(1000.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_percentage(1000.0, 500.0);
         assert_eq!(actual, 0.5);
 
-        let actual = CandleStick::<90>::get_percentage(1000.0, 0.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_percentage(1000.0, 0.0);
         assert_eq!(actual, 0.0);
 
-        let actual = CandleStick::<90>::get_percentage(1000.0, 1000.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_percentage(1000.0, 1000.0);
         assert_eq!(actual, 1.0);
 
-        let actual = CandleStick::<90>::get_percentage(0.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_percentage(0.0, 500.0);
         assert_eq!(actual, 1.0);
     }
 
     #[test]
     fn get_bullish_bearish_type_test() {
-        let actual = CandleStick::<90>::get_bullish_bearish_type(500.0, 1000.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_bullish_bearish_type(500.0, 1000.0);
         assert_eq!(actual, BullishBearishType::Bullish);
 
-        let actual = CandleStick::<90>::get_bullish_bearish_type(1000.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_bullish_bearish_type(1000.0, 500.0);
         assert_eq!(actual, BullishBearishType::Bearish);
 
-        let actual = CandleStick::<90>::get_bullish_bearish_type(1000.0, 1000.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::get_bullish_bearish_type(1000.0, 1000.0);
         assert_eq!(actual, BullishBearishType::Neither);
     }
 
     #[test]
     fn is_marubozu_test() {
-        let actual = CandleStick::<90>::is_marubozu(1.0, 0.9);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::is_marubozu(1.0, 0.9);
         assert!(actual);
 
-        let actual = CandleStick::<90>::is_marubozu(0.9, 0.9);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::is_marubozu(0.9, 0.9);
         assert!(actual);
 
-        let actual = CandleStick::<90>::is_marubozu(0.8, 0.9);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::is_marubozu(0.8, 0.9);
         assert!(!actual);
     }
 
     #[test]
     fn is_doji_test() {
-        let actual = CandleStick::<90>::is_doji(500.0, 501.0, 501.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::is_doji(500.0, 501.0, 501.0);
         assert!(actual);
 
-        let actual = CandleStick::<90>::is_doji(500.0, 500.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::is_doji(500.0, 500.0, 500.0);
         assert!(!actual);
 
-        let actual = CandleStick::<90>::is_doji(500.0, 501.0, 500.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::is_doji(500.0, 501.0, 500.0);
         assert!(!actual);
 
-        let actual = CandleStick::<90>::is_doji(500.0, 500.0, 501.0);
+        let actual = CandleStick::<MARUBOZU_MIN_RATE>::is_doji(500.0, 500.0, 501.0);
         assert!(!actual);
     }
 }
