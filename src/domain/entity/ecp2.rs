@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use itertools::Itertools;
 
-use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
+use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -98,12 +98,12 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
 mod tests {
     use chrono::NaiveDate;
 
-    use crate::domain::entity::buy_sell_signal::tests::TupleVecBuySellSignal;
-    use crate::domain::entity::buy_sell_signal::{
+    use crate::domain::entity::ecp2::VecECP2;
+    use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
+    use crate::domain::models::buy_sell_signal::model::{
         BuySellSignal,
         BuySellSignalType::{Buy, Sell},
     };
-    use crate::domain::entity::ecp2::VecECP2;
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;

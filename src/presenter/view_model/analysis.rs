@@ -19,9 +19,9 @@ mod tests {
     use chrono::NaiveDate;
     use indoc::indoc;
 
-    use crate::domain::entity::buy_sell_signal::BuySellSignalType;
     use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
     use crate::domain::entity::macos::MACOSType;
+    use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
     use crate::presenter::view_model::analysis::Analysis;
     use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
     use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;

@@ -1,4 +1,4 @@
-use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
+use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
 use itertools::Itertools;
 
@@ -80,12 +80,12 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecMSESP {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::buy_sell_signal::BuySellSignalType::Sell;
-    use crate::domain::entity::buy_sell_signal::{
+    use crate::domain::entity::msesp::VecMSESP;
+    use crate::domain::models::buy_sell_signal::model::BuySellSignalType::Sell;
+    use crate::domain::models::buy_sell_signal::model::{
         BuySellSignal,
         BuySellSignalType::{Buy, Stay},
     };
-    use crate::domain::entity::msesp::VecMSESP;
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;

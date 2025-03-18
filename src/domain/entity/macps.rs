@@ -1,7 +1,7 @@
 use rayon::prelude::*;
 
-use crate::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
 use crate::domain::entity::sma::SMAListTrio;
+use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -39,7 +39,7 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// # Examples
     /// ```
     /// use chrono::NaiveDate;
-    /// use quantitative_data_analysis_rs::domain::entity::buy_sell_signal::{BuySellSignal, BuySellSignalType};
+    /// use quantitative_data_analysis_rs::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
     /// use quantitative_data_analysis_rs::domain::entity::macps::{VecMACPS, MACPS};
     /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListTrio, VecSMA};
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
