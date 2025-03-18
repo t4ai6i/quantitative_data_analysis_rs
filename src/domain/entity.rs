@@ -1,4 +1,3 @@
-pub mod candle_stick_pattern_date_set;
 pub mod chance_loss;
 pub mod close_macos_trend_analysis;
 pub mod company;
