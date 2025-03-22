@@ -3,11 +3,11 @@ use std::ops::{Mul, Sub};
 use chrono::NaiveDate;
 use itertools::Itertools;
 
-use MACOSType::{Dead, Golden, Neither};
+use crate::domain::models::macos::model::Pattern::{Dead, Golden, Neither};
 
-use crate::domain::entity::chance_loss::{ChanceLoss, MACOSTypeRateOfChangePair};
-use crate::domain::entity::macos::MACOSType;
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
+use crate::domain::models::macos::model::Pattern;
+use crate::domain::models::macos::model::{MACOSAnalysis, MACOSPatternRateOfChangePair};
 
 /// 終値ベースのMovingAverageCrossoverStrategyのトレンド解析
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
@@ -18,16 +18,16 @@ pub struct CloseMACOSTrendAnalysis {
     pub close_on_macos: f64,
     /// N日後の終値
     pub close_after_n_days: f64,
-    /// MovingAverageCrossoverStrategyType
-    pub r#type: MACOSType,
+    /// MovingAverageCrossoverStrategyPattern
+    pub pattern: Pattern,
     /// 増減率
     pub rate_of_change: f64,
-    /// チャンスロス
-    pub chance_loss: ChanceLoss,
+    /// 移動平均交差分析
+    pub macos_analysis: MACOSAnalysis,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct ChanceRate {
+pub struct MACOSRateOfChance {
     pub all: f64,
     pub golden_only: f64,
     pub dead_only: f64,
@@ -39,7 +39,7 @@ pub struct LatestChance {
     pub latest_dead_chance: Option<NaiveDate>,
 }
 
-impl From<LatestChance> for MACOSType {
+impl From<LatestChance> for Pattern {
     fn from(value: LatestChance) -> Self {
         let LatestChance {
             latest_golden_chance,
@@ -84,7 +84,7 @@ impl From<LatestChance> for NaiveDate {
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct VecCloseMACOSTrendAnalysis<const N: usize> {
     pub vec_close_macos_trend_analysis: Vec<CloseMACOSTrendAnalysis>,
-    pub chance_rate: ChanceRate,
+    pub macos_rate_of_chance: MACOSRateOfChance,
     pub latest_chance: LatestChance,
 }
 
@@ -94,7 +94,7 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for VecCloseMACOSTrendAnal
         let vec_close_macos_trend_analysis = macoses
             .iter()
             .filter_map(|macos| {
-                if macos.macos_set_5_25.close.eq(&Neither) {
+                if macos.pattern_close_volume.close.eq(&Neither) {
                     return None;
                 }
                 // Crossoverが発生した日を特定
@@ -116,28 +116,32 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for VecCloseMACOSTrendAnal
                 // 増減率を取得
                 let rate_of_change = stock_after_n_days.close.sub(stock.close) / stock.close;
                 let rate_of_change = rate_of_change.mul(100.0);
-                let macos_type_rate_of_change_pair = MACOSTypeRateOfChangePair {
-                    r#type: macos.macos_set_5_25.close,
+                let macos_type_rate_of_change_pair = MACOSPatternRateOfChangePair {
+                    pattern: macos.pattern_close_volume.close,
                     rate_of_change,
                 };
-                let chance_loss = ChanceLoss::from(macos_type_rate_of_change_pair);
+                let chance_loss = MACOSAnalysis::from(macos_type_rate_of_change_pair);
                 Some(CloseMACOSTrendAnalysis {
                     date: macos.date,
                     close_on_macos: stock.close,
                     close_after_n_days: stock_after_n_days.close,
-                    r#type: macos.macos_set_5_25.close,
+                    pattern: macos.pattern_close_volume.close,
                     rate_of_change,
-                    chance_loss,
+                    macos_analysis: chance_loss,
                 })
             })
             .collect_vec();
         let golden_chance_count = vec_close_macos_trend_analysis
             .iter()
-            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::GoldenChance))
+            .filter(|trend_analysis| {
+                matches!(trend_analysis.macos_analysis, MACOSAnalysis::GoldenChance)
+            })
             .count();
         let golden_loss_count = vec_close_macos_trend_analysis
             .iter()
-            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::GoldenLoss))
+            .filter(|trend_analysis| {
+                matches!(trend_analysis.macos_analysis, MACOSAnalysis::GoldenLoss)
+            })
             .count();
         let golden_only = (golden_chance_count as f64
             / (golden_chance_count + golden_loss_count) as f64)
@@ -149,28 +153,32 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for VecCloseMACOSTrendAnal
         };
         let dead_chance_count = vec_close_macos_trend_analysis
             .iter()
-            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadChance))
+            .filter(|trend_analysis| {
+                matches!(trend_analysis.macos_analysis, MACOSAnalysis::DeadChance)
+            })
             .count();
         let dead_loss_count = vec_close_macos_trend_analysis
             .iter()
-            .filter(|trend_analysis| matches!(trend_analysis.chance_loss, ChanceLoss::DeadLoss))
+            .filter(|trend_analysis| {
+                matches!(trend_analysis.macos_analysis, MACOSAnalysis::DeadLoss)
+            })
             .count();
         let dead_only =
             (dead_chance_count as f64 / (dead_chance_count + dead_loss_count) as f64).mul(100.0);
         let dead_only = if dead_only.is_nan() { 0.0 } else { dead_only };
         let chance_count = vec_close_macos_trend_analysis
             .iter()
-            .filter(|trend_analysis| match trend_analysis.chance_loss {
-                ChanceLoss::None => false,
-                ChanceLoss::GoldenChance => true,
-                ChanceLoss::DeadChance => true,
-                ChanceLoss::GoldenLoss => false,
-                ChanceLoss::DeadLoss => false,
+            .filter(|trend_analysis| match trend_analysis.macos_analysis {
+                MACOSAnalysis::None => false,
+                MACOSAnalysis::GoldenChance => true,
+                MACOSAnalysis::DeadChance => true,
+                MACOSAnalysis::GoldenLoss => false,
+                MACOSAnalysis::DeadLoss => false,
             })
             .count();
         let all = (chance_count as f64 / vec_close_macos_trend_analysis.len() as f64).mul(100.0);
         let all = if all.is_nan() { 0.0 } else { all };
-        let chance_rate = ChanceRate {
+        let macos_rate_of_chance = MACOSRateOfChance {
             all,
             golden_only,
             dead_only,
@@ -178,12 +186,16 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for VecCloseMACOSTrendAnal
         let latest_golden_chance = vec_close_macos_trend_analysis
             .iter()
             .rev()
-            .find(|trend_analysis| trend_analysis.chance_loss.eq(&ChanceLoss::GoldenChance))
+            .find(|trend_analysis| {
+                trend_analysis
+                    .macos_analysis
+                    .eq(&MACOSAnalysis::GoldenChance)
+            })
             .map(|trend_analysis| trend_analysis.date);
         let latest_dead_chance = vec_close_macos_trend_analysis
             .iter()
             .rev()
-            .find(|trend_analysis| trend_analysis.chance_loss.eq(&ChanceLoss::DeadChance))
+            .find(|trend_analysis| trend_analysis.macos_analysis.eq(&MACOSAnalysis::DeadChance))
             .map(|trend_analysis| trend_analysis.date);
         let latest_chance = LatestChance {
             latest_golden_chance,
@@ -191,7 +203,7 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for VecCloseMACOSTrendAnal
         };
         VecCloseMACOSTrendAnalysis::<N> {
             vec_close_macos_trend_analysis,
-            chance_rate,
+            macos_rate_of_chance,
             latest_chance,
         }
     }
@@ -202,9 +214,9 @@ mod tests {
     use chrono::NaiveDate;
 
     use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
-    use crate::domain::entity::macos::VecMACOS;
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
     use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
+    use crate::domain::models::macos::model::MACOSES;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
@@ -219,7 +231,7 @@ mod tests {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
-        let VecMACOS(macoses) = VecMACOS::from(sma_list_pair);
+        let macoses = MACOSES::from(sma_list_pair);
         let stocks_macoses_pair = StocksMACOSESPair {
             stocks: vec_stock.as_slice(),
             macoses: macoses.as_slice(),
@@ -227,7 +239,7 @@ mod tests {
         // 3日後トレンドを取得
         let VecCloseMACOSTrendAnalysis {
             vec_close_macos_trend_analysis,
-            chance_rate,
+            macos_rate_of_chance: chance_rate,
             latest_chance,
         } = VecCloseMACOSTrendAnalysis::<3>::from(&stocks_macoses_pair);
         let actual = 11;

@@ -1,0 +1,231 @@
+use rayon::prelude::*;
+
+use crate::domain::entity::sma::{SMAListPair, SMAPair, SMASet};
+use chrono::NaiveDate;
+use deref_derive::{Deref, DerefMut};
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use strum::Display;
+
+/// 各移動平均線が交わったときの向きのパターン
+#[derive(
+    Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
+)]
+pub enum Pattern {
+    /// ゴールデンクロス
+    Golden,
+    /// デッドクロス
+    Dead,
+    #[default]
+    /// どちらでもない場合
+    Neither,
+}
+
+impl From<(Option<Ordering>, Option<Ordering>)> for Pattern {
+    fn from(value: (Option<Ordering>, Option<Ordering>)) -> Self {
+        match value {
+            (Some(Ordering::Less), Some(Ordering::Greater)) => Self::Golden,
+            (Some(Ordering::Greater), Some(Ordering::Less)) => Self::Dead,
+            _ => Self::Neither,
+        }
+    }
+}
+
+/// 終値・取引高における各移動平均線が交わったときの向きのパターンのセット
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+pub struct PatternCloseVolume {
+    /// 終値ベースのMovingAverageCrossoverStrategy
+    pub close: Pattern,
+    /// 出来高ベースのMovingAverageCrossoverStrategy
+    pub volume: Pattern,
+}
+
+impl<const N: usize, const O: usize> From<OrderingCloseVolumePastFuture<N, O>>
+    for PatternCloseVolume
+{
+    fn from(value: OrderingCloseVolumePastFuture<N, O>) -> Self {
+        // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
+        // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
+        let OrderingCloseVolumePastFuture { past, future } = value;
+        let close = Pattern::from((past.close, future.close));
+        let volume = Pattern::from((past.volume, future.volume));
+        PatternCloseVolume { close, volume }
+    }
+}
+
+/// MovingAverageCrossoverStrategy
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
+pub struct MACOS {
+    pub date: NaiveDate,
+    pub sma_set_25: Option<SMASet<25>>,
+    pub pattern_close_volume: PatternCloseVolume,
+}
+
+struct Intermediate {
+    date: NaiveDate,
+    sma_set_25: Option<SMASet<25>>,
+    ordering_close_volume_5_25: OrderingCloseVolume<5, 25>,
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
+pub struct MACOSES(Vec<MACOS>);
+
+// TODO: Move to domain/services/macos/service.rs, because it is a service layer.
+impl MACOSES {
+    pub fn latest_based_on_close(&self, pattern: &Pattern) -> Option<NaiveDate> {
+        let filtered: Vec<MACOS> = self
+            .par_iter()
+            .filter_map(|macos| {
+                if macos.pattern_close_volume.close.eq(pattern) {
+                    Some(*macos)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        filtered
+            .iter()
+            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
+            .last()
+            .map(|x| x.date)
+    }
+}
+
+impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSES {
+    ///
+    /// # Examples
+    /// ```
+    /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSES;
+    /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListPair, VecSMA};
+    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
+    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    ///
+    /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
+    ///
+    /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
+    /// let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
+    /// let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
+    /// let sma_list_pair = SMAListPair {
+    ///     smas_n: smas_5.as_slice(),
+    ///     smas_o: smas_25.as_slice(),
+    /// };
+    /// let macoses = MACOSES::from(sma_list_pair);
+    /// assert_eq!(macoses.len(), 241);
+    /// ```
+    fn from(value: SMAListPair<'a, 5, 25>) -> Self {
+        let SMAListPair {
+            smas_n: smas_5,
+            smas_o: smas_25,
+        } = value;
+        let intermediates: Vec<Intermediate> = smas_5
+            .par_iter()
+            .map(|sma_5| {
+                let sma_25 = smas_25
+                    .par_iter()
+                    .find_first(|sma_25| sma_5.date.eq(&sma_25.date));
+                let sma_pair = SMAPair {
+                    sma_n: sma_5,
+                    sma_o: sma_25,
+                };
+                let ordering_close_volume_5_25 = OrderingCloseVolume::from(sma_pair);
+                Intermediate {
+                    date: sma_5.date,
+                    sma_set_25: sma_25.map(|sma_25| sma_25.sma_n),
+                    ordering_close_volume_5_25,
+                }
+            })
+            .collect();
+        let vec_macos = intermediates
+            .windows(2)
+            .map(|x| {
+                let yesterday = x[0].ordering_close_volume_5_25;
+                let today = x[1].ordering_close_volume_5_25;
+                let ordering_close_volume_pair = OrderingCloseVolumePastFuture {
+                    past: yesterday,
+                    future: today,
+                };
+                let pattern_close_volume = PatternCloseVolume::from(ordering_close_volume_pair);
+                MACOS {
+                    date: x[1].date,
+                    sma_set_25: x[1].sma_set_25,
+                    pattern_close_volume,
+                }
+            })
+            .collect_vec();
+        Self(vec_macos)
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+pub enum MACOSAnalysis {
+    #[default]
+    None,
+    GoldenChance,
+    DeadChance,
+    GoldenLoss,
+    DeadLoss,
+}
+
+pub struct MACOSPatternRateOfChangePair {
+    pub pattern: Pattern,
+    pub rate_of_change: f64,
+}
+
+impl From<MACOSPatternRateOfChangePair> for MACOSAnalysis {
+    fn from(value: MACOSPatternRateOfChangePair) -> Self {
+        // 移動平均交差分析
+        // GoldenChance: Golden/増減率+
+        // GoldenLoss: Golden/増減率-
+        // DeadChance: Dead/増減率-
+        // DeadLoss: Dead/増減率+
+        match value {
+            MACOSPatternRateOfChangePair {
+                pattern: Pattern::Golden,
+                rate_of_change: change,
+            } if change > 0.0 => MACOSAnalysis::GoldenChance,
+            MACOSPatternRateOfChangePair {
+                pattern: Pattern::Dead,
+                rate_of_change: change,
+            } if change < 0.0 => MACOSAnalysis::DeadChance,
+            MACOSPatternRateOfChangePair {
+                pattern: Pattern::Golden,
+                rate_of_change: change,
+            } if change <= 0.0 => MACOSAnalysis::GoldenLoss,
+            MACOSPatternRateOfChangePair {
+                pattern: Pattern::Dead,
+                rate_of_change: change,
+            } if change >= 0.0 => MACOSAnalysis::DeadLoss,
+            _ => MACOSAnalysis::None,
+        }
+    }
+}
+
+/// 終値平均、出来高平均それぞれの大小関係
+/// 対象日が片方なかったなど比較出来なかった場合は、None
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+struct OrderingCloseVolume<const N: usize, const O: usize> {
+    /// 終値平均の比較値
+    pub close: Option<Ordering>,
+    /// 取引高平均の比較値
+    pub volume: Option<Ordering>,
+}
+
+impl<'a, const N: usize, const O: usize> From<SMAPair<'a, N, O>> for OrderingCloseVolume<N, O> {
+    fn from(value: SMAPair<'a, N, O>) -> Self {
+        let SMAPair { sma_n, sma_o } = value;
+        match (sma_n, sma_o) {
+            (sma_n, Some(sma_o)) => {
+                let close = sma_n.sma_n.close.partial_cmp(&sma_o.sma_n.close);
+                let volume = sma_n.sma_n.volume.partial_cmp(&sma_o.sma_n.volume);
+                OrderingCloseVolume::<N, O> { close, volume }
+            }
+            (_, _) => OrderingCloseVolume::<N, O>::default(),
+        }
+    }
+}
+
+struct OrderingCloseVolumePastFuture<const N: usize, const O: usize> {
+    past: OrderingCloseVolume<N, O>,
+    future: OrderingCloseVolume<N, O>,
+}

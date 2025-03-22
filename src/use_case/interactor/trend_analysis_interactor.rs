@@ -3,7 +3,6 @@ use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::indicator::Indicator;
 use crate::domain::entity::indicator_analysis::{IndicatorAnalysis, IndicatorAnalysisSet};
-use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::macps::MACPS;
 use crate::domain::entity::msesp::VecMSESP;
 use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
@@ -12,6 +11,7 @@ use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
 use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
 use crate::domain::models::candle_stick::model::CandleSticks;
+use crate::domain::models::macos::model::MACOSES;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;
@@ -86,7 +86,7 @@ where
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
         };
-        let vec_macos = VecMACOS::from(sma_list_pair);
+        let macoses = MACOSES::from(sma_list_pair);
 
         let vec_sma_50 = VecSMA::<50>::from(stocks.as_slice());
         let sma_list_trio = SMAListTrio {
@@ -101,7 +101,7 @@ where
 
         let stocks_macoses_pair = StocksMACOSESPair {
             stocks: stocks_from_end_days.as_slice(),
-            macoses: vec_macos.0.as_slice(),
+            macoses: macoses.as_slice(),
         };
         let vec_close_macos_trend_analysis =
             VecCloseMACOSTrendAnalysis::<AFTER_DAYS>::from(&stocks_macoses_pair);
@@ -119,7 +119,7 @@ where
             ecp2s: vec_ecp2.0.as_slice(),
             msesps: vec_msesp.0.as_slice(),
             macps: &macps,
-            macoses: &vec_macos,
+            macoses: &macoses,
         };
 
         let trend_reversal_analysis = TrendReversalAnalysis::from(&trend_reversal_analysis_set);
@@ -134,7 +134,7 @@ where
             vec_sma_5,
             vec_sma_25,
             vec_sma_50,
-            vec_macos,
+            macoses,
             vec_close_macos_trend_analysis,
             vec_volume_macos_trend_analysis,
             vec_ecp1,

@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
-use crate::domain::entity::chance_loss::ChanceLoss;
 use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
+use crate::domain::models::macos::model::MACOSAnalysis;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 
 pub trait VecCloseMACOSTrendAnalysisExt {
@@ -25,17 +25,17 @@ impl<const N: usize> VecCloseMACOSTrendAnalysisExt for VecCloseMACOSTrendAnalysi
     fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
         self.vec_close_macos_trend_analysis
             .iter()
-            .filter(|trend_analysis| pattern.is_display_by_macos_type(&trend_analysis.r#type))
+            .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
             .map(|trend_analysis| {
-                let chance_loss = match trend_analysis.chance_loss {
-                    ChanceLoss::None => "❔".to_string(),
-                    ChanceLoss::GoldenChance => "✅".to_string(),
-                    ChanceLoss::DeadChance => "✅".to_string(),
-                    ChanceLoss::GoldenLoss => "❌".to_string(),
-                    ChanceLoss::DeadLoss => "❌".to_string(),
+                let chance_loss = match trend_analysis.macos_analysis {
+                    MACOSAnalysis::None => "❔".to_string(),
+                    MACOSAnalysis::GoldenChance => "✅".to_string(),
+                    MACOSAnalysis::DeadChance => "✅".to_string(),
+                    MACOSAnalysis::GoldenLoss => "❌".to_string(),
+                    MACOSAnalysis::DeadLoss => "❌".to_string(),
                 };
                 let macos_date = trend_analysis.date.format("%Y/%m/%d").to_string();
-                let macos_5_25 = trend_analysis.r#type.to_string();
+                let macos_5_25 = trend_analysis.pattern.to_string();
                 let change = format!("{:+.3}%", trend_analysis.rate_of_change);
                 let close_on_macos = trend_analysis.close_on_macos.to_string();
                 let close_after_n_days = trend_analysis.close_after_n_days.to_string();
@@ -52,20 +52,20 @@ impl<const N: usize> VecCloseMACOSTrendAnalysisExt for VecCloseMACOSTrendAnalysi
     }
 
     fn table_chart_summary(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
-        let chance_rate = match pattern {
+        let rate_of_chance = match pattern {
             DisplayMACOSPattern::All => {
-                format!("{:.0}%", self.chance_rate.all)
+                format!("{:.0}%", self.macos_rate_of_chance.all)
             }
             DisplayMACOSPattern::GoldenOnly => {
-                format!("{:.0}%", self.chance_rate.golden_only)
+                format!("{:.0}%", self.macos_rate_of_chance.golden_only)
             }
             DisplayMACOSPattern::DeadOnly => {
-                format!("{:.0}%", self.chance_rate.dead_only)
+                format!("{:.0}%", self.macos_rate_of_chance.dead_only)
             }
         };
         vec![vec![
             "".to_string(),
-            chance_rate,
+            rate_of_chance,
             "".to_string(),
             "".to_string(),
             "".to_string(),
@@ -79,9 +79,9 @@ mod tests {
     use anyhow::Result;
 
     use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
-    use crate::domain::entity::macos::VecMACOS;
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
     use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
+    use crate::domain::models::macos::model::MACOSES;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
@@ -98,7 +98,7 @@ mod tests {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
-        let VecMACOS(macoses) = VecMACOS::from(sma_list_pair);
+        let macoses = MACOSES::from(sma_list_pair);
         let stocks_macoses_pair = StocksMACOSESPair {
             stocks: vec_stock.as_slice(),
             macoses: macoses.as_slice(),

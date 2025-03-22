@@ -1,10 +1,10 @@
 use rayon::prelude::*;
 
-use crate::domain::entity::macos::MACOSType::{Dead, Golden};
-use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::macps::MACPS;
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
+use crate::domain::models::macos::model::Pattern::{Dead, Golden};
+use crate::domain::models::macos::model::MACOSES;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -40,7 +40,7 @@ pub struct TrendReversalAnalysisSet<'a> {
     pub ecp2s: &'a [BuySellSignal],
     pub msesps: &'a [BuySellSignal],
     pub macps: &'a MACPS,
-    pub macoses: &'a VecMACOS,
+    pub macoses: &'a MACOSES,
 }
 
 impl TrendReversalAnalysis {
@@ -109,7 +109,6 @@ impl<'a> From<&TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 #[cfg(test)]
 mod tests {
     use crate::domain::entity::ecp2::VecECP2;
-    use crate::domain::entity::macos::VecMACOS;
     use crate::domain::entity::macps::MACPS;
     use crate::domain::entity::msesp::VecMSESP;
     use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
@@ -117,6 +116,7 @@ mod tests {
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
     use crate::domain::models::candle_stick::model::CandleSticks;
+    use crate::domain::models::macos::model::MACOSES;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
@@ -138,7 +138,7 @@ mod tests {
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
         };
-        let vec_macos = VecMACOS::from(sma_list_pair);
+        let macoses = MACOSES::from(sma_list_pair);
         let sma_list_trio = SMAListTrio {
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
@@ -149,7 +149,7 @@ mod tests {
             ecp2s: vec_ecp2.0.as_slice(),
             msesps: vec_msesp.0.as_slice(),
             macps: &macps,
-            macoses: &vec_macos,
+            macoses: &macoses,
         };
         let actual = TrendReversalAnalysis::from(&candle_stick_pattern_set);
         let expected = TrendReversalAnalysis {

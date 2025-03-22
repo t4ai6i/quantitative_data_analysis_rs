@@ -1,14 +1,14 @@
 use crate::domain::entity::close_macos_trend_analysis::{
-    ChanceRate, LatestChance, VecCloseMACOSTrendAnalysis,
+    LatestChance, MACOSRateOfChance, VecCloseMACOSTrendAnalysis,
 };
 use crate::domain::entity::company::Company;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
-use crate::domain::entity::macos::VecMACOS;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
 use crate::domain::models::candle_stick::model::CandleSticks;
+use crate::domain::models::macos::model::MACOSES;
 use crate::domain::models::stock::model::Stocks;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use anyhow::Result;
@@ -22,7 +22,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_sma_5: VecSMA<5>,
     pub vec_sma_25: VecSMA<25>,
     pub vec_sma_50: VecSMA<50>,
-    pub vec_macos: VecMACOS,
+    pub macoses: MACOSES,
     pub vec_close_macos_trend_analysis: VecCloseMACOSTrendAnalysis<N>,
     pub vec_volume_macos_trend_analysis: VecVolumeMACOSTrendAnalysis,
     pub vec_ecp1: VecECP1,
@@ -37,14 +37,14 @@ pub enum TrendAnalysisResponse {
     Chart {
         company: Company,
         display_macos_pattern: DisplayMACOSPattern,
-        chance_rate: ChanceRate,
+        rate_of_chance: MACOSRateOfChance,
         latest_chance: LatestChance,
         body: String,
     },
     Json {
         company: Company,
         display_macos_pattern: DisplayMACOSPattern,
-        chance_rate: ChanceRate,
+        rate_of_chance: MACOSRateOfChance,
         latest_chance: LatestChance,
         vec_ecp1: VecECP1,
         trend_reversal_analysis: TrendReversalAnalysis,

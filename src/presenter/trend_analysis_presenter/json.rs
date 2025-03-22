@@ -12,14 +12,14 @@ impl TrendAnalysisPresenter for JSON {
         output: TrendAnalysisOutput<N, M>,
     ) -> Result<TrendAnalysisResponse> {
         let VecCloseMACOSTrendAnalysis {
-            chance_rate,
+            macos_rate_of_chance: chance_rate,
             latest_chance,
             ..
         } = output.vec_close_macos_trend_analysis;
         Ok(TrendAnalysisResponse::Json {
             company: output.company,
             display_macos_pattern: output.display_macos_pattern,
-            chance_rate,
+            rate_of_chance: chance_rate,
             latest_chance,
             vec_ecp1: output.vec_ecp1,
             trend_reversal_analysis: output.trend_reversal_analysis,

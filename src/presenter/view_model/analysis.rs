@@ -20,8 +20,8 @@ mod tests {
     use indoc::indoc;
 
     use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
-    use crate::domain::entity::macos::MACOSType;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
+    use crate::domain::models::macos::model::Pattern;
     use crate::presenter::view_model::analysis::Analysis;
     use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
     use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
@@ -35,9 +35,9 @@ mod tests {
               "code": "8473",
               "symbol": "8473.T",
               "macos_analysis": {
-                "type": "Neither",
+                "pattern": "Neither",
                 "latest_chance": "2017-02-16",
-                "chance_rate": 32.7
+                "rate_of_chance": 32.7
               },
               "ecp1_analysis": [
                 {
@@ -59,9 +59,9 @@ mod tests {
               }
             }"#};
         let macos_analysis = MACOSAnalysis {
-            r#type: MACOSType::Neither,
+            pattern: Pattern::Neither,
             latest_chance: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
-            chance_rate: 32.7,
+            rate_of_chance: 32.7,
         };
         let ecp1_analysis = BuySellSignalAnalysis(vec![BuySellSignal {
             r#type: BuySellSignalType::Stay,

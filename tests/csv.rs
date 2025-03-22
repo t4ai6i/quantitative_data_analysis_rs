@@ -37,9 +37,9 @@ fn csv_sandbox() {
     assert_eq!(actual, expected);
 
     let json = indoc! {r#"{
-            "type":"Golden",
+            "pattern":"Golden",
             "latest_chance":"2023-08-30",
-            "chance_rate":27.27272727272727
+            "rate_of_chance":27.27272727272727
         }"#};
     let macos_analysis: MACOSAnalysis = serde_json::from_str(json).unwrap();
     let mut builder = Writer::from_writer(vec![]);
@@ -47,6 +47,6 @@ fn csv_sandbox() {
     let data = String::from_utf8(builder.into_inner().unwrap()).unwrap();
     assert_eq!(
         data,
-        "type,latest_chance,chance_rate\nGolden,2023-08-30,27.27272727272727\n"
+        "pattern,latest_chance,rate_of_chance\nGolden,2023-08-30,27.27272727272727\n"
     );
 }

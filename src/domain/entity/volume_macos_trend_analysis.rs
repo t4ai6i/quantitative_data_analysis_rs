@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 use itertools::Itertools;
 
-use crate::domain::entity::macos::MACOSType;
-use crate::domain::entity::macos::MACOSType::Neither;
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
+use crate::domain::models::macos::model::Pattern;
+use crate::domain::models::macos::model::Pattern::Neither;
 
 /// 出来高ベースのMovingAverageCrossoverStrategyのトレンド解析
 pub struct VolumeMACOSTrendAnalysis {
@@ -11,8 +11,8 @@ pub struct VolumeMACOSTrendAnalysis {
     pub date: NaiveDate,
     /// Crossover発生日の出来高
     pub volume_on_macos: u64,
-    /// MovingAverageCrossoverStrategyType
-    pub r#type: MACOSType,
+    /// MovingAverageCrossoverStrategyPattern
+    pub pattern: Pattern,
 }
 
 pub struct VecVolumeMACOSTrendAnalysis(pub Vec<VolumeMACOSTrendAnalysis>);
@@ -24,7 +24,7 @@ impl<'a> From<&StocksMACOSESPair<'a>> for VecVolumeMACOSTrendAnalysis {
             .iter()
             .filter_map(|macos| {
                 // Neitherは判断材料とならないため結果から除外する
-                if macos.macos_set_5_25.volume.eq(&Neither) {
+                if macos.pattern_close_volume.volume.eq(&Neither) {
                     return None;
                 }
                 // Crossover発生日と同じ日の株価情報を取得
@@ -32,7 +32,7 @@ impl<'a> From<&StocksMACOSESPair<'a>> for VecVolumeMACOSTrendAnalysis {
                 Some(VolumeMACOSTrendAnalysis {
                     date: stock.date,
                     volume_on_macos: stock.volume,
-                    r#type: macos.macos_set_5_25.volume,
+                    pattern: macos.pattern_close_volume.volume,
                 })
             })
             .collect_vec();
@@ -42,10 +42,10 @@ impl<'a> From<&StocksMACOSESPair<'a>> for VecVolumeMACOSTrendAnalysis {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::macos::VecMACOS;
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
     use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
     use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
+    use crate::domain::models::macos::model::MACOSES;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
@@ -59,7 +59,7 @@ mod tests {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
-        let VecMACOS(macoses) = VecMACOS::from(sma_list_pair);
+        let macoses = MACOSES::from(sma_list_pair);
         let stocks_macoses_pair = StocksMACOSESPair {
             stocks: vec_stock.as_slice(),
             macoses: macoses.as_slice(),

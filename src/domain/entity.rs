@@ -1,14 +1,11 @@
-pub mod chance_loss;
 pub mod close_macos_trend_analysis;
 pub mod company;
 pub mod ecp1;
 pub mod ecp2;
 pub mod indicator;
 pub mod indicator_analysis;
-pub mod macos;
 pub mod macps;
 pub mod msesp;
-mod ordering;
 pub mod sma;
 pub mod statement;
 pub mod stocks_macoses_pair;

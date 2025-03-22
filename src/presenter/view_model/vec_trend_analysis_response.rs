@@ -1,5 +1,5 @@
 use crate::domain::entity::company::Company;
-use crate::domain::entity::macos::MACOSType;
+use crate::domain::models::macos::model::Pattern;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::view_model::analysis::Analysis;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
@@ -22,16 +22,16 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 TrendAnalysisResponse::Chart {
                     company,
                     display_macos_pattern,
-                    chance_rate,
+                    rate_of_chance,
                     latest_chance,
                     ..
                 } => {
                     let Company { code, symbol, .. } = company;
                     let latest_chance = display_macos_pattern.get_latest_chance(&latest_chance);
-                    let macos = MACOSType::from(latest_chance).to_string();
+                    let macos = Pattern::from(latest_chance).to_string();
                     let latest_chance = latest_chance.to_string();
-                    let chance_rate = chance_rate.to_string(&display_macos_pattern);
-                    Some(vec![code, symbol, macos, latest_chance, chance_rate])
+                    let rate_of_chance = rate_of_chance.to_string(&display_macos_pattern);
+                    Some(vec![code, symbol, macos, latest_chance, rate_of_chance])
                 }
                 _ => None,
             })
@@ -45,7 +45,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 TrendAnalysisResponse::Json {
                     company,
                     display_macos_pattern,
-                    chance_rate,
+                    rate_of_chance,
                     latest_chance,
                     vec_ecp1,
                     trend_reversal_analysis,
@@ -53,7 +53,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 } => {
                     let Company { code, symbol, .. } = company;
                     let macos_analysis =
-                        MACOSAnalysis::from((display_macos_pattern, chance_rate, latest_chance));
+                        MACOSAnalysis::from((display_macos_pattern, rate_of_chance, latest_chance));
                     let ecp1_analysis = BuySellSignalAnalysis::from(vec_ecp1.0.as_slice());
                     let trend_reversal_analysis =
                         TrendReversalAnalysis::from(trend_reversal_analysis);

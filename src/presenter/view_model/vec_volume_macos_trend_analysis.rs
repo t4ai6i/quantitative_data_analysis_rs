@@ -20,12 +20,12 @@ impl VecVolumeMACOSTrendAnalysisExt for VecVolumeMACOSTrendAnalysis {
     fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
         self.0
             .iter()
-            .filter(|trend_analysis| pattern.is_display_by_macos_type(&trend_analysis.r#type))
+            .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
             .map(|trend_analysis| {
                 let date = trend_analysis.date.format("%Y/%m/%d").to_string();
-                let r#type = trend_analysis.r#type.to_string();
+                let pattern = trend_analysis.pattern.to_string();
                 let volume_on_macos = trend_analysis.volume_on_macos.to_string();
-                vec![date, r#type, volume_on_macos]
+                vec![date, pattern, volume_on_macos]
             })
             .collect_vec()
     }
