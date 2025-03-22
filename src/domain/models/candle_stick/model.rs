@@ -40,6 +40,7 @@ pub struct CandleStick<const N: usize> {
     pub is_doji: bool,
 }
 
+// TODO: Move to domain/services/candle_stick/service.rs, because it is a service layer.
 impl<const N: usize> CandleStick<N> {
     fn get_size(high: f64, low: f64) -> f64 {
         high - low
@@ -84,7 +85,7 @@ impl<const N: usize> CandleStick<N> {
 
 impl<const N: usize> From<&Stock> for CandleStick<N> {
     fn from(value: &Stock) -> Self {
-        let min_body_pct = N.to_f64().unwrap().div(100.0);
+        let min_body_pct = N.to_f64().unwrap_or_default().div(100.0);
 
         let Stock {
             date,
