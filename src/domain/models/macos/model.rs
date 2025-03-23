@@ -1,27 +1,59 @@
-use rayon::prelude::*;
-
 use crate::domain::entity::sma::{SMAListPair, SMAPair, SMASet};
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use itertools::Itertools;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use strum::Display;
+
+/// MovingAverageCrossoverStrategy
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
+pub struct MACOS {
+    pub date: NaiveDate,
+    pub sma_set_25: Option<SMASet<25>>,
+    pub pattern_close_volume: PatternCloseVolume,
+}
+
+/// 終値・取引高における各移動平均線が交わったときの向きのパターンのセット
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+pub struct PatternCloseVolume {
+    /// 終値ベースのMACOSのパターン
+    pub close: Pattern,
+    /// 出来高ベースのMACOSのパターン
+    pub volume: Pattern,
+}
 
 /// 各移動平均線が交わったときの向きのパターン
 #[derive(
     Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default, Display,
 )]
 pub enum Pattern {
-    /// ゴールデンクロス
-    Golden,
-    /// デッドクロス
-    Dead,
     #[default]
-    /// どちらでもない場合
     Neither,
+    /// GoldenCross
+    Golden,
+    /// DeadCross
+    Dead,
 }
 
+/// Creates a `Pattern` from a tuple of two `Option<Ordering>` values.
+///
+/// # Parameters
+/// - `value: (Option<Ordering>, Option<Ordering>)`  
+///   A tuple containing two optional `Ordering` values, which represent comparisons.
+///
+/// # Returns
+/// - `Pattern`:  
+///   - Returns `Pattern::Golden` if the first value is `Some(Ordering::Less)` and the second is `Some(Ordering::Greater)`.
+///   - Returns `Pattern::Dead` if the first value is `Some(Ordering::Greater)` and the second is `Some(Ordering::Less)`.
+///   - Returns `Pattern::Neither` for all other cases.
+///
+/// # Behavior
+/// - The function pattern matches on the provided tuple of `Option<Ordering>` values to determine which `Pattern` variant to return.
+///
+/// # Notes
+/// - Provides a convenient way to map comparison results (`Ordering`) into a `Pattern` variant.
 impl From<(Option<Ordering>, Option<Ordering>)> for Pattern {
     fn from(value: (Option<Ordering>, Option<Ordering>)) -> Self {
         match value {
@@ -32,47 +64,97 @@ impl From<(Option<Ordering>, Option<Ordering>)> for Pattern {
     }
 }
 
-/// 終値・取引高における各移動平均線が交わったときの向きのパターンのセット
+/// MACOS analysis pattern
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct PatternCloseVolume {
-    /// 終値ベースのMovingAverageCrossoverStrategy
-    pub close: Pattern,
-    /// 出来高ベースのMovingAverageCrossoverStrategy
-    pub volume: Pattern,
+pub enum AnalysisPattern {
+    #[default]
+    None,
+    GoldenChance,
+    DeadChance,
+    GoldenLoss,
+    DeadLoss,
 }
 
-impl<const N: usize, const O: usize> From<OrderingCloseVolumePastFuture<N, O>>
-    for PatternCloseVolume
-{
-    fn from(value: OrderingCloseVolumePastFuture<N, O>) -> Self {
-        // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
-        // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
-        let OrderingCloseVolumePastFuture { past, future } = value;
-        let close = Pattern::from((past.close, future.close));
-        let volume = Pattern::from((past.volume, future.volume));
-        PatternCloseVolume { close, volume }
+/// A pair of `Pattern` and `rate_of_change` values.
+pub struct PatternRateOfChangePair {
+    pub pattern: Pattern,
+    pub rate_of_change: f64,
+}
+
+/// Converts a `PatternRateOfChangePair` into an `AnalysisPattern`.
+///
+/// # Parameters
+/// - `value: PatternRateOfChangePair`  
+///   The input object containing a `Pattern` (either `Golden` or `Dead`) and a `rate_of_change` value for evaluation.
+///
+/// # Returns
+/// - `AnalysisPattern`:  
+///   - Returns `AnalysisPattern::GoldenChance` if the `Pattern` is `Golden` and the `rate_of_change` is greater than `0.0`.
+///   - Returns `AnalysisPattern::DeadChance` if the `Pattern` is `Dead` and the `rate_of_change` is less than `0.0`.
+///   - Returns `AnalysisPattern::GoldenLoss` if the `Pattern` is `Golden` and the `rate_of_change` is less than or equal to `0.0`.
+///   - Returns `AnalysisPattern::DeadLoss` if the `Pattern` is `Dead` and the `rate_of_change` is greater than or equal to `0.0`.
+///   - Returns `AnalysisPattern::None` if none of the above conditions are met.
+///
+/// # Behavior
+/// - The conversion logic evaluates both the `Pattern` and the `rate_of_change` value
+///   based on specific conditions to determine the appropriate `AnalysisPattern` variant.
+///
+/// # Notes
+/// - This implementation provides a structured way to classify input `PatternRateOfChangePair` values into `AnalysisPattern` variants,
+///   reflecting specific conditions of the pattern and its associated rate of change.
+impl From<PatternRateOfChangePair> for AnalysisPattern {
+    fn from(value: PatternRateOfChangePair) -> Self {
+        match value {
+            // GoldenChance: GoldenPattern/rate_of_change > 0.0
+            PatternRateOfChangePair {
+                pattern: Pattern::Golden,
+                rate_of_change: change,
+            } if change > 0.0 => AnalysisPattern::GoldenChance,
+            // DeadChance: DeadPattern/rate_of_change < 0.0
+            PatternRateOfChangePair {
+                pattern: Pattern::Dead,
+                rate_of_change: change,
+            } if change < 0.0 => AnalysisPattern::DeadChance,
+            // GoldenLoss: GoldenPattern/rate_of_change <= 0.0
+            PatternRateOfChangePair {
+                pattern: Pattern::Golden,
+                rate_of_change: change,
+            } if change <= 0.0 => AnalysisPattern::GoldenLoss,
+            // DeadLoss: DeadPattern/rate_of_change >= 0.0
+            PatternRateOfChangePair {
+                pattern: Pattern::Dead,
+                rate_of_change: change,
+            } if change >= 0.0 => AnalysisPattern::DeadLoss,
+            _ => AnalysisPattern::None,
+        }
     }
 }
 
-/// MovingAverageCrossoverStrategy
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct MACOS {
-    pub date: NaiveDate,
-    pub sma_set_25: Option<SMASet<25>>,
-    pub pattern_close_volume: PatternCloseVolume,
-}
-
-struct Intermediate {
-    date: NaiveDate,
-    sma_set_25: Option<SMASet<25>>,
-    ordering_close_volume_5_25: OrderingCloseVolume<5, 25>,
-}
-
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
-pub struct MACOSES(Vec<MACOS>);
+pub struct MACOSES(pub(crate) Vec<MACOS>);
 
-// TODO: Move to domain/services/macos/service.rs, because it is a service layer.
 impl MACOSES {
+    /// Retrieves the latest date based on the closing value that matches a specified pattern.
+    ///
+    /// # Parameters
+    /// - `pattern: &Pattern`  
+    ///    A reference to the `Pattern` object used to match against the `close` value
+    ///    in the `pattern_close_volume` of each `MACOS` item.
+    ///
+    /// # Returns
+    /// - `Option<NaiveDate>`:  
+    ///   - Returns `Some(date)` if one or more `MACOS` objects match the given pattern, where `date` is the latest matching date.
+    ///   - Returns `None` if no matches are found.
+    ///
+    /// # Process
+    /// - The method uses parallel iteration (`par_iter`) for efficiency when traversing the `MACOSES` collection.
+    /// - It filters `MACOS` objects where the `close` field of `pattern_close_volume` equals the given `Pattern`.
+    /// - The filtered results are then sorted by the `date` field in ascending order.
+    /// - Finally, the latest date (if any) is extracted and returned.
+    ///
+    /// # Notes
+    /// - This method leverages the `rayon` library for parallel processing, ideal for handling large datasets.
+    /// - Sorting is done using `itertools`'s `sorted_by` for a clear and concise sorting step.
     pub fn latest_based_on_close(&self, pattern: &Pattern) -> Option<NaiveDate> {
         let filtered: Vec<MACOS> = self
             .par_iter()
@@ -92,12 +174,18 @@ impl MACOSES {
     }
 }
 
+struct Intermediate {
+    date: NaiveDate,
+    sma_set_25: Option<SMASet<25>>,
+    ordering_close_volume_5_25: OrderingCloseVolume<5, 25>,
+}
+
 impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSES {
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSES;
     /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListPair, VecSMA};
+    /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSES;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
@@ -157,57 +245,13 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSES {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub enum MACOSAnalysis {
-    #[default]
-    None,
-    GoldenChance,
-    DeadChance,
-    GoldenLoss,
-    DeadLoss,
-}
-
-pub struct MACOSPatternRateOfChangePair {
-    pub pattern: Pattern,
-    pub rate_of_change: f64,
-}
-
-impl From<MACOSPatternRateOfChangePair> for MACOSAnalysis {
-    fn from(value: MACOSPatternRateOfChangePair) -> Self {
-        // 移動平均交差分析
-        // GoldenChance: Golden/増減率+
-        // GoldenLoss: Golden/増減率-
-        // DeadChance: Dead/増減率-
-        // DeadLoss: Dead/増減率+
-        match value {
-            MACOSPatternRateOfChangePair {
-                pattern: Pattern::Golden,
-                rate_of_change: change,
-            } if change > 0.0 => MACOSAnalysis::GoldenChance,
-            MACOSPatternRateOfChangePair {
-                pattern: Pattern::Dead,
-                rate_of_change: change,
-            } if change < 0.0 => MACOSAnalysis::DeadChance,
-            MACOSPatternRateOfChangePair {
-                pattern: Pattern::Golden,
-                rate_of_change: change,
-            } if change <= 0.0 => MACOSAnalysis::GoldenLoss,
-            MACOSPatternRateOfChangePair {
-                pattern: Pattern::Dead,
-                rate_of_change: change,
-            } if change >= 0.0 => MACOSAnalysis::DeadLoss,
-            _ => MACOSAnalysis::None,
-        }
-    }
-}
-
-/// 終値平均、出来高平均それぞれの大小関係
+/// 終値ベース、出来高ベースそれぞれの大小関係
 /// 対象日が片方なかったなど比較出来なかった場合は、None
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-struct OrderingCloseVolume<const N: usize, const O: usize> {
-    /// 終値平均の比較値
+pub struct OrderingCloseVolume<const N: usize, const O: usize> {
+    /// 終値ベースの比較値
     pub close: Option<Ordering>,
-    /// 取引高平均の比較値
+    /// 取引高ベースの比較値
     pub volume: Option<Ordering>,
 }
 
@@ -228,4 +272,17 @@ impl<'a, const N: usize, const O: usize> From<SMAPair<'a, N, O>> for OrderingClo
 struct OrderingCloseVolumePastFuture<const N: usize, const O: usize> {
     past: OrderingCloseVolume<N, O>,
     future: OrderingCloseVolume<N, O>,
+}
+
+impl<const N: usize, const O: usize> From<OrderingCloseVolumePastFuture<N, O>>
+    for PatternCloseVolume
+{
+    fn from(value: OrderingCloseVolumePastFuture<N, O>) -> Self {
+        // 前日と対象日の大小関係を比較して、ゴールデンクロスかデッドクロスかどちらも発生していないかを判定していく。
+        // https://myfrankblog.com/find_golden_cross_and_dead_cross_by_python/#i-4
+        let OrderingCloseVolumePastFuture { past, future } = value;
+        let close = Pattern::from((past.close, future.close));
+        let volume = Pattern::from((past.volume, future.volume));
+        PatternCloseVolume { close, volume }
+    }
 }

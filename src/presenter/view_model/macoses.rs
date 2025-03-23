@@ -1,5 +1,4 @@
-use crate::domain::models::macos::model::Pattern;
-use crate::domain::models::macos::model::MACOSES;
+use crate::domain::models::macos::model::{Pattern, MACOSES};
 use charts_rs::NIL_VALUE;
 use itertools::Itertools;
 

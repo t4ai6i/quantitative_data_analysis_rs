@@ -2,8 +2,9 @@ use chrono::NaiveDate;
 use strum::Display;
 
 use crate::domain::entity::close_macos_trend_analysis::{LatestChance, MACOSRateOfChance};
-use crate::domain::models::macos::model::MACOSAnalysis;
-use crate::domain::models::macos::model::Pattern;
+use crate::domain::models::macos;
+use crate::domain::models::macos::model::AnalysisPattern;
+use crate::domain::models::macos::model::Pattern::{Dead, Golden};
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Display)]
 pub enum DisplayMACOSPattern {
@@ -15,12 +16,12 @@ pub enum DisplayMACOSPattern {
 
 /// View向けMovingAverageCrossoverStrategyパターン
 impl DisplayMACOSPattern {
-    /// MACOSTypeによって描画するか判定
-    pub fn is_display_by_macos_pattern(&self, r#type: &Pattern) -> bool {
+    /// 指定されたMACOSPatternと比較
+    pub fn is_display_by_macos_pattern(&self, pattern: &macos::model::Pattern) -> bool {
         match self {
             DisplayMACOSPattern::All => true,
-            DisplayMACOSPattern::GoldenOnly => r#type.eq(&Pattern::Golden),
-            DisplayMACOSPattern::DeadOnly => r#type.eq(&Pattern::Dead),
+            DisplayMACOSPattern::GoldenOnly => pattern.eq(&Golden),
+            DisplayMACOSPattern::DeadOnly => pattern.eq(&Dead),
         }
     }
 
@@ -50,7 +51,7 @@ impl DisplayMACOSPattern {
         self,
         within_days: NaiveDate,
         latest_chance: &LatestChance,
-    ) -> Option<(MACOSAnalysis, NaiveDate)> {
+    ) -> Option<(AnalysisPattern, NaiveDate)> {
         let LatestChance {
             latest_golden_chance,
             latest_dead_chance,
@@ -64,12 +65,12 @@ impl DisplayMACOSPattern {
                 let latest_dead_chance = latest_dead_chance.unwrap();
                 if latest_golden_chance >= latest_dead_chance {
                     if latest_golden_chance >= within_days {
-                        Some((MACOSAnalysis::GoldenChance, latest_golden_chance))
+                        Some((AnalysisPattern::GoldenChance, latest_golden_chance))
                     } else {
                         None
                     }
                 } else if latest_dead_chance >= within_days {
-                    Some((MACOSAnalysis::DeadChance, latest_dead_chance))
+                    Some((AnalysisPattern::DeadChance, latest_dead_chance))
                 } else {
                     None
                 }
@@ -80,7 +81,7 @@ impl DisplayMACOSPattern {
                 };
                 let latest_golden_chance = latest_golden_chance.unwrap();
                 if latest_golden_chance >= within_days {
-                    Some((MACOSAnalysis::GoldenChance, latest_golden_chance))
+                    Some((AnalysisPattern::GoldenChance, latest_golden_chance))
                 } else {
                     None
                 }
@@ -91,7 +92,7 @@ impl DisplayMACOSPattern {
                 };
                 let latest_dead_chance = latest_dead_chance.unwrap();
                 if latest_dead_chance >= within_days {
-                    Some((MACOSAnalysis::DeadChance, latest_dead_chance))
+                    Some((AnalysisPattern::DeadChance, latest_dead_chance))
                 } else {
                     None
                 }

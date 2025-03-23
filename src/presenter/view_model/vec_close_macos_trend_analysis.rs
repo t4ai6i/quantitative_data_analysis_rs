@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
 use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
-use crate::domain::models::macos::model::MACOSAnalysis;
+use crate::domain::models::macos::model::AnalysisPattern;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 
 pub trait VecCloseMACOSTrendAnalysisExt {
@@ -27,12 +27,12 @@ impl<const N: usize> VecCloseMACOSTrendAnalysisExt for VecCloseMACOSTrendAnalysi
             .iter()
             .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
             .map(|trend_analysis| {
-                let chance_loss = match trend_analysis.macos_analysis {
-                    MACOSAnalysis::None => "❔".to_string(),
-                    MACOSAnalysis::GoldenChance => "✅".to_string(),
-                    MACOSAnalysis::DeadChance => "✅".to_string(),
-                    MACOSAnalysis::GoldenLoss => "❌".to_string(),
-                    MACOSAnalysis::DeadLoss => "❌".to_string(),
+                let chance_loss = match trend_analysis.analysis_pattern {
+                    AnalysisPattern::None => "❔".to_string(),
+                    AnalysisPattern::GoldenChance => "✅".to_string(),
+                    AnalysisPattern::DeadChance => "✅".to_string(),
+                    AnalysisPattern::GoldenLoss => "❌".to_string(),
+                    AnalysisPattern::DeadLoss => "❌".to_string(),
                 };
                 let macos_date = trend_analysis.date.format("%Y/%m/%d").to_string();
                 let macos_5_25 = trend_analysis.pattern.to_string();
