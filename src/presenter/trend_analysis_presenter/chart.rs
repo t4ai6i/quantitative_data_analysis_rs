@@ -14,9 +14,9 @@ use crate::presenter::{
         TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
-        candle_sticks::CandleSticksExt, macoses::MACOSESExt, stocks::StocksExt,
-        vec_close_macos_trend_analysis::VecCloseMACOSTrendAnalysisExt, vec_sma::VecSMAExt,
-        vec_volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysisExt,
+        candle_sticks::CandleSticksExt, macos_analysis_closes::VecCloseMACOSTrendAnalysisExt,
+        macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSESExt,
+        stocks::StocksExt, vec_sma::VecSMAExt,
     },
 };
 use crate::utils::float;
@@ -228,13 +228,13 @@ impl TrendAnalysisPresenter for Chart {
         }
         charts.add(ChildChart::Bar(volume_chart, None));
 
-        let mut rows = output.vec_close_macos_trend_analysis.table_chart_header();
+        let mut rows = output.macos_analysis_closes.table_chart_header();
         let mut body = output
-            .vec_close_macos_trend_analysis
+            .macos_analysis_closes
             .table_chart_rows(&output.display_macos_pattern);
         rows.append(&mut body);
         let mut summary = output
-            .vec_close_macos_trend_analysis
+            .macos_analysis_closes
             .table_chart_summary(&output.display_macos_pattern);
         rows.append(&mut summary);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
@@ -242,9 +242,9 @@ impl TrendAnalysisPresenter for Chart {
         table_chart.width = self.width;
         charts.add(ChildChart::Table(table_chart, None));
 
-        let mut rows = output.vec_volume_macos_trend_analysis.table_chart_header();
+        let mut rows = output.macos_analysis_volumes.table_chart_header();
         let mut body = output
-            .vec_volume_macos_trend_analysis
+            .macos_analysis_volumes
             .table_chart_rows(&output.display_macos_pattern);
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
@@ -276,8 +276,8 @@ impl TrendAnalysisPresenter for Chart {
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
             display_macos_pattern: output.display_macos_pattern,
-            rate_of_chance: output.vec_close_macos_trend_analysis.macos_rate_of_chance,
-            latest_chance: output.vec_close_macos_trend_analysis.latest_chance,
+            rate_of_chance: output.macos_analysis_closes.rate_of_chance,
+            latest_chance: output.macos_analysis_closes.latest_chance,
         })
     }
 }

@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
+use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 
 pub trait VecVolumeMACOSTrendAnalysisExt {
@@ -8,7 +8,7 @@ pub trait VecVolumeMACOSTrendAnalysisExt {
     fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>>;
 }
 
-impl VecVolumeMACOSTrendAnalysisExt for VecVolumeMACOSTrendAnalysis {
+impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
     fn table_chart_header(&self) -> Vec<Vec<String>> {
         vec![vec![
             "date".to_string(),
@@ -22,9 +22,9 @@ impl VecVolumeMACOSTrendAnalysisExt for VecVolumeMACOSTrendAnalysis {
             .iter()
             .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
             .map(|trend_analysis| {
-                let date = trend_analysis.date.format("%Y/%m/%d").to_string();
+                let date = trend_analysis.date_of_event.format("%Y/%m/%d").to_string();
                 let pattern = trend_analysis.pattern.to_string();
-                let volume_on_macos = trend_analysis.volume_on_macos.to_string();
+                let volume_on_macos = trend_analysis.volume.to_string();
                 vec![date, pattern, volume_on_macos]
             })
             .collect_vec()

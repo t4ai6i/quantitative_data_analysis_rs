@@ -1,4 +1,3 @@
-use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::indicator::Indicator;
@@ -9,9 +8,10 @@ use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
-use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
 use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::macos::model::MACOSES;
+use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
+use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;
@@ -103,10 +103,8 @@ where
             stocks: stocks_from_end_days.as_slice(),
             macoses: macoses.as_slice(),
         };
-        let vec_close_macos_trend_analysis =
-            VecCloseMACOSTrendAnalysis::<AFTER_DAYS>::from(&stocks_macoses_pair);
-        let vec_volume_macos_trend_analysis =
-            VecVolumeMACOSTrendAnalysis::from(&stocks_macoses_pair);
+        let macos_analysis_closes = MACOSAnalysisCloses::<AFTER_DAYS>::from(&stocks_macoses_pair);
+        let macos_analysis_volumes = MACOSAnalysisVolumes::from(&stocks_macoses_pair);
 
         let candle_sticks =
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks_from_end_days.as_slice())?;
@@ -135,8 +133,8 @@ where
             vec_sma_25,
             vec_sma_50,
             macoses,
-            vec_close_macos_trend_analysis,
-            vec_volume_macos_trend_analysis,
+            macos_analysis_closes,
+            macos_analysis_volumes: macos_analysis_volumes,
             vec_ecp1,
             candle_sticks,
             trend_reversal_analysis,

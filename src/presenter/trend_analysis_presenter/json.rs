@@ -1,4 +1,4 @@
-use crate::domain::entity::close_macos_trend_analysis::VecCloseMACOSTrendAnalysis;
+use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::presenter::trend_analysis_presenter::{
     TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
 };
@@ -11,15 +11,15 @@ impl TrendAnalysisPresenter for JSON {
         &self,
         output: TrendAnalysisOutput<N, M>,
     ) -> Result<TrendAnalysisResponse> {
-        let VecCloseMACOSTrendAnalysis {
-            macos_rate_of_chance: chance_rate,
+        let MACOSAnalysisCloses {
+            rate_of_chance,
             latest_chance,
             ..
-        } = output.vec_close_macos_trend_analysis;
+        } = output.macos_analysis_closes;
         Ok(TrendAnalysisResponse::Json {
             company: output.company,
             display_macos_pattern: output.display_macos_pattern,
-            rate_of_chance: chance_rate,
+            rate_of_chance,
             latest_chance,
             vec_ecp1: output.vec_ecp1,
             trend_reversal_analysis: output.trend_reversal_analysis,

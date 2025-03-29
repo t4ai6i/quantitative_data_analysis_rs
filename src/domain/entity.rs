@@ -1,4 +1,3 @@
-pub mod close_macos_trend_analysis;
 pub mod company;
 pub mod ecp1;
 pub mod ecp2;
@@ -10,4 +9,3 @@ pub mod sma;
 pub mod statement;
 pub mod stocks_macoses_pair;
 pub mod trend_reversal_analysis;
-pub mod volume_macos_trend_analysis;

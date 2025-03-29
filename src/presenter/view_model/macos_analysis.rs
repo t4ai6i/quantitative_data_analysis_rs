@@ -1,5 +1,5 @@
-use crate::domain::entity::close_macos_trend_analysis::{LatestChance, MACOSRateOfChance};
 use crate::domain::models::macos::model::Pattern;
+use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::utils::custom_date_format;
 use chrono::NaiveDate;
@@ -13,8 +13,8 @@ pub struct MACOSAnalysis {
     pub rate_of_chance: f64,
 }
 
-impl From<(DisplayMACOSPattern, MACOSRateOfChance, LatestChance)> for MACOSAnalysis {
-    fn from(value: (DisplayMACOSPattern, MACOSRateOfChance, LatestChance)) -> Self {
+impl From<(DisplayMACOSPattern, RateOfChance, LatestChance)> for MACOSAnalysis {
+    fn from(value: (DisplayMACOSPattern, RateOfChance, LatestChance)) -> Self {
         let (display_macos_pattern, rate_of_chance, latest_chance) = value;
         let latest_chance = display_macos_pattern.get_latest_chance(&latest_chance);
         let pattern = Pattern::from(latest_chance);

@@ -1,10 +1,10 @@
 use chrono::NaiveDate;
 use strum::Display;
 
-use crate::domain::entity::close_macos_trend_analysis::{LatestChance, MACOSRateOfChance};
 use crate::domain::models::macos;
 use crate::domain::models::macos::model::AnalysisPattern;
 use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
+use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Display)]
 pub enum DisplayMACOSPattern {
@@ -25,7 +25,7 @@ impl DisplayMACOSPattern {
         }
     }
 
-    pub fn get_rate_of_chance(self, rate_of_chance: &MACOSRateOfChance) -> f64 {
+    pub fn get_rate_of_chance(self, rate_of_chance: &RateOfChance) -> f64 {
         match self {
             DisplayMACOSPattern::All => rate_of_chance.all,
             DisplayMACOSPattern::GoldenOnly => rate_of_chance.golden_only,
@@ -106,12 +106,12 @@ mod tests {
     use anyhow::Result;
     use chrono::NaiveDate;
 
-    use crate::domain::entity::close_macos_trend_analysis::{LatestChance, MACOSRateOfChance};
+    use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
     use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 
     #[test]
     fn display_macos_direction_test() -> Result<()> {
-        let rate_of_chance = MACOSRateOfChance {
+        let rate_of_chance = RateOfChance {
             all: 0.0,
             golden_only: 1.0,
             dead_only: 2.0,

@@ -1,14 +1,14 @@
-use crate::domain::entity::close_macos_trend_analysis::{
-    LatestChance, MACOSRateOfChance, VecCloseMACOSTrendAnalysis,
-};
 use crate::domain::entity::company::Company;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
-use crate::domain::entity::volume_macos_trend_analysis::VecVolumeMACOSTrendAnalysis;
 use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::macos::model::MACOSES;
+use crate::domain::models::macos_analysis::close::model::{
+    LatestChance, MACOSAnalysisCloses, RateOfChance,
+};
+use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::domain::models::stock::model::Stocks;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use anyhow::Result;
@@ -23,8 +23,8 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_sma_25: VecSMA<25>,
     pub vec_sma_50: VecSMA<50>,
     pub macoses: MACOSES,
-    pub vec_close_macos_trend_analysis: VecCloseMACOSTrendAnalysis<N>,
-    pub vec_volume_macos_trend_analysis: VecVolumeMACOSTrendAnalysis,
+    pub macos_analysis_closes: MACOSAnalysisCloses<N>,
+    pub macos_analysis_volumes: MACOSAnalysisVolumes,
     pub vec_ecp1: VecECP1,
     pub candle_sticks: CandleSticks<M>,
     pub trend_reversal_analysis: TrendReversalAnalysis,
@@ -37,14 +37,14 @@ pub enum TrendAnalysisResponse {
     Chart {
         company: Company,
         display_macos_pattern: DisplayMACOSPattern,
-        rate_of_chance: MACOSRateOfChance,
+        rate_of_chance: RateOfChance,
         latest_chance: LatestChance,
         body: String,
     },
     Json {
         company: Company,
         display_macos_pattern: DisplayMACOSPattern,
-        rate_of_chance: MACOSRateOfChance,
+        rate_of_chance: RateOfChance,
         latest_chance: LatestChance,
         vec_ecp1: VecECP1,
         trend_reversal_analysis: TrendReversalAnalysis,
