@@ -32,9 +32,9 @@ pub enum Pattern {
     #[default]
     Neither,
     /// GoldenCross
-    Golden,
+    GoldenCross,
     /// DeadCross
-    Dead,
+    DeadCross,
 }
 
 /// Creates a `Pattern` from a tuple of two `Option<Ordering>` values.
@@ -57,8 +57,8 @@ pub enum Pattern {
 impl From<(Option<Ordering>, Option<Ordering>)> for Pattern {
     fn from(value: (Option<Ordering>, Option<Ordering>)) -> Self {
         match value {
-            (Some(Ordering::Less), Some(Ordering::Greater)) => Self::Golden,
-            (Some(Ordering::Greater), Some(Ordering::Less)) => Self::Dead,
+            (Some(Ordering::Less), Some(Ordering::Greater)) => Self::GoldenCross,
+            (Some(Ordering::Greater), Some(Ordering::Less)) => Self::DeadCross,
             _ => Self::Neither,
         }
     }
@@ -76,7 +76,7 @@ pub enum AnalysisPattern {
 }
 
 /// A pair of `Pattern` and `rate_of_change` values.
-pub struct PatternRateOfChangePair {
+pub(crate) struct PatternRateOfChangePair {
     pub pattern: Pattern,
     pub rate_of_change: f64,
 }
@@ -107,22 +107,22 @@ impl From<PatternRateOfChangePair> for AnalysisPattern {
         match value {
             // GoldenChance: GoldenPattern/rate_of_change > 0.0
             PatternRateOfChangePair {
-                pattern: Pattern::Golden,
+                pattern: Pattern::GoldenCross,
                 rate_of_change: change,
             } if change > 0.0 => AnalysisPattern::GoldenChance,
             // DeadChance: DeadPattern/rate_of_change < 0.0
             PatternRateOfChangePair {
-                pattern: Pattern::Dead,
+                pattern: Pattern::DeadCross,
                 rate_of_change: change,
             } if change < 0.0 => AnalysisPattern::DeadChance,
             // GoldenLoss: GoldenPattern/rate_of_change <= 0.0
             PatternRateOfChangePair {
-                pattern: Pattern::Golden,
+                pattern: Pattern::GoldenCross,
                 rate_of_change: change,
             } if change <= 0.0 => AnalysisPattern::GoldenLoss,
             // DeadLoss: DeadPattern/rate_of_change >= 0.0
             PatternRateOfChangePair {
-                pattern: Pattern::Dead,
+                pattern: Pattern::DeadCross,
                 rate_of_change: change,
             } if change >= 0.0 => AnalysisPattern::DeadLoss,
             _ => AnalysisPattern::None,

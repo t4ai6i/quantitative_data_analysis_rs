@@ -4,7 +4,7 @@ use strum::Display;
 use crate::domain::entity::close_macos_trend_analysis::{LatestChance, MACOSRateOfChance};
 use crate::domain::models::macos;
 use crate::domain::models::macos::model::AnalysisPattern;
-use crate::domain::models::macos::model::Pattern::{Dead, Golden};
+use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Display)]
 pub enum DisplayMACOSPattern {
@@ -20,8 +20,8 @@ impl DisplayMACOSPattern {
     pub fn is_display_by_macos_pattern(&self, pattern: &macos::model::Pattern) -> bool {
         match self {
             DisplayMACOSPattern::All => true,
-            DisplayMACOSPattern::GoldenOnly => pattern.eq(&Golden),
-            DisplayMACOSPattern::DeadOnly => pattern.eq(&Dead),
+            DisplayMACOSPattern::GoldenOnly => pattern.eq(&GoldenCross),
+            DisplayMACOSPattern::DeadOnly => pattern.eq(&DeadCross),
         }
     }
 

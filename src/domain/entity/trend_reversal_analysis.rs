@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use crate::domain::entity::macps::MACPS;
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
-use crate::domain::models::macos::model::Pattern::{Dead, Golden};
+use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
 use crate::domain::models::macos::model::MACOSES;
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -68,8 +68,8 @@ impl<'a> From<&TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
         } = value;
 
         let macps = Self::cmp(macps.buy, macps.sell);
-        let macos_close_golden = macoses.latest_based_on_close(&Golden);
-        let macos_close_dead = macoses.latest_based_on_close(&Dead);
+        let macos_close_golden = macoses.latest_based_on_close(&GoldenCross);
+        let macos_close_dead = macoses.latest_based_on_close(&DeadCross);
         let macos = Self::cmp(macos_close_golden, macos_close_dead);
         let ecp2_buy = Self::latest_buy_sell_signal_date(ecp2s, &Buy);
         let ecp2_sell = Self::latest_buy_sell_signal_date(ecp2s, &Sell);

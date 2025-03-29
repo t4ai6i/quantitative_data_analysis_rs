@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
-use crate::domain::models::macos::model::Pattern::{Dead, Golden, Neither};
+use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross, Neither};
 use crate::domain::models::macos::model::{AnalysisPattern, Pattern, PatternRateOfChangePair};
 /// 終値ベースのMovingAverageCrossoverStrategyのトレンド解析
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
@@ -45,13 +45,13 @@ impl From<LatestChance> for Pattern {
         match (latest_golden_chance, latest_dead_chance) {
             (Some(golden), Some(dead)) => {
                 if golden >= dead {
-                    Golden
+                    GoldenCross
                 } else {
-                    Dead
+                    DeadCross
                 }
             }
-            (Some(_), None) => Golden,
-            (None, Some(_)) => Dead,
+            (Some(_), None) => GoldenCross,
+            (None, Some(_)) => DeadCross,
             _ => Neither,
         }
     }

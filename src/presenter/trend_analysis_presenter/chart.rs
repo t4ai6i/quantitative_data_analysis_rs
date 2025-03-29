@@ -70,10 +70,12 @@ impl TrendAnalysisPresenter for Chart {
 
         let series_list = match output.display_macos_pattern {
             DisplayMACOSPattern::All => {
-                let dead_macoses = output.macoses.collect_vec_sma_25_close_macos(Pattern::Dead);
+                let dead_macoses = output
+                    .macoses
+                    .collect_vec_sma_25_close_macos(Pattern::DeadCross);
                 let golden_macoses = output
                     .macoses
-                    .collect_vec_sma_25_close_macos(Pattern::Golden);
+                    .collect_vec_sma_25_close_macos(Pattern::GoldenCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
@@ -86,7 +88,7 @@ impl TrendAnalysisPresenter for Chart {
             DisplayMACOSPattern::GoldenOnly => {
                 let golden_macoses = output
                     .macoses
-                    .collect_vec_sma_25_close_macos(Pattern::Golden);
+                    .collect_vec_sma_25_close_macos(Pattern::GoldenCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
@@ -96,7 +98,9 @@ impl TrendAnalysisPresenter for Chart {
                 ]
             }
             DisplayMACOSPattern::DeadOnly => {
-                let dead_macoses = output.macoses.collect_vec_sma_25_close_macos(Pattern::Dead);
+                let dead_macoses = output
+                    .macoses
+                    .collect_vec_sma_25_close_macos(Pattern::DeadCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
@@ -162,10 +166,10 @@ impl TrendAnalysisPresenter for Chart {
             DisplayMACOSPattern::All => {
                 let dead_macoses = output
                     .macoses
-                    .collect_vec_sma_25_volume_macos(Pattern::Dead);
+                    .collect_vec_sma_25_volume_macos(Pattern::DeadCross);
                 let golden_macoses = output
                     .macoses
-                    .collect_vec_sma_25_volume_macos(Pattern::Golden);
+                    .collect_vec_sma_25_volume_macos(Pattern::GoldenCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
@@ -177,7 +181,7 @@ impl TrendAnalysisPresenter for Chart {
             DisplayMACOSPattern::GoldenOnly => {
                 let golden_macoses = output
                     .macoses
-                    .collect_vec_sma_25_volume_macos(Pattern::Golden);
+                    .collect_vec_sma_25_volume_macos(Pattern::GoldenCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
@@ -188,7 +192,7 @@ impl TrendAnalysisPresenter for Chart {
             DisplayMACOSPattern::DeadOnly => {
                 let dead_macoses = output
                     .macoses
-                    .collect_vec_sma_25_volume_macos(Pattern::Dead);
+                    .collect_vec_sma_25_volume_macos(Pattern::DeadCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
                     Series::from(("SMA25", sma_25_averages)),
