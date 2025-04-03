@@ -27,9 +27,9 @@ impl DisplayMACOSPattern {
 
     pub fn get_rate_of_chance(self, rate_of_chance: &RateOfChance) -> f64 {
         match self {
-            DisplayMACOSPattern::All => rate_of_chance.all,
-            DisplayMACOSPattern::GoldenOnly => rate_of_chance.golden_only,
-            DisplayMACOSPattern::DeadOnly => rate_of_chance.dead_only,
+            DisplayMACOSPattern::All => rate_of_chance.whole,
+            DisplayMACOSPattern::GoldenOnly => rate_of_chance.golden,
+            DisplayMACOSPattern::DeadOnly => rate_of_chance.dead,
         }
     }
 
@@ -37,12 +37,12 @@ impl DisplayMACOSPattern {
         match self {
             DisplayMACOSPattern::All => *latest_chance,
             DisplayMACOSPattern::GoldenOnly => LatestChance {
-                latest_golden_chance: latest_chance.latest_golden_chance,
-                latest_dead_chance: None,
+                golden_cross: latest_chance.golden_cross,
+                dead_cross: None,
             },
             DisplayMACOSPattern::DeadOnly => LatestChance {
-                latest_golden_chance: None,
-                latest_dead_chance: latest_chance.latest_dead_chance,
+                golden_cross: None,
+                dead_cross: latest_chance.dead_cross,
             },
         }
     }
@@ -53,8 +53,8 @@ impl DisplayMACOSPattern {
         latest_chance: &LatestChance,
     ) -> Option<(AnalysisPattern, NaiveDate)> {
         let LatestChance {
-            latest_golden_chance,
-            latest_dead_chance,
+            golden_cross: latest_golden_chance,
+            dead_cross: latest_dead_chance,
         } = latest_chance;
         match self {
             DisplayMACOSPattern::All => {
@@ -112,13 +112,13 @@ mod tests {
     #[test]
     fn display_macos_direction_test() -> Result<()> {
         let rate_of_chance = RateOfChance {
-            all: 0.0,
-            golden_only: 1.0,
-            dead_only: 2.0,
+            whole: 0.0,
+            golden: 1.0,
+            dead: 2.0,
         };
         let latest_chance = LatestChance {
-            latest_golden_chance: NaiveDate::from_ymd_opt(2023, 12, 12),
-            latest_dead_chance: NaiveDate::from_ymd_opt(2022, 12, 12),
+            golden_cross: NaiveDate::from_ymd_opt(2023, 12, 12),
+            dead_cross: NaiveDate::from_ymd_opt(2022, 12, 12),
         };
         let display_macos_pattern = DisplayMACOSPattern::All;
         let actual = display_macos_pattern.get_rate_of_chance(&rate_of_chance);
@@ -127,8 +127,8 @@ mod tests {
         assert_eq!(
             actual,
             LatestChance {
-                latest_golden_chance: NaiveDate::from_ymd_opt(2023, 12, 12),
-                latest_dead_chance: NaiveDate::from_ymd_opt(2022, 12, 12),
+                golden_cross: NaiveDate::from_ymd_opt(2023, 12, 12),
+                dead_cross: NaiveDate::from_ymd_opt(2022, 12, 12),
             }
         );
         let display_macos_pattern = DisplayMACOSPattern::GoldenOnly;
@@ -138,8 +138,8 @@ mod tests {
         assert_eq!(
             actual,
             LatestChance {
-                latest_golden_chance: NaiveDate::from_ymd_opt(2023, 12, 12),
-                latest_dead_chance: None,
+                golden_cross: NaiveDate::from_ymd_opt(2023, 12, 12),
+                dead_cross: None,
             }
         );
         let display_macos_pattern = DisplayMACOSPattern::DeadOnly;
@@ -149,8 +149,8 @@ mod tests {
         assert_eq!(
             actual,
             LatestChance {
-                latest_golden_chance: None,
-                latest_dead_chance: NaiveDate::from_ymd_opt(2022, 12, 12),
+                golden_cross: None,
+                dead_cross: NaiveDate::from_ymd_opt(2022, 12, 12),
             }
         );
         Ok(())

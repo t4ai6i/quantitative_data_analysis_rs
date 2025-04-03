@@ -1,8 +1,10 @@
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross, Neither};
 use crate::domain::models::macos::model::{AnalysisPattern, Pattern, PatternRateOfChangePair};
+use crate::utils::float::percentage;
 use chrono::NaiveDate;
-use itertools::Itertools;
+use deref_derive::{Deref, DerefMut};
+use rayon::prelude::*;
 use std::ops::{Mul, Sub};
 
 /// 終値ベースのMovingAverageCrossoverStrategyの解析
@@ -22,79 +24,20 @@ pub struct MACOSAnalysisClose {
     pub analysis_pattern: AnalysisPattern,
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct RateOfChance {
-    pub all: f64,
-    pub golden_only: f64,
-    pub dead_only: f64,
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-pub struct LatestChance {
-    pub latest_golden_chance: Option<NaiveDate>,
-    pub latest_dead_chance: Option<NaiveDate>,
-}
-
-impl From<LatestChance> for Pattern {
-    fn from(value: LatestChance) -> Self {
-        let LatestChance {
-            latest_golden_chance,
-            latest_dead_chance,
-        } = value;
-        match (latest_golden_chance, latest_dead_chance) {
-            (Some(golden), Some(dead)) => {
-                if golden >= dead {
-                    GoldenCross
-                } else {
-                    DeadCross
-                }
-            }
-            (Some(_), None) => GoldenCross,
-            (None, Some(_)) => DeadCross,
-            _ => Neither,
-        }
-    }
-}
-
-impl From<LatestChance> for NaiveDate {
-    fn from(value: LatestChance) -> Self {
-        let LatestChance {
-            latest_golden_chance,
-            latest_dead_chance,
-        } = value;
-        match (latest_golden_chance, latest_dead_chance) {
-            (Some(golden), Some(dead)) => {
-                if golden >= dead {
-                    golden
-                } else {
-                    dead
-                }
-            }
-            (Some(golden), None) => golden,
-            (None, Some(dead)) => dead,
-            _ => NaiveDate::default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct MACOSAnalysisCloses<const N: usize> {
-    pub vec_macos_analysis_close: Vec<MACOSAnalysisClose>,
-    pub rate_of_chance: RateOfChance,
-    pub latest_chance: LatestChance,
-}
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
+pub struct MACOSAnalysisCloses<const N: usize>(pub Vec<MACOSAnalysisClose>);
 
 impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for MACOSAnalysisCloses<N> {
     fn from(value: &StocksMACOSESPair<'a>) -> Self {
         let StocksMACOSESPair { stocks, macoses } = value;
-        let vec_macos_analysis_close = macoses
-            .iter()
+        let vec_macos_analysis_close: Vec<MACOSAnalysisClose> = macoses
+            .par_iter()
             .filter_map(|macos| {
                 if macos.pattern_close_volume.close.eq(&Neither) {
                     return None;
                 }
                 // Crossoverが発生した日を特定
-                let (stock, macos) = stocks.iter().find_map(|stock| {
+                let (stock, macos) = stocks.par_iter().find_map_first(|stock| {
                     if stock.date.eq(&macos.date) {
                         Some((stock, macos))
                     } else {
@@ -103,8 +46,9 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for MACOSAnalysisCloses<N>
                 })?;
                 // n日後のStockを取得。ただし営業日で並んでいる。
                 let (stock, macos, stock_after_n_days) = stocks
-                    .iter()
-                    .find_position(|stock| stock.date.eq(&macos.date))
+                    .par_iter()
+                    .enumerate()
+                    .find_first(|(_, stock)| stock.date.eq(&macos.date))
                     .and_then(|(index, _)| {
                         let stock_after_n_days = stocks.get(index + N)?;
                         Some((stock, macos, stock_after_n_days))
@@ -126,102 +70,144 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for MACOSAnalysisCloses<N>
                     analysis_pattern,
                 })
             })
-            .collect_vec();
-        let golden_chance_count = vec_macos_analysis_close
-            .iter()
-            .filter(|trend_analysis| {
+            .collect();
+        MACOSAnalysisCloses::<N>(vec_macos_analysis_close)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+pub struct RateOfChance {
+    pub whole: f64,
+    pub golden: f64,
+    pub dead: f64,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+pub struct LatestChance {
+    pub golden_cross: Option<NaiveDate>,
+    pub dead_cross: Option<NaiveDate>,
+}
+
+impl From<LatestChance> for Pattern {
+    fn from(value: LatestChance) -> Self {
+        let LatestChance {
+            golden_cross: latest_golden_chance,
+            dead_cross: latest_dead_chance,
+        } = value;
+        match (latest_golden_chance, latest_dead_chance) {
+            (Some(golden), Some(dead)) => {
+                if golden >= dead {
+                    GoldenCross
+                } else {
+                    DeadCross
+                }
+            }
+            (Some(_), None) => GoldenCross,
+            (None, Some(_)) => DeadCross,
+            _ => Neither,
+        }
+    }
+}
+
+impl From<LatestChance> for NaiveDate {
+    fn from(value: LatestChance) -> Self {
+        let LatestChance {
+            golden_cross: latest_golden_chance,
+            dead_cross: latest_dead_chance,
+        } = value;
+        match (latest_golden_chance, latest_dead_chance) {
+            (Some(golden), Some(dead)) => {
+                if golden >= dead {
+                    golden
+                } else {
+                    dead
+                }
+            }
+            (Some(golden), None) => golden,
+            (None, Some(dead)) => dead,
+            _ => NaiveDate::default(),
+        }
+    }
+}
+
+impl<const N: usize> MACOSAnalysisCloses<N> {
+    pub fn rate_of_chance(&self) -> RateOfChance {
+        let count_golden_chance = self
+            .par_iter()
+            .filter(|macos_analysis_close| {
                 matches!(
-                    trend_analysis.analysis_pattern,
+                    macos_analysis_close.analysis_pattern,
                     AnalysisPattern::GoldenChance
                 )
             })
             .count();
-        let golden_loss_count = vec_macos_analysis_close
-            .iter()
-            .filter(|trend_analysis| {
-                matches!(trend_analysis.analysis_pattern, AnalysisPattern::GoldenLoss)
+        let count_golden_loss = self
+            .par_iter()
+            .filter(|macos_analysis_close| {
+                matches!(
+                    macos_analysis_close.analysis_pattern,
+                    AnalysisPattern::GoldenLoss
+                )
             })
             .count();
-        let golden_only = (golden_chance_count as f64
-            / (golden_chance_count + golden_loss_count) as f64)
-            .mul(100.0);
-        let golden_only = if golden_only.is_nan() {
-            0.0
-        } else {
-            golden_only
-        };
-        let dead_chance_count = vec_macos_analysis_close
-            .iter()
-            .filter(|trend_analysis| {
-                matches!(trend_analysis.analysis_pattern, AnalysisPattern::DeadChance)
+        let golden = percentage(count_golden_chance, count_golden_chance + count_golden_loss);
+
+        let count_dead_chance = self
+            .par_iter()
+            .filter(|macos_analysis_close| {
+                matches!(
+                    macos_analysis_close.analysis_pattern,
+                    AnalysisPattern::DeadChance
+                )
             })
             .count();
-        let dead_loss_count = vec_macos_analysis_close
-            .iter()
-            .filter(|trend_analysis| {
-                matches!(trend_analysis.analysis_pattern, AnalysisPattern::DeadLoss)
+        let count_dead_loss = self
+            .par_iter()
+            .filter(|macos_analysis_close| {
+                matches!(
+                    macos_analysis_close.analysis_pattern,
+                    AnalysisPattern::DeadLoss
+                )
             })
             .count();
-        let dead_only =
-            (dead_chance_count as f64 / (dead_chance_count + dead_loss_count) as f64).mul(100.0);
-        let dead_only = if dead_only.is_nan() { 0.0 } else { dead_only };
-        let chance_count = vec_macos_analysis_close
-            .iter()
-            .filter(|trend_analysis| match trend_analysis.analysis_pattern {
-                AnalysisPattern::None => false,
-                AnalysisPattern::GoldenChance => true,
-                AnalysisPattern::DeadChance => true,
-                AnalysisPattern::GoldenLoss => false,
-                AnalysisPattern::DeadLoss => false,
-            })
-            .count();
-        let all = (chance_count as f64 / vec_macos_analysis_close.len() as f64).mul(100.0);
-        let all = if all.is_nan() { 0.0 } else { all };
-        let rate_of_chance = RateOfChance {
-            all,
-            golden_only,
-            dead_only,
-        };
-        let latest_golden_chance = vec_macos_analysis_close
-            .iter()
+        let dead = percentage(count_dead_chance, count_dead_chance + count_dead_loss);
+
+        let whole = percentage(count_golden_chance + count_dead_chance, self.len());
+        RateOfChance {
+            whole,
+            golden,
+            dead,
+        }
+    }
+
+    fn find_latest_event(&self, target_pattern: &AnalysisPattern) -> Option<NaiveDate> {
+        self.par_iter()
             .rev()
-            .find(|trend_analysis| {
-                trend_analysis
-                    .analysis_pattern
-                    .eq(&AnalysisPattern::GoldenChance)
+            .find_first(|macos_analysis_close| {
+                macos_analysis_close.analysis_pattern.eq(target_pattern)
             })
-            .map(|trend_analysis| trend_analysis.date_of_event);
-        let latest_dead_chance = vec_macos_analysis_close
-            .iter()
-            .rev()
-            .find(|trend_analysis| {
-                trend_analysis
-                    .analysis_pattern
-                    .eq(&AnalysisPattern::DeadChance)
-            })
-            .map(|trend_analysis| trend_analysis.date_of_event);
-        let latest_chance = LatestChance {
-            latest_golden_chance,
-            latest_dead_chance,
-        };
-        MACOSAnalysisCloses::<N> {
-            vec_macos_analysis_close,
-            rate_of_chance,
-            latest_chance,
+            .map(|macos_analysis_close| macos_analysis_close.date_of_event)
+    }
+
+    pub fn latest_chance(&self) -> LatestChance {
+        let golden_cross = self.find_latest_event(&AnalysisPattern::GoldenChance);
+        let dead_cross = self.find_latest_event(&AnalysisPattern::DeadChance);
+        LatestChance {
+            golden_cross,
+            dead_cross,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
-
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
     use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
     use crate::domain::models::macos::model::MACOSES;
     use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
+    use chrono::NaiveDate;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
 
@@ -240,22 +226,22 @@ mod tests {
             macoses: macoses.as_slice(),
         };
         // 3日後トレンドを取得
-        let MACOSAnalysisCloses {
-            vec_macos_analysis_close,
-            rate_of_chance,
-            latest_chance,
-        } = MACOSAnalysisCloses::<3>::from(&stocks_macoses_pair);
+        let macos_analysis_closes = MACOSAnalysisCloses::<3>::from(&stocks_macoses_pair);
         let actual = 11;
-        assert_eq!(actual, vec_macos_analysis_close.len());
+        assert_eq!(actual, macos_analysis_closes.len());
+
+        let rate_of_chance = macos_analysis_closes.rate_of_chance();
         let actual = 45.45454545454545;
-        assert_eq!(actual, rate_of_chance.all);
+        assert_eq!(actual, rate_of_chance.whole);
         let actual = 66.66666666666666;
-        assert_eq!(actual, rate_of_chance.golden_only);
+        assert_eq!(actual, rate_of_chance.golden);
         let actual = 20.0;
-        assert_eq!(actual, rate_of_chance.dead_only);
+        assert_eq!(actual, rate_of_chance.dead);
+
+        let latest_chance = macos_analysis_closes.latest_chance();
         let actual = NaiveDate::from_ymd_opt(2023, 8, 30);
-        assert_eq!(actual, latest_chance.latest_golden_chance);
+        assert_eq!(actual, latest_chance.golden_cross);
         let actual = NaiveDate::from_ymd_opt(2023, 3, 14);
-        assert_eq!(actual, latest_chance.latest_dead_chance);
+        assert_eq!(actual, latest_chance.dead_cross);
     }
 }

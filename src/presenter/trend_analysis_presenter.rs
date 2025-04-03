@@ -24,6 +24,8 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_sma_50: VecSMA<50>,
     pub macoses: MACOSES,
     pub macos_analysis_closes: MACOSAnalysisCloses<N>,
+    pub rate_of_chance: RateOfChance,
+    pub latest_chance: LatestChance,
     pub macos_analysis_volumes: MACOSAnalysisVolumes,
     pub vec_ecp1: VecECP1,
     pub candle_sticks: CandleSticks<M>,

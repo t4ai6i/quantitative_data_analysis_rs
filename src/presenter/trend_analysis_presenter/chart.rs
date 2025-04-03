@@ -14,7 +14,7 @@ use crate::presenter::{
         TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
     },
     view_model::{
-        candle_sticks::CandleSticksExt, macos_analysis_closes::VecCloseMACOSTrendAnalysisExt,
+        candle_sticks::CandleSticksExt, macos_analysis_closes::MACOSAnalysisClosesExt,
         macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSESExt,
         stocks::StocksExt, vec_sma::VecSMAExt,
     },
@@ -233,9 +233,8 @@ impl TrendAnalysisPresenter for Chart {
             .macos_analysis_closes
             .table_chart_rows(&output.display_macos_pattern);
         rows.append(&mut body);
-        let mut summary = output
-            .macos_analysis_closes
-            .table_chart_summary(&output.display_macos_pattern);
+        let rate_of_chance = output.macos_analysis_closes.rate_of_chance();
+        let mut summary = rate_of_chance.table_chart_summary(&output.display_macos_pattern);
         rows.append(&mut summary);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "CloseCrossTrendAnalysis".to_string();
@@ -276,8 +275,8 @@ impl TrendAnalysisPresenter for Chart {
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
             display_macos_pattern: output.display_macos_pattern,
-            rate_of_chance: output.macos_analysis_closes.rate_of_chance,
-            latest_chance: output.macos_analysis_closes.latest_chance,
+            rate_of_chance: output.rate_of_chance,
+            latest_chance: output.latest_chance,
         })
     }
 }

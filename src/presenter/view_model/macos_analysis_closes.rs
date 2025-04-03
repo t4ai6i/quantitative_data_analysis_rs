@@ -1,16 +1,14 @@
-use itertools::Itertools;
-
 use crate::domain::models::macos::model::AnalysisPattern;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+use rayon::prelude::*;
 
-pub trait VecCloseMACOSTrendAnalysisExt {
+pub trait MACOSAnalysisClosesExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
     fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>>;
-    fn table_chart_summary(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>>;
 }
 
-impl<const N: usize> VecCloseMACOSTrendAnalysisExt for MACOSAnalysisCloses<N> {
+impl<const N: usize> MACOSAnalysisClosesExt for MACOSAnalysisCloses<N> {
     fn table_chart_header(&self) -> Vec<Vec<String>> {
         vec![vec![
             "date".to_string(),
@@ -23,123 +21,35 @@ impl<const N: usize> VecCloseMACOSTrendAnalysisExt for MACOSAnalysisCloses<N> {
     }
 
     fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
-        self.vec_macos_analysis_close
-            .iter()
-            .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
-            .map(|trend_analysis| {
-                let chance_loss = match trend_analysis.analysis_pattern {
+        self.par_iter()
+            .filter(|macos_analysis_close| {
+                pattern.is_display_by_macos_pattern(&macos_analysis_close.pattern)
+            })
+            .map(|macos_analysis_close| {
+                let chance_loss = match macos_analysis_close.analysis_pattern {
                     AnalysisPattern::None => "❔".to_string(),
                     AnalysisPattern::GoldenChance => "✅".to_string(),
                     AnalysisPattern::DeadChance => "✅".to_string(),
                     AnalysisPattern::GoldenLoss => "❌".to_string(),
                     AnalysisPattern::DeadLoss => "❌".to_string(),
                 };
-                let macos_date = trend_analysis.date_of_event.format("%Y/%m/%d").to_string();
-                let macos_5_25 = trend_analysis.pattern.to_string();
-                let change = format!("{:+.3}%", trend_analysis.rate_of_change);
-                let close_on_macos = trend_analysis.close.to_string();
-                let close_after_n_days = trend_analysis.close_after_n_days.to_string();
+                let date_of_event = macos_analysis_close
+                    .date_of_event
+                    .format("%Y/%m/%d")
+                    .to_string();
+                let pattern = macos_analysis_close.pattern.to_string();
+                let rate_of_change = format!("{:+.3}%", macos_analysis_close.rate_of_change);
+                let close = macos_analysis_close.close.to_string();
+                let close_after_n_days = macos_analysis_close.close_after_n_days.to_string();
                 vec![
-                    macos_date,
+                    date_of_event,
                     chance_loss,
-                    macos_5_25,
-                    change,
-                    close_on_macos,
+                    pattern,
+                    rate_of_change,
+                    close,
                     close_after_n_days,
                 ]
             })
-            .collect_vec()
-    }
-
-    fn table_chart_summary(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
-        let rate_of_chance = match pattern {
-            DisplayMACOSPattern::All => {
-                format!("{:.0}%", self.rate_of_chance.all)
-            }
-            DisplayMACOSPattern::GoldenOnly => {
-                format!("{:.0}%", self.rate_of_chance.golden_only)
-            }
-            DisplayMACOSPattern::DeadOnly => {
-                format!("{:.0}%", self.rate_of_chance.dead_only)
-            }
-        };
-        vec![vec![
-            "".to_string(),
-            rate_of_chance,
-            "".to_string(),
-            "".to_string(),
-            "".to_string(),
-            "".to_string(),
-        ]]
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use anyhow::Result;
-
-    use crate::domain::entity::sma::{SMAListPair, VecSMA};
-    use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
-    use crate::domain::models::macos::model::MACOSES;
-    use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::stock_repository::data_format::csv::Csv;
-    use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
-    use crate::presenter::view_model::macos_analysis_closes::VecCloseMACOSTrendAnalysisExt;
-
-    const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
-
-    #[test]
-    fn table_chart_summary_test() -> Result<()> {
-        let vec_stock = Csv::from_slice::<true>(CSV_8473);
-        let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
-        let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
-        let sma_list_pair = SMAListPair {
-            smas_n: smas_5.as_slice(),
-            smas_o: smas_25.as_slice(),
-        };
-        let macoses = MACOSES::from(sma_list_pair);
-        let stocks_macoses_pair = StocksMACOSESPair {
-            stocks: vec_stock.as_slice(),
-            macoses: macoses.as_slice(),
-        };
-        let macos_analysis_closes = MACOSAnalysisCloses::<5>::from(&stocks_macoses_pair);
-        let summary = macos_analysis_closes.table_chart_summary(&DisplayMACOSPattern::All);
-        assert_eq!(
-            summary,
-            vec![vec![
-                "".to_string(),
-                "27%".to_string(),
-                "".to_string(),
-                "".to_string(),
-                "".to_string(),
-                "".to_string(),
-            ]]
-        );
-        let summary = macos_analysis_closes.table_chart_summary(&DisplayMACOSPattern::GoldenOnly);
-        assert_eq!(
-            summary,
-            vec![vec![
-                "".to_string(),
-                "33%".to_string(),
-                "".to_string(),
-                "".to_string(),
-                "".to_string(),
-                "".to_string(),
-            ]]
-        );
-        let summary = macos_analysis_closes.table_chart_summary(&DisplayMACOSPattern::DeadOnly);
-        assert_eq!(
-            summary,
-            vec![vec![
-                "".to_string(),
-                "20%".to_string(),
-                "".to_string(),
-                "".to_string(),
-                "".to_string(),
-                "".to_string(),
-            ]]
-        );
-        Ok(())
+            .collect()
     }
 }

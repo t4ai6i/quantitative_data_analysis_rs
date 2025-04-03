@@ -104,6 +104,9 @@ where
             macoses: macoses.as_slice(),
         };
         let macos_analysis_closes = MACOSAnalysisCloses::<AFTER_DAYS>::from(&stocks_macoses_pair);
+        let rate_of_chance = macos_analysis_closes.rate_of_chance();
+        let latest_chance = macos_analysis_closes.latest_chance();
+
         let macos_analysis_volumes = MACOSAnalysisVolumes::from(&stocks_macoses_pair);
 
         let candle_sticks =
@@ -134,7 +137,9 @@ where
             vec_sma_50,
             macoses,
             macos_analysis_closes,
-            macos_analysis_volumes: macos_analysis_volumes,
+            rate_of_chance,
+            latest_chance,
+            macos_analysis_volumes,
             vec_ecp1,
             candle_sticks,
             trend_reversal_analysis,
