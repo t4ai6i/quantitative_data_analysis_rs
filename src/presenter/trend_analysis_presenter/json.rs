@@ -15,7 +15,7 @@ impl TrendAnalysisPresenter for JSON {
             display_macos_pattern: output.display_macos_pattern,
             rate_of_chance: output.rate_of_chance,
             latest_chance: output.latest_chance,
-            vec_ecp1: output.vec_ecp1,
+            ecp1s: output.ecp1s,
             trend_reversal_analysis: output.trend_reversal_analysis,
             indicator_analysis: output.indicator_analysis,
         })

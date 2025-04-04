@@ -1,4 +1,3 @@
-use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::indicator::Indicator;
 use crate::domain::entity::indicator_analysis::{IndicatorAnalysis, IndicatorAnalysisSet};
@@ -9,6 +8,7 @@ use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
 use crate::domain::models::candle_stick::model::CandleSticks;
+use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::macos::model::MACOSES;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
@@ -97,7 +97,7 @@ where
         let macps = MACPS::from((stocks.as_slice(), sma_list_trio));
 
         let stocks_from_end_days = VecT(stocks.as_slice()).get_from_end(FROM_END_DAYS);
-        let vec_ecp1 = VecECP1::from(stocks_from_end_days.as_slice());
+        let ecp1s = ECP1s::from(stocks_from_end_days.as_slice());
 
         let stocks_macoses_pair = StocksMACOSESPair {
             stocks: stocks_from_end_days.as_slice(),
@@ -140,7 +140,7 @@ where
             rate_of_chance,
             latest_chance,
             macos_analysis_volumes,
-            vec_ecp1,
+            ecp1s,
             candle_sticks,
             trend_reversal_analysis,
             indicator_analysis,

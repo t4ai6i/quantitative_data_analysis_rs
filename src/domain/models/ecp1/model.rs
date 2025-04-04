@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
-
+use deref_derive::{Deref, DerefMut};
 use itertools::Itertools;
+use std::cmp::Ordering;
 
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::stock::model::Stock;
@@ -32,24 +32,24 @@ impl From<ECP1> for BuySellSignalType {
     }
 }
 
-#[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub struct VecECP1(pub Vec<BuySellSignal>);
+#[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Deref, DerefMut)]
+pub struct ECP1s(Vec<BuySellSignal>);
 
-impl From<&[Stock]> for VecECP1 {
+impl From<&[Stock]> for ECP1s {
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::entity::ecp1::VecECP1;
+    /// use quantitative_data_analysis_rs::domain::models::ecp1::model::ECP1s;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
-    /// const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_9223);
-    /// let _ = VecECP1::from(vec_stock.as_slice());
+    /// let _ = ECP1s::from(vec_stock.as_slice());
     /// ```
     fn from(value: &[Stock]) -> Self {
-        let vec = value
+        let vec_buy_sell_signal = value
             .windows(2)
             .map(|stock| {
                 let prev = stock.first().unwrap();
@@ -68,7 +68,7 @@ impl From<&[Stock]> for VecECP1 {
                 BuySellSignal { r#type, date }
             })
             .collect_vec();
-        VecECP1(vec)
+        ECP1s(vec_buy_sell_signal)
     }
 }
 
@@ -76,23 +76,23 @@ impl From<&[Stock]> for VecECP1 {
 mod tests {
     use chrono::NaiveDate;
 
-    use crate::domain::entity::ecp1::VecECP1;
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
         BuySellSignal,
         BuySellSignalType::{Buy, Sell},
     };
+    use crate::domain::models::ecp1::model::ECP1s;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
-    const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
 
     #[test]
     fn from_test() {
         let vec_stock = Csv::from_slice::<true>(CSV_9223);
-        let vec_ecp1 = VecECP1::from(vec_stock.as_slice());
+        let ecp1s = ECP1s::from(vec_stock.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
-            TupleVecBuySellSignal::from(vec_ecp1.0.as_slice()).0;
+            TupleVecBuySellSignal::from(ecp1s.as_slice()).0;
         let (expected_buy, expected_sell): (Vec<BuySellSignal>, Vec<BuySellSignal>) = (
             vec![
                 BuySellSignal {

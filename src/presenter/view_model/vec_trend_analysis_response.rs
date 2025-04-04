@@ -47,14 +47,14 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     display_macos_pattern,
                     rate_of_chance,
                     latest_chance,
-                    vec_ecp1,
+                    ecp1s,
                     trend_reversal_analysis,
                     indicator_analysis,
                 } => {
                     let Company { code, symbol, .. } = company;
                     let macos_analysis =
                         MACOSAnalysis::from((display_macos_pattern, rate_of_chance, latest_chance));
-                    let ecp1_analysis = BuySellSignalAnalysis::from(vec_ecp1.0.as_slice());
+                    let ecp1_analysis = BuySellSignalAnalysis::from(ecp1s.as_slice());
                     let trend_reversal_analysis =
                         TrendReversalAnalysis::from(trend_reversal_analysis);
                     Some(Analysis {
