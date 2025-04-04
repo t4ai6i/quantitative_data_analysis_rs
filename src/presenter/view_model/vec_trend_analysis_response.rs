@@ -1,4 +1,4 @@
-use crate::domain::entity::company::Company;
+use crate::domain::models::company::model::Company;
 use crate::domain::models::macos::model::Pattern;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
 use crate::presenter::view_model::analysis::Analysis;

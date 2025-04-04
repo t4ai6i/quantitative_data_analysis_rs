@@ -1,4 +1,4 @@
-use crate::domain::entity::company::Company;
+use crate::domain::models::company::model::Company;
 use crate::domain::models::stock::model::Stocks;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::data_format::DataFormat;

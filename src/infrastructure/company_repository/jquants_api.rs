@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::domain::entity::company::Company;
+use crate::domain::models::company::model::Company;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
@@ -69,7 +69,7 @@ mod tests {
     use anyhow::Result;
     use rstest::*;
 
-    use crate::domain::entity::company::Company;
+    use crate::domain::models::company::model::Company;
     use crate::domain::repository::company_repository::CompanyRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};

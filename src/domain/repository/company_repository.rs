@@ -1,4 +1,4 @@
-use crate::domain::entity::company::Company;
+use crate::domain::models::company::model::Company;
 use anyhow::Result;
 use async_trait::async_trait;
 

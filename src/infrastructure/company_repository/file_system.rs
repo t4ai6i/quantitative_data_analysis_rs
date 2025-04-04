@@ -1,4 +1,4 @@
-use crate::domain::entity::company::Company;
+use crate::domain::models::company::model::Company;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::infrastructure::company_repository::data_format::csv::Csv;
 use crate::infrastructure::company_repository::data_format::tsv::Tsv;
@@ -68,7 +68,7 @@ impl CompanyRepository for FileSystem {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::company::Company;
+    use crate::domain::models::company::model::Company;
     use crate::domain::repository::company_repository::CompanyRepository;
     use crate::infrastructure::company_repository::file_system::FileSystem;
     use crate::infrastructure::data_format::DataFormat;

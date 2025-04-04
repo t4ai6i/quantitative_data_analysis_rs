@@ -25,7 +25,7 @@ impl Company {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::company::Company;
+    use crate::domain::models::company::model::Company;
 
     #[test]
     fn symbol_test() {

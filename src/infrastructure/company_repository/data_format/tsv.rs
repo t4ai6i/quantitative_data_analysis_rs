@@ -1,4 +1,4 @@
-use crate::domain::entity::company::Company;
+use crate::domain::models::company::model::Company;
 use crate::infrastructure::from_slice::{DataFormat, FromSlice};
 use serde::{Deserialize, Serialize};
 

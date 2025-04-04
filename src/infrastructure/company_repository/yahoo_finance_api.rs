@@ -1,4 +1,4 @@
-use crate::domain::entity::company::Company;
+use crate::domain::models::company::model::Company;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;

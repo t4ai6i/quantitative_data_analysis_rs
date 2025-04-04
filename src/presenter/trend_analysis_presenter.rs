@@ -1,9 +1,9 @@
-use crate::domain::entity::company::Company;
 use crate::domain::entity::ecp1::VecECP1;
 use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
 use crate::domain::entity::sma::VecSMA;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::models::candle_stick::model::CandleSticks;
+use crate::domain::models::company::model::Company;
 use crate::domain::models::macos::model::MACOSES;
 use crate::domain::models::macos_analysis::close::model::{
     LatestChance, MACOSAnalysisCloses, RateOfChance,
