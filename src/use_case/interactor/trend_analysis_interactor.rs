@@ -1,4 +1,3 @@
-use crate::domain::entity::ecp2::VecECP2;
 use crate::domain::entity::indicator::Indicator;
 use crate::domain::entity::indicator_analysis::{IndicatorAnalysis, IndicatorAnalysisSet};
 use crate::domain::entity::macps::MACPS;
@@ -9,6 +8,7 @@ use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
 use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::ecp1::model::ECP1s;
+use crate::domain::models::ecp2::model::ECP2s;
 use crate::domain::models::macos::model::MACOSES;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
@@ -113,17 +113,16 @@ where
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks_from_end_days.as_slice())?;
         let candle_sticks_from_end_days =
             VecT(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
-        let vec_ecp2 = VecECP2::from(candle_sticks_from_end_days.as_slice());
+        let ecp2s = ECP2s::from(candle_sticks_from_end_days.as_slice());
         let vec_msesp = VecMSESP::from(candle_sticks_from_end_days.as_slice());
         // 相場転換を分析
         let trend_reversal_analysis_set = TrendReversalAnalysisSet {
-            ecp2s: vec_ecp2.0.as_slice(),
+            ecp2s: &ecp2s,
             msesps: vec_msesp.0.as_slice(),
             macps: &macps,
             macoses: &macoses,
         };
-
-        let trend_reversal_analysis = TrendReversalAnalysis::from(&trend_reversal_analysis_set);
+        let trend_reversal_analysis = TrendReversalAnalysis::from(trend_reversal_analysis_set);
 
         let indicator = Indicator::from((stocks_from_end_days.as_slice(), &statement));
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };

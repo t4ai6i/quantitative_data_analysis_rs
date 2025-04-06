@@ -58,8 +58,8 @@ impl TrendReversalAnalysis {
     }
 }
 
-impl<'a> From<&TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
-    fn from(value: &TrendReversalAnalysisSet<'a>) -> Self {
+impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
+    fn from(value: TrendReversalAnalysisSet<'a>) -> Self {
         let TrendReversalAnalysisSet {
             macps,
             macoses,
@@ -108,7 +108,6 @@ impl<'a> From<&TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::ecp2::VecECP2;
     use crate::domain::entity::macps::MACPS;
     use crate::domain::entity::msesp::VecMSESP;
     use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
@@ -116,6 +115,7 @@ mod tests {
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
     use crate::domain::models::candle_stick::model::CandleSticks;
+    use crate::domain::models::ecp2::model::ECP2s;
     use crate::domain::models::macos::model::MACOSES;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
@@ -129,7 +129,7 @@ mod tests {
         let vec_stock = Csv::from_slice::<true>(CSV_8473);
         let candle_sticks =
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
-        let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
+        let ecp2s = ECP2s::from(candle_sticks.as_slice());
         let vec_msesp = VecMSESP::from(candle_sticks.as_slice());
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.as_slice());
         let vec_sma_25 = VecSMA::<25>::from(vec_stock.as_slice());
@@ -146,12 +146,12 @@ mod tests {
         };
         let macps = MACPS::from((vec_stock.as_slice(), sma_list_trio));
         let candle_stick_pattern_set = TrendReversalAnalysisSet {
-            ecp2s: vec_ecp2.0.as_slice(),
+            ecp2s: &ecp2s,
             msesps: vec_msesp.0.as_slice(),
             macps: &macps,
             macoses: &macoses,
         };
-        let actual = TrendReversalAnalysis::from(&candle_stick_pattern_set);
+        let actual = TrendReversalAnalysis::from(candle_stick_pattern_set);
         let expected = TrendReversalAnalysis {
             r#type: Stay,
             macos: NaiveDate::from_ymd_opt(2023, 8, 30).map(|date| (date, Buy)),

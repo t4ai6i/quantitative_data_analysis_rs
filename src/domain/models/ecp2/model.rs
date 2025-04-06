@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
-
+use deref_derive::{Deref, DerefMut};
 use itertools::Itertools;
+use std::cmp::Ordering;
 
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
@@ -13,14 +13,14 @@ pub struct ECP2 {
     today_bullish_bearish: BullishBearishType,
 }
 
+/// Engulfing Candlestick Pattern2
+///
+/// ある日の始値と終値の間にその前日の始値と終値が飲み込まれているかをみる
+///
+/// * **Buy**: ある日の始値と終値の間にその前日の始値と終値が飲み込まれており、前日がBearishCandleで当日がBullishCandleのとき
+/// * **Sell**: ある日の始値と終値の間にその前日の始値と終値が飲み込まれており、前日がBullishCandleで当日がBearishCandleのとき
+/// * **Stay**: 上記のどちらにもあてはまならない
 impl From<ECP2> for BuySellSignalType {
-    /// Engulfing Candlestick Pattern2
-    ///
-    /// ある日の始値と終値の間にその前日の始値と終値が飲み込まれているかをみる
-    ///
-    /// * **Buy**: ある日の始値と終値の間にその前日の始値と終値が飲み込まれており、前日がBearishCandleで当日がBullishCandleのとき
-    /// * **Sell**: ある日の始値と終値の間にその前日の始値と終値が飲み込まれており、前日がBullishCandleで当日がBearishCandleのとき
-    /// * **Stay**: 上記のどちらにもあてはまならない
     fn from(value: ECP2) -> Self {
         let ECP2 {
             body_low_ordering,
@@ -51,24 +51,24 @@ impl From<ECP2> for BuySellSignalType {
     }
 }
 
-#[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub struct VecECP2(pub Vec<BuySellSignal>);
+#[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Deref, DerefMut)]
+pub struct ECP2s(Vec<BuySellSignal>);
 
-impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
+impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
     ///
     /// # Examples
     /// ```
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
-    /// use quantitative_data_analysis_rs::domain::entity::ecp2::VecECP2;
+    /// use quantitative_data_analysis_rs::domain::models::ecp2::model::ECP2s;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
-    /// const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_9223);
     /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
-    /// let _ = VecECP2::from(candle_sticks.as_slice());
+    /// let _ = ECP2s::from(candle_sticks.as_slice());
     /// ```
     fn from(value: &[CandleStick<N>]) -> Self {
         let vec = value
@@ -90,7 +90,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
                 BuySellSignal { r#type, date }
             })
             .collect_vec();
-        VecECP2(vec)
+        ECP2s(vec)
     }
 }
 
@@ -98,17 +98,17 @@ impl<const N: usize> From<&[CandleStick<N>]> for VecECP2 {
 mod tests {
     use chrono::NaiveDate;
 
-    use crate::domain::entity::ecp2::VecECP2;
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
         BuySellSignal,
         BuySellSignalType::{Buy, Sell},
     };
     use crate::domain::models::candle_stick::model::CandleSticks;
+    use crate::domain::models::ecp2::model::ECP2s;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
-    const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
+    const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
 
     #[test]
@@ -116,7 +116,7 @@ mod tests {
         let vec_stock = Csv::from_slice::<true>(CSV_8473);
         let candle_sticks =
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
-        let vec_ecp2 = VecECP2::from(candle_sticks.as_slice());
+        let vec_ecp2 = ECP2s::from(candle_sticks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
             TupleVecBuySellSignal::from(vec_ecp2.0.as_slice()).0;
         let (expected_buy, expected_sell): (Vec<BuySellSignal>, Vec<BuySellSignal>) = (

@@ -135,12 +135,12 @@ pub struct CandleSticks<const N: usize>(Vec<CandleStick<N>>);
 #[derive(thiserror::Error, Debug)]
 pub enum MarubozuMinimumBodyPercentError<const N: usize> {
     #[error("Minimum Body Percent must be less than 100 for Marubozu. but specified {N}")]
-    LessThan100Percent,
+    GreaterThan100Percent,
 
     #[error(
         "Minimum Body Percent must at least 80% for Marubozu and is usually greater than 90%. but specified {N}"
     )]
-    AtLeast80Percent,
+    LessThan80Percent,
 }
 
 impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
@@ -163,10 +163,10 @@ impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
     /// ```
     fn try_from(value: &[Stock]) -> Result<Self, Self::Error> {
         if N > 100 {
-            return Err(MarubozuMinimumBodyPercentError::LessThan100Percent);
+            return Err(MarubozuMinimumBodyPercentError::GreaterThan100Percent);
         }
         if N < 80 {
-            return Err(MarubozuMinimumBodyPercentError::AtLeast80Percent);
+            return Err(MarubozuMinimumBodyPercentError::LessThan80Percent);
         }
         let candle_sticks = value.iter().map(CandleStick::<N>::from).collect_vec();
         Ok(CandleSticks(candle_sticks))
