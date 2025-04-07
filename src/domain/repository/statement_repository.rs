@@ -1,4 +1,4 @@
-use crate::domain::entity::statement::Statement;
+use crate::domain::models::statement::model::Statement;
 use anyhow::Result;
 use async_trait::async_trait;
 

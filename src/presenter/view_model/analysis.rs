@@ -1,4 +1,4 @@
-use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
+use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
 use crate::presenter::view_model::trend_reversal_analysis::TrendReversalAnalysis;
@@ -19,8 +19,8 @@ mod tests {
     use chrono::NaiveDate;
     use indoc::indoc;
 
-    use crate::domain::entity::indicator_analysis::IndicatorAnalysis;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
+    use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
     use crate::domain::models::macos::model::Pattern;
     use crate::presenter::view_model::analysis::Analysis;
     use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
@@ -55,6 +55,8 @@ mod tests {
               "indicator_analysis": {
                 "close_date": "2023-08-15",
                 "disclosed_date": "2023-06-01",
+                "pbr": null,
+                "per": null,
                 "mix": null
               }
             }"#};
@@ -77,6 +79,8 @@ mod tests {
         let indicator_analysis = IndicatorAnalysis {
             close_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
             disclosed_date: NaiveDate::from_ymd_opt(2023, 6, 1).unwrap(),
+            pbr: None,
+            per: None,
             mix: None,
         };
         let analysis = Analysis {

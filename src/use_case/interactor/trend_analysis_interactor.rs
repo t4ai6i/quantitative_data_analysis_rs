@@ -1,5 +1,3 @@
-use crate::domain::entity::indicator::Indicator;
-use crate::domain::entity::indicator_analysis::{IndicatorAnalysis, IndicatorAnalysisSet};
 use crate::domain::entity::macps::MACPS;
 use crate::domain::entity::msesp::VecMSESP;
 use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
@@ -9,6 +7,8 @@ use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
 use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::ecp2::model::ECP2s;
+use crate::domain::models::indicator::model::Indicator;
+use crate::domain::models::indicator_analysis::model::{IndicatorAnalysis, IndicatorAnalysisSet};
 use crate::domain::models::macos::model::MACOSES;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;

@@ -1,4 +1,4 @@
-use crate::domain::entity::statement::Statement;
+use crate::domain::models::statement::model::Statement;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use anyhow::{bail, Context};
