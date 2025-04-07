@@ -1,10 +1,10 @@
 use rayon::prelude::*;
 
-use crate::domain::entity::macps::MACPS;
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
 use crate::domain::models::macos::model::MACOSES;
+use crate::domain::models::macps::model::MACPS;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -108,7 +108,6 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::macps::MACPS;
     use crate::domain::entity::msesp::VecMSESP;
     use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
@@ -117,6 +116,7 @@ mod tests {
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::domain::models::ecp2::model::ECP2s;
     use crate::domain::models::macos::model::MACOSES;
+    use crate::domain::models::macps::model::MACPS;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;

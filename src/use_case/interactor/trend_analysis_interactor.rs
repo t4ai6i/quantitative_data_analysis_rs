@@ -1,4 +1,3 @@
-use crate::domain::entity::macps::MACPS;
 use crate::domain::entity::msesp::VecMSESP;
 use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
@@ -12,6 +11,7 @@ use crate::domain::models::indicator_analysis::model::{IndicatorAnalysis, Indica
 use crate::domain::models::macos::model::MACOSES;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
+use crate::domain::models::macps::model::MACPS;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;

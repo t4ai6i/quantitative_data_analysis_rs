@@ -14,18 +14,15 @@ pub struct MACPS {
     pub sell: Option<NaiveDate>,
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecMACPS(pub Vec<MACPS>);
-
 impl From<(Option<Ordering>, Option<Ordering>, Option<Ordering>)> for BuySellSignalType {
     fn from(value: (Option<Ordering>, Option<Ordering>, Option<Ordering>)) -> Self {
         let (cmp1, cmp2, cmp3) = value;
         match (cmp1, cmp2, cmp3) {
-            // Current close < 20-day sma < 50-day sma < 200-day sma → BUY signal
+            // current close < 5day sma < 25day sma < 50day sma → Buy
             (Some(Ordering::Less), Some(Ordering::Less), Some(Ordering::Less)) => {
                 BuySellSignalType::Buy
             }
-            // Current close > 20-day sma > 50-day sma > 200-day sma → SELL signal
+            // current close > 5day sma > 25day sma > 50day sma → Sell
             (Some(Ordering::Greater), Some(Ordering::Greater), Some(Ordering::Greater)) => {
                 BuySellSignalType::Sell
             }
@@ -40,12 +37,12 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// ```
     /// use chrono::NaiveDate;
     /// use quantitative_data_analysis_rs::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
-    /// use quantitative_data_analysis_rs::domain::entity::macps::{VecMACPS, MACPS};
+    /// use quantitative_data_analysis_rs::domain::models::macps::model::MACPS;
     /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListTrio, VecSMA};
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
-    /// const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
+    /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
     /// let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
