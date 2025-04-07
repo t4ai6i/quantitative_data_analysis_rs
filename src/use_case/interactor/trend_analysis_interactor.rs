@@ -1,4 +1,3 @@
-use crate::domain::entity::msesp::VecMSESP;
 use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
@@ -8,10 +7,11 @@ use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::ecp2::model::ECP2s;
 use crate::domain::models::indicator::model::Indicator;
 use crate::domain::models::indicator_analysis::model::{IndicatorAnalysis, IndicatorAnalysisSet};
-use crate::domain::models::macos::model::MACOSES;
+use crate::domain::models::macos::model::MACOSes;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::domain::models::macps::model::MACPS;
+use crate::domain::models::msesp::model::MSESPes;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;
@@ -86,7 +86,7 @@ where
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
         };
-        let macoses = MACOSES::from(sma_list_pair);
+        let macoses = MACOSes::from(sma_list_pair);
 
         let vec_sma_50 = VecSMA::<50>::from(stocks.as_slice());
         let sma_list_trio = SMAListTrio {
@@ -114,11 +114,11 @@ where
         let candle_sticks_from_end_days =
             VecT(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
         let ecp2s = ECP2s::from(candle_sticks_from_end_days.as_slice());
-        let vec_msesp = VecMSESP::from(candle_sticks_from_end_days.as_slice());
+        let msespes = MSESPes::from(candle_sticks_from_end_days.as_slice());
         // 相場転換を分析
         let trend_reversal_analysis_set = TrendReversalAnalysisSet {
             ecp2s: &ecp2s,
-            msesps: vec_msesp.0.as_slice(),
+            msesps: &msespes,
             macps: &macps,
             macoses: &macoses,
         };

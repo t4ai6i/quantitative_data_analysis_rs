@@ -8,5 +8,6 @@ pub mod indicator_analysis;
 pub mod macos;
 pub mod macos_analysis;
 pub mod macps;
+pub mod msesp;
 pub mod statement;
 pub mod stock;

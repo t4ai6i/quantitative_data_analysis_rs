@@ -1,14 +1,14 @@
-use crate::domain::models::macos::model::{Pattern, MACOSES};
+use crate::domain::models::macos::model::{MACOSes, Pattern};
 use charts_rs::NIL_VALUE;
 use itertools::Itertools;
 
-pub trait MACOSESExt {
+pub trait MACOSesExt {
     fn collect_vec_sma_25_close_macos(&self, pattern: Pattern) -> Vec<f32>;
     fn collect_vec_sma_25_volume_macos(&self, pattern: Pattern) -> Vec<f32>;
     fn get_value(target: Pattern, pattern: Pattern, value: Option<f64>) -> f32;
 }
 
-impl MACOSESExt for MACOSES {
+impl MACOSesExt for MACOSes {
     fn collect_vec_sma_25_close_macos(&self, pattern: Pattern) -> Vec<f32> {
         self.iter()
             .map(|macos| {

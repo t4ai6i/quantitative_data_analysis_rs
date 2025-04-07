@@ -46,7 +46,7 @@ impl<'a> From<&StocksMACOSESPair<'a>> for MACOSAnalysisVolumes {
 mod tests {
     use crate::domain::entity::sma::{SMAListPair, VecSMA};
     use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
-    use crate::domain::models::macos::model::MACOSES;
+    use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
@@ -62,7 +62,7 @@ mod tests {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
-        let macoses = MACOSES::from(sma_list_pair);
+        let macoses = MACOSes::from(sma_list_pair);
         let stocks_macoses_pair = StocksMACOSESPair {
             stocks: vec_stock.as_slice(),
             macoses: macoses.as_slice(),

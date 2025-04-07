@@ -4,7 +4,7 @@ use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::company::model::Company;
 use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
-use crate::domain::models::macos::model::MACOSES;
+use crate::domain::models::macos::model::MACOSes;
 use crate::domain::models::macos_analysis::close::model::{
     LatestChance, MACOSAnalysisCloses, RateOfChance,
 };
@@ -22,7 +22,7 @@ pub struct TrendAnalysisOutput<const N: usize, const M: usize> {
     pub vec_sma_5: VecSMA<5>,
     pub vec_sma_25: VecSMA<25>,
     pub vec_sma_50: VecSMA<50>,
-    pub macoses: MACOSES,
+    pub macoses: MACOSes,
     pub macos_analysis_closes: MACOSAnalysisCloses<N>,
     pub rate_of_chance: RateOfChance,
     pub latest_chance: LatestChance,

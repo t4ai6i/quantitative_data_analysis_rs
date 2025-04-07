@@ -2,8 +2,8 @@ use rayon::prelude::*;
 
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
+use crate::domain::models::macos::model::MACOSes;
 use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
-use crate::domain::models::macos::model::MACOSES;
 use crate::domain::models::macps::model::MACPS;
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -40,7 +40,7 @@ pub struct TrendReversalAnalysisSet<'a> {
     pub ecp2s: &'a [BuySellSignal],
     pub msesps: &'a [BuySellSignal],
     pub macps: &'a MACPS,
-    pub macoses: &'a MACOSES,
+    pub macoses: &'a MACOSes,
 }
 
 impl TrendReversalAnalysis {
@@ -108,15 +108,15 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::msesp::VecMSESP;
     use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::domain::models::ecp2::model::ECP2s;
-    use crate::domain::models::macos::model::MACOSES;
+    use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macps::model::MACPS;
+    use crate::domain::models::msesp::model::MSESPes;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
@@ -130,7 +130,7 @@ mod tests {
         let candle_sticks =
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
         let ecp2s = ECP2s::from(candle_sticks.as_slice());
-        let vec_msesp = VecMSESP::from(candle_sticks.as_slice());
+        let msespes = MSESPes::from(candle_sticks.as_slice());
         let vec_sma_5 = VecSMA::<5>::from(vec_stock.as_slice());
         let vec_sma_25 = VecSMA::<25>::from(vec_stock.as_slice());
         let vec_sma_50 = VecSMA::<50>::from(vec_stock.as_slice());
@@ -138,7 +138,7 @@ mod tests {
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
         };
-        let macoses = MACOSES::from(sma_list_pair);
+        let macoses = MACOSes::from(sma_list_pair);
         let sma_list_trio = SMAListTrio {
             smas_n: vec_sma_5.0.as_slice(),
             smas_o: vec_sma_25.0.as_slice(),
@@ -147,7 +147,7 @@ mod tests {
         let macps = MACPS::from((vec_stock.as_slice(), sma_list_trio));
         let candle_stick_pattern_set = TrendReversalAnalysisSet {
             ecp2s: &ecp2s,
-            msesps: vec_msesp.0.as_slice(),
+            msesps: &msespes,
             macps: &macps,
             macoses: &macoses,
         };

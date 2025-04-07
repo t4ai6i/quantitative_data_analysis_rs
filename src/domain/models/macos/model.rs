@@ -131,9 +131,9 @@ impl From<PatternRateOfChangePair> for AnalysisPattern {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
-pub struct MACOSES(pub(crate) Vec<MACOS>);
+pub struct MACOSes(pub(crate) Vec<MACOS>);
 
-impl MACOSES {
+impl MACOSes {
     /// Retrieves the latest date based on the closing value that matches a specified pattern.
     ///
     /// # Parameters
@@ -180,12 +180,12 @@ struct Intermediate {
     ordering_close_volume_5_25: OrderingCloseVolume<5, 25>,
 }
 
-impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSES {
+impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     ///
     /// # Examples
     /// ```
     /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListPair, VecSMA};
-    /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSES;
+    /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
@@ -198,7 +198,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSES {
     ///     smas_n: smas_5.as_slice(),
     ///     smas_o: smas_25.as_slice(),
     /// };
-    /// let macoses = MACOSES::from(sma_list_pair);
+    /// let macoses = MACOSes::from(sma_list_pair);
     /// assert_eq!(macoses.len(), 241);
     /// ```
     fn from(value: SMAListPair<'a, 5, 25>) -> Self {
