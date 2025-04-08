@@ -15,7 +15,7 @@ use crate::presenter::{
     },
     view_model::{
         candle_sticks::CandleSticksExt, macos_analysis_closes::MACOSAnalysisClosesExt,
-        macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSESExt,
+        macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSesExt,
         stocks::StocksExt, vec_sma::VecSMAExt,
     },
 };
