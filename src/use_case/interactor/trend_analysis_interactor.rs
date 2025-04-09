@@ -1,4 +1,3 @@
-use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
 use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
@@ -12,6 +11,7 @@ use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::domain::models::macps::model::MACPS;
 use crate::domain::models::msesp::model::MSESPes;
+use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;
@@ -79,20 +79,20 @@ where
             .get_statement(input.code.as_str())
             .await?;
 
-        let vec_sma_5 = VecSMA::<5>::from(stocks.as_slice());
-        let vec_sma_25 = VecSMA::<25>::from(stocks.as_slice());
+        let smas_5 = SMAs::<5>::from(stocks.as_slice());
+        let smas_25 = SMAs::<25>::from(stocks.as_slice());
 
         let sma_list_pair = SMAListPair {
-            smas_n: vec_sma_5.0.as_slice(),
-            smas_o: vec_sma_25.0.as_slice(),
+            smas_n: smas_5.as_slice(),
+            smas_o: smas_25.as_slice(),
         };
         let macoses = MACOSes::from(sma_list_pair);
 
-        let vec_sma_50 = VecSMA::<50>::from(stocks.as_slice());
+        let smas_50 = SMAs::<50>::from(stocks.as_slice());
         let sma_list_trio = SMAListTrio {
-            smas_n: vec_sma_5.0.as_slice(),
-            smas_o: vec_sma_25.0.as_slice(),
-            smas_p: vec_sma_50.0.as_slice(),
+            smas_n: smas_5.as_slice(),
+            smas_o: smas_25.as_slice(),
+            smas_p: smas_50.as_slice(),
         };
         let macps = MACPS::from((stocks.as_slice(), sma_list_trio));
 
@@ -131,9 +131,9 @@ where
         let output = TrendAnalysisOutput {
             company,
             stocks,
-            vec_sma_5,
-            vec_sma_25,
-            vec_sma_50,
+            smas_5,
+            smas_25,
+            smas_50,
             macoses,
             macos_analysis_closes,
             rate_of_chance,

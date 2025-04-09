@@ -108,7 +108,6 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::sma::{SMAListPair, SMAListTrio, VecSMA};
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
     use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
@@ -117,6 +116,7 @@ mod tests {
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macps::model::MACPS;
     use crate::domain::models::msesp::model::MSESPes;
+    use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
@@ -131,18 +131,18 @@ mod tests {
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
         let ecp2s = ECP2s::from(candle_sticks.as_slice());
         let msespes = MSESPes::from(candle_sticks.as_slice());
-        let vec_sma_5 = VecSMA::<5>::from(vec_stock.as_slice());
-        let vec_sma_25 = VecSMA::<25>::from(vec_stock.as_slice());
-        let vec_sma_50 = VecSMA::<50>::from(vec_stock.as_slice());
+        let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
+        let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
+        let smas_50 = SMAs::<50>::from(vec_stock.as_slice());
         let sma_list_pair = SMAListPair {
-            smas_n: vec_sma_5.0.as_slice(),
-            smas_o: vec_sma_25.0.as_slice(),
+            smas_n: smas_5.as_slice(),
+            smas_o: smas_25.as_slice(),
         };
         let macoses = MACOSes::from(sma_list_pair);
         let sma_list_trio = SMAListTrio {
-            smas_n: vec_sma_5.0.as_slice(),
-            smas_o: vec_sma_25.0.as_slice(),
-            smas_p: vec_sma_50.0.as_slice(),
+            smas_n: smas_5.as_slice(),
+            smas_o: smas_25.as_slice(),
+            smas_p: smas_50.as_slice(),
         };
         let macps = MACPS::from((vec_stock.as_slice(), sma_list_trio));
         let candle_stick_pattern_set = TrendReversalAnalysisSet {

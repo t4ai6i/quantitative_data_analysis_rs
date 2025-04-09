@@ -1,8 +1,7 @@
-use crate::domain::entity::sma::{SMAListPair, SMAPair, SMASet};
+use crate::domain::models::sma::model::{SMAListPair, SMAPair, SMASet};
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
-use itertools::Itertools;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use strum::Display;
@@ -167,9 +166,8 @@ impl MACOSes {
             })
             .collect();
         filtered
-            .iter()
-            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
-            .last()
+            .par_iter()
+            .max_by(|a, b| Ord::cmp(&a.date, &b.date))
             .map(|x| x.date)
     }
 }
@@ -184,7 +182,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     ///
     /// # Examples
     /// ```
-    /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListPair, VecSMA};
+    /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListPair, SMAs};
     /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
@@ -192,8 +190,8 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
-    /// let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
-    /// let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
+    /// let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
+    /// let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
     /// let sma_list_pair = SMAListPair {
     ///     smas_n: smas_5.as_slice(),
     ///     smas_o: smas_25.as_slice(),
@@ -225,7 +223,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
             })
             .collect();
         let vec_macos = intermediates
-            .windows(2)
+            .par_windows(2)
             .map(|x| {
                 let yesterday = x[0].ordering_close_volume_5_25;
                 let today = x[1].ordering_close_volume_5_25;
@@ -240,7 +238,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
                     pattern_close_volume,
                 }
             })
-            .collect_vec();
+            .collect::<Vec<MACOS>>();
         Self(vec_macos)
     }
 }

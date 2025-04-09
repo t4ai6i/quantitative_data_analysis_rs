@@ -9,7 +9,7 @@ pub mod macos_analysis_volumes;
 pub mod macoses;
 pub mod macps_analysis;
 pub mod rate_of_chance;
+pub mod smas;
 pub mod stocks;
 pub mod trend_reversal_analysis;
-pub mod vec_sma;
 pub mod vec_trend_analysis_response;

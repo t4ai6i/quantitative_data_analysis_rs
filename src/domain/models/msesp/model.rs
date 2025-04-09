@@ -1,7 +1,7 @@
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
 use deref_derive::{Deref, DerefMut};
-use itertools::Itertools;
+use rayon::prelude::*;
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct MSESP {
@@ -55,8 +55,8 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     /// let _ = MSESPes::from(candle_sticks.as_slice());
     /// ```
     fn from(value: &[CandleStick<N>]) -> Self {
-        let vec = value
-            .windows(3)
+        let vec_buy_sell_signal = value
+            .par_windows(3)
             .map(|candle_sticks| {
                 let two_days_before_bullish_bearish = candle_sticks[0].bullish_bearish;
                 let a_day_before_is_doji = candle_sticks[1].is_doji;
@@ -73,8 +73,8 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
                     date: today,
                 }
             })
-            .collect_vec();
-        MSESPes(vec)
+            .collect::<Vec<BuySellSignal>>();
+        MSESPes(vec_buy_sell_signal)
     }
 }
 
@@ -90,6 +90,7 @@ mod tests {
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
+    use rayon::prelude::*;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
@@ -101,7 +102,7 @@ mod tests {
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
         let MSESPes(vec_msesp) = MSESPes::from(candle_sticks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_msesp
-            .into_iter()
+            .into_par_iter()
             .filter(|signal| signal.r#type.ne(&Stay))
             .partition(|signal| signal.r#type.eq(&Buy));
         let (expected_buy, expected_sell): (Vec<BuySellSignal>, Vec<BuySellSignal>) = (

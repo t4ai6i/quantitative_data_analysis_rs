@@ -1,6 +1,7 @@
 use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
-use itertools::Itertools;
+use deref_derive::{Deref, DerefMut};
+use rayon::prelude::*;
 use simple_moving_average::{SumTreeSMA, SMA as OtherSMA};
 
 /// 終値、取引高の単純移動平均のセット
@@ -14,23 +15,21 @@ pub struct SMASet<const N: usize> {
 
 impl<const N: usize> From<&[Stock]> for SMASet<N> {
     fn from(value: &[Stock]) -> Self {
-        // 終値のN日の単純移動平均
-        let ma = value
-            .iter()
-            .fold(SumTreeSMA::<_, f64, { N }>::new(), |mut acc, stock| {
-                acc.add_sample(stock.close);
-                acc
-            });
-        let close = ma.get_average();
-
-        // 取引高のN日の単純移動平均
-        let ma = value
-            .iter()
-            .fold(SumTreeSMA::<_, f64, { N }>::new(), |mut acc, stock| {
-                acc.add_sample(stock.volume as _);
-                acc
-            });
-        let volume = ma.get_average();
+        // 終値のN日と取引高のN日の単純移動平均
+        let (closes, volumes) = value.iter().fold(
+            (
+                SumTreeSMA::<_, f64, { N }>::new(),
+                SumTreeSMA::<_, f64, { N }>::new(),
+            ),
+            |acc, stock| {
+                let (mut acc_close, mut acc_volume) = acc;
+                acc_close.add_sample(stock.close);
+                acc_volume.add_sample(stock.volume as _);
+                (acc_close, acc_volume)
+            },
+        );
+        let close = closes.get_average();
+        let volume = volumes.get_average();
         Self { close, volume }
     }
 }
@@ -44,42 +43,42 @@ pub struct SMA<const N: usize> {
     pub date: NaiveDate,
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct VecSMA<const N: usize>(pub Vec<SMA<N>>);
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
+pub struct SMAs<const N: usize>(Vec<SMA<N>>);
 
-impl<const N: usize> From<&[Stock]> for VecSMA<N> {
+impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// # Examples
     /// ```
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
-    /// use quantitative_data_analysis_rs::domain::entity::sma::VecSMA;
+    /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     ///
-    /// const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
+    /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     /// const DAYS_5: usize = 5;
     /// const DAYS_25: usize = 25;
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
-    /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(vec_stock.as_slice());
+    /// let smas_5 = SMAs::<DAYS_5>::from(vec_stock.as_slice());
     /// assert_eq!(smas_5.len(), 242);
     ///
-    /// let VecSMA(smas_25) = VecSMA::<DAYS_25>::from(vec_stock.as_slice());
+    /// let smas_25 = SMAs::<DAYS_25>::from(vec_stock.as_slice());
     /// assert_eq!(smas_25.len(), 222);
     ///
     /// let stocks = Stocks::default();
-    /// let VecSMA(smas_5) = VecSMA::<DAYS_5>::from(stocks.as_slice());
+    /// let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
     /// assert_eq!(smas_5.len(), 0);
     /// ```
     fn from(value: &[Stock]) -> Self {
-        let smas = value
-            .windows(N)
+        let vec_sma = value
+            .par_windows(N)
             .map(|stocks| SMA {
                 sma_n: SMASet::<N>::from(stocks),
                 date: stocks.last().unwrap().date,
             })
-            .collect_vec();
-        Self(smas)
+            .collect::<Vec<SMA<N>>>();
+        Self(vec_sma)
     }
 }
 

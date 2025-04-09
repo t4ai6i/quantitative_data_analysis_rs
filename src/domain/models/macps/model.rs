@@ -1,7 +1,7 @@
 use rayon::prelude::*;
 
-use crate::domain::entity::sma::SMAListTrio;
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
+use crate::domain::models::sma::model::SMAListTrio;
 use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -38,16 +38,16 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// use chrono::NaiveDate;
     /// use quantitative_data_analysis_rs::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
     /// use quantitative_data_analysis_rs::domain::models::macps::model::MACPS;
-    /// use quantitative_data_analysis_rs::domain::entity::sma::{SMAListTrio, VecSMA};
+    /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListTrio, SMAs};
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
     ///
     /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
-    /// let VecSMA(smas_5) = VecSMA::<5>::from(vec_stock.as_slice());
-    /// let VecSMA(smas_25) = VecSMA::<25>::from(vec_stock.as_slice());
-    /// let VecSMA(smas_50) = VecSMA::<50>::from(vec_stock.as_slice());
+    /// let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
+    /// let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
+    /// let smas_50 = SMAs::<50>::from(vec_stock.as_slice());
     /// let sma_list_trio = SMAListTrio {
     ///     smas_n: smas_5.as_slice(),
     ///     smas_o: smas_25.as_slice(),

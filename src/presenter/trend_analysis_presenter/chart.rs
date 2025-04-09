@@ -15,8 +15,8 @@ use crate::presenter::{
     },
     view_model::{
         candle_sticks::CandleSticksExt, macos_analysis_closes::MACOSAnalysisClosesExt,
-        macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSesExt,
-        stocks::StocksExt, vec_sma::VecSMAExt,
+        macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSesExt, smas::SMAsExt,
+        stocks::StocksExt,
     },
 };
 use crate::utils::float;
@@ -54,9 +54,9 @@ impl TrendAnalysisPresenter for Chart {
         charts.margin = 5.0.into();
 
         let company = output.company;
-        let sma_5_averages = output.vec_sma_5.collect_average_close();
-        let sma_25_averages = output.vec_sma_25.collect_average_close();
-        let sma_50_averages = output.vec_sma_50.collect_average_close();
+        let sma_5_averages = output.smas_5.collect_average_close();
+        let sma_25_averages = output.smas_25.collect_average_close();
+        let sma_50_averages = output.smas_50.collect_average_close();
         let ohlcs: Vec<f32> = output
             .stocks
             .collect_ohlc()
@@ -153,8 +153,8 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.candlestick_down_border_color = Color::from((0, 40, 143));
         charts.add(ChildChart::Candlestick(candlestick_chart, None));
 
-        let sma_5_averages = output.vec_sma_5.collect_average_volume();
-        let sma_25_averages = output.vec_sma_25.collect_average_volume();
+        let sma_5_averages = output.smas_5.collect_average_volume();
+        let sma_25_averages = output.smas_25.collect_average_volume();
         let volumes: Vec<f32> = output
             .stocks
             .collect_volume()
