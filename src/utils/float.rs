@@ -1,11 +1,24 @@
 use num_traits::{Float, FromPrimitive, PrimInt, ToPrimitive};
+use rayon::prelude::*;
 
-pub fn min<T: Float + FromPrimitive>(v: &[T]) -> T {
-    v.iter().copied().fold(T::infinity(), T::min)
+pub fn min<T: Float + Send + Sync>(v: &[T]) -> T {
+    if v.is_empty() {
+        return T::nan(); // 空のベクタの場合はNaNを返す
+    }
+    v.par_iter() // 並列イテレーションを開始
+        .cloned() // `par_iter` では参照を扱うため値に変換
+        .filter(|&x| !x.is_nan()) // NaN を除外
+        .reduce(|| T::max_value(), T::min) // 並列化された要素を統合しながら最小値を計算
 }
 
-pub fn max<T: Float + FromPrimitive>(v: &[T]) -> T {
-    v.iter().copied().fold(T::neg_infinity(), T::max)
+pub fn max<T: Float + Send + Sync>(v: &[T]) -> T {
+    if v.is_empty() {
+        return T::nan(); // 空のベクタの場合はNaNを返す
+    }
+    v.par_iter() // 並列イテレーションを開始
+        .cloned() // `par_iter` では参照を扱うため値に変換
+        .filter(|&x| !x.is_nan()) // NaN を除外
+        .reduce(|| T::min_value(), T::max) // 並列化された要素を統合しながら最小値を計算
 }
 
 pub fn percentage<T, U>(dividend: T, divisor: T) -> U
@@ -36,9 +49,13 @@ mod tests {
         let result = min(&v);
         assert_eq!(result, -3.0);
 
+        let v = vec![1.0];
+        let result = min(&v);
+        assert_eq!(result, 1.0);
+
         let v: Vec<f64> = vec![];
         let result = min(&v);
-        assert_eq!(result, f64::INFINITY);
+        assert!(result.is_nan());
     }
 
     #[test]
@@ -51,9 +68,13 @@ mod tests {
         let result = max(&v);
         assert_eq!(result, -1.0);
 
+        let v = vec![1.0];
+        let result = max(&v);
+        assert_eq!(result, 1.0);
+
         let v: Vec<f64> = vec![];
         let result = max(&v);
-        assert_eq!(result, f64::NEG_INFINITY);
+        assert!(result.is_nan());
     }
 
     #[test]
