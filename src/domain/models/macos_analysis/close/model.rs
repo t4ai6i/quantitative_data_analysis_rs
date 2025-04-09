@@ -25,7 +25,7 @@ pub struct MACOSAnalysisClose {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
-pub struct MACOSAnalysisCloses<const N: usize>(pub Vec<MACOSAnalysisClose>);
+pub struct MACOSAnalysisCloses<const N: usize>(Vec<MACOSAnalysisClose>);
 
 impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for MACOSAnalysisCloses<N> {
     fn from(value: &StocksMACOSESPair<'a>) -> Self {

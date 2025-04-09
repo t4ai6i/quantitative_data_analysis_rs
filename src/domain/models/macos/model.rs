@@ -155,8 +155,7 @@ impl MACOSes {
     /// - This method leverages the `rayon` library for parallel processing, ideal for handling large datasets.
     /// - Sorting is done using `itertools`'s `sorted_by` for a clear and concise sorting step.
     pub fn latest_based_on_close(&self, pattern: &Pattern) -> Option<NaiveDate> {
-        let filtered: Vec<MACOS> = self
-            .par_iter()
+        self.par_iter()
             .filter_map(|macos| {
                 if macos.pattern_close_volume.close.eq(pattern) {
                     Some(*macos)
@@ -164,9 +163,6 @@ impl MACOSes {
                     None
                 }
             })
-            .collect();
-        filtered
-            .par_iter()
             .max_by(|a, b| Ord::cmp(&a.date, &b.date))
             .map(|x| x.date)
     }

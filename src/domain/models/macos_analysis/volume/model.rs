@@ -3,7 +3,7 @@ use crate::domain::models::macos::model::Pattern;
 use crate::domain::models::macos::model::Pattern::Neither;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
-use itertools::Itertools;
+use rayon::prelude::*;
 
 /// 出来高ベースのMovingAverageCrossoverStrategyのトレンド解析
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
@@ -17,27 +17,29 @@ pub struct MACOSAnalysisVolume {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
-pub struct MACOSAnalysisVolumes(pub Vec<MACOSAnalysisVolume>);
+pub struct MACOSAnalysisVolumes(Vec<MACOSAnalysisVolume>);
 
 impl<'a> From<&StocksMACOSESPair<'a>> for MACOSAnalysisVolumes {
     fn from(value: &StocksMACOSESPair<'a>) -> Self {
         let StocksMACOSESPair { stocks, macoses } = value;
         let vec_macos_analysis_volume = macoses
-            .iter()
+            .par_iter()
             .filter_map(|macos| {
                 // Neitherは判断材料とならないため結果から除外する
                 if macos.pattern_close_volume.volume.eq(&Neither) {
                     return None;
                 }
                 // Crossover発生日と同じ日の株価情報を取得
-                let stock = stocks.iter().find(|stock| stock.date.eq(&macos.date))?;
+                let stock = stocks
+                    .par_iter()
+                    .find_first(|stock| stock.date.eq(&macos.date))?;
                 Some(MACOSAnalysisVolume {
                     date_of_event: stock.date,
                     volume: stock.volume,
                     pattern: macos.pattern_close_volume.volume,
                 })
             })
-            .collect_vec();
+            .collect::<Vec<MACOSAnalysisVolume>>();
         MACOSAnalysisVolumes(vec_macos_analysis_volume)
     }
 }

@@ -6,7 +6,6 @@ use crate::domain::models::macos::model::MACOSes;
 use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
 use crate::domain::models::macps::model::MACPS;
 use chrono::NaiveDate;
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 /// MACOS/MACPS/ECP2/MSESPの売買シグナルから相場転換を分析する
@@ -24,14 +23,10 @@ impl TrendReversalAnalysis {
         buy_sell_signal: &[BuySellSignal],
         r#type: &BuySellSignalType,
     ) -> Option<NaiveDate> {
-        let filtered: Vec<&BuySellSignal> = buy_sell_signal
+        buy_sell_signal
             .par_iter()
             .filter(|signal| signal.r#type.eq(r#type))
-            .collect();
-        filtered
-            .iter()
-            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
-            .last()
+            .max_by(|a, b| Ord::cmp(&a.date, &b.date))
             .map(|signal| signal.date)
     }
 }

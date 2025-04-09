@@ -18,8 +18,7 @@ impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
     }
 
     fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
-        self.0
-            .iter()
+        self.iter()
             .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
             .map(|trend_analysis| {
                 let date = trend_analysis.date_of_event.format("%Y/%m/%d").to_string();

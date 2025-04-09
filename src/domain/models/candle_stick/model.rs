@@ -1,8 +1,8 @@
 use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
-use itertools::Itertools;
 use num_traits::ToPrimitive;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::ops::{Div, Sub};
@@ -168,7 +168,10 @@ impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
         if N < 80 {
             return Err(MarubozuMinimumBodyPercentError::LessThan80Percent);
         }
-        let candle_sticks = value.iter().map(CandleStick::<N>::from).collect_vec();
+        let candle_sticks = value
+            .par_iter()
+            .map(CandleStick::<N>::from)
+            .collect::<Vec<CandleStick<N>>>();
         Ok(CandleSticks(candle_sticks))
     }
 }

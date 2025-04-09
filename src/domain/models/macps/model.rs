@@ -4,7 +4,6 @@ use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignal
 use crate::domain::models::sma::model::SMAListTrio;
 use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
-use itertools::Itertools;
 use std::cmp::Ordering;
 
 /// MovingAverageComparisonStrategy
@@ -81,14 +80,12 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
             })
             .partition(|buy_sell_signal| buy_sell_signal.r#type.eq(&BuySellSignalType::Buy));
         let buy = buys
-            .iter()
-            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
-            .last()
+            .par_iter()
+            .max_by(|a, b| Ord::cmp(&a.date, &b.date))
             .map(|buy| buy.date);
         let sell = sells
-            .iter()
-            .sorted_by(|a, b| Ord::cmp(&a.date, &b.date))
-            .last()
+            .par_iter()
+            .max_by(|a, b| Ord::cmp(&a.date, &b.date))
             .map(|sell| sell.date);
         Self { buy, sell }
     }
