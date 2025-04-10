@@ -29,6 +29,24 @@ impl TrendReversalAnalysis {
             .max_by(|a, b| Ord::cmp(&a.date, &b.date))
             .map(|signal| signal.date)
     }
+
+    fn resolve_latest_signal(
+        buy_date: Option<NaiveDate>,
+        sell_date: Option<NaiveDate>,
+    ) -> Option<(NaiveDate, BuySellSignalType)> {
+        match (buy_date, sell_date) {
+            (Some(buy_date), Some(sell_date)) => {
+                if buy_date >= sell_date {
+                    Some((buy_date, Buy))
+                } else {
+                    Some((sell_date, Sell))
+                }
+            }
+            (Some(buy_date), None) => Some((buy_date, Buy)),
+            (None, Some(sell_date)) => Some((sell_date, Sell)),
+            _ => None,
+        }
+    }
 }
 
 pub struct TrendReversalAnalysisSet<'a> {
@@ -36,21 +54,6 @@ pub struct TrendReversalAnalysisSet<'a> {
     pub msesps: &'a [BuySellSignal],
     pub macps: &'a MACPS,
     pub macoses: &'a MACOSes,
-}
-
-impl TrendReversalAnalysis {
-    fn cmp(
-        buy_date: Option<NaiveDate>,
-        sell_date: Option<NaiveDate>,
-    ) -> Option<(NaiveDate, BuySellSignalType)> {
-        match (buy_date, sell_date) {
-            (Some(buy), Some(sell)) if buy.ge(&sell) => Some((buy, Buy)),
-            (Some(buy), Some(sell)) if sell.ge(&buy) => Some((sell, Sell)),
-            (Some(buy), None) => Some((buy, Buy)),
-            (None, Some(sell)) => Some((sell, Sell)),
-            _ => None,
-        }
-    }
 }
 
 impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
@@ -62,16 +65,16 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
             msesps,
         } = value;
 
-        let macps = Self::cmp(macps.buy, macps.sell);
+        let macps = Self::resolve_latest_signal(macps.buy, macps.sell);
         let macos_close_golden = macoses.latest_based_on_close(&GoldenCross);
         let macos_close_dead = macoses.latest_based_on_close(&DeadCross);
-        let macos = Self::cmp(macos_close_golden, macos_close_dead);
+        let macos = Self::resolve_latest_signal(macos_close_golden, macos_close_dead);
         let ecp2_buy = Self::latest_buy_sell_signal_date(ecp2s, &Buy);
         let ecp2_sell = Self::latest_buy_sell_signal_date(ecp2s, &Sell);
-        let ecp2 = Self::cmp(ecp2_buy, ecp2_sell);
+        let ecp2 = Self::resolve_latest_signal(ecp2_buy, ecp2_sell);
         let msesp_buy = Self::latest_buy_sell_signal_date(msesps, &Buy);
         let msesp_sell = Self::latest_buy_sell_signal_date(msesps, &Sell);
-        let msesp = Self::cmp(msesp_buy, msesp_sell);
+        let msesp = Self::resolve_latest_signal(msesp_buy, msesp_sell);
         // 終値のGoldenCross/ECP2 Buy/MSESP Buy/MACPS Buy が揃っていれば Buy
         // 終値のDeadCross/ECP2 Sell/MSESP Sell/MACPS Sell が揃っていれば Sell
         // それ以外はStay
@@ -103,8 +106,6 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
-    use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::domain::models::ecp2::model::ECP2s;
@@ -112,11 +113,13 @@ mod tests {
     use crate::domain::models::macps::model::MACPS;
     use crate::domain::models::msesp::model::MSESPes;
     use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
+    use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
+    use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use chrono::NaiveDate;
 
-    const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
+    const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
 
     #[test]

@@ -13,3 +13,4 @@ pub mod sma;
 pub mod statement;
 pub mod stock;
 pub mod stocks_macoses_pair;
+pub mod trend_reversal_analysis;

@@ -1,5 +1,5 @@
-use crate::domain::entity::trend_reversal_analysis;
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
+use crate::domain::models::trend_reversal_analysis::model;
 use crate::utils::custom_date_format;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
@@ -17,9 +17,9 @@ pub struct TrendReversalAnalysis {
     pub macps_date: NaiveDate,
 }
 
-impl From<trend_reversal_analysis::TrendReversalAnalysis> for TrendReversalAnalysis {
-    fn from(value: trend_reversal_analysis::TrendReversalAnalysis) -> Self {
-        let trend_reversal_analysis::TrendReversalAnalysis {
+impl From<model::TrendReversalAnalysis> for TrendReversalAnalysis {
+    fn from(value: model::TrendReversalAnalysis) -> Self {
+        let model::TrendReversalAnalysis {
             r#type,
             macos,
             ecp2,

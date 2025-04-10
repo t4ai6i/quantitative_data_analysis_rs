@@ -1,4 +1,3 @@
-use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::company::model::Company;
 use crate::domain::models::ecp1::model::ECP1s;
@@ -10,6 +9,7 @@ use crate::domain::models::macos_analysis::close::model::{
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::domain::models::sma::model::SMAs;
 use crate::domain::models::stock::model::Stocks;
+use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use anyhow::Result;
 
