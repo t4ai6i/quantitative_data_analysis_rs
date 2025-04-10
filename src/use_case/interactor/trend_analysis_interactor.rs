@@ -1,4 +1,3 @@
-use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysis;
 use crate::domain::entity::trend_reversal_analysis::TrendReversalAnalysisSet;
 use crate::domain::models::candle_stick::model::CandleSticks;
@@ -12,6 +11,7 @@ use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::domain::models::macps::model::MACPS;
 use crate::domain::models::msesp::model::MSESPes;
 use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
+use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::domain::repository::statement_repository::StatementRepository;
 use crate::domain::repository::stock_repository::StockRepository;

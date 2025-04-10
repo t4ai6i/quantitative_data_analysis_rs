@@ -24,10 +24,10 @@ impl RateOfChance {
 mod tests {
     use anyhow::Result;
 
-    use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
     use crate::domain::models::sma::model::{SMAListPair, SMAs};
+    use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
     use crate::presenter::display_macos_pattern::DisplayMACOSPattern;

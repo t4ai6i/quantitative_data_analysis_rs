@@ -12,3 +12,4 @@ pub mod msesp;
 pub mod sma;
 pub mod statement;
 pub mod stock;
+pub mod stocks_macoses_pair;

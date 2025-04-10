@@ -1,6 +1,6 @@
-use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
 use crate::domain::models::macos::model::Pattern;
 use crate::domain::models::macos::model::Pattern::Neither;
+use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -46,10 +46,10 @@ impl<'a> From<&StocksMACOSESPair<'a>> for MACOSAnalysisVolumes {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::stocks_macoses_pair::StocksMACOSESPair;
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
     use crate::domain::models::sma::model::{SMAListPair, SMAs};
+    use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::stock_repository::data_format::csv::Csv;
 
