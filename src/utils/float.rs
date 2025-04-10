@@ -1,24 +1,34 @@
 use num_traits::{Float, FromPrimitive, PrimInt, ToPrimitive};
 use rayon::prelude::*;
 
-pub fn min<T: Float + Send + Sync>(v: &[T]) -> T {
+fn reduce_with_operation<T: Float + Send + Sync, F>(v: &[T], op: F, identity: T) -> T
+where
+    F: Fn(T, T) -> T + Send + Sync,
+{
     if v.is_empty() {
         return T::nan(); // 空のベクタの場合はNaNを返す
     }
-    v.par_iter() // 並列イテレーションを開始
+
+    let filtered = v
+        .par_iter() // 並列イテレーションを開始
         .cloned() // `par_iter` では参照を扱うため値に変換
-        .filter(|&x| !x.is_nan()) // NaN を除外
-        .reduce(|| T::max_value(), T::min) // 並列化された要素を統合しながら最小値を計算
+        .filter(|x| !x.is_nan())
+        .collect::<Vec<T>>(); // NaN を除外
+    if filtered.is_empty() {
+        return T::nan(); // 要素がすべてNaNで空のベクタになった場合、NaNを返す
+    }
+    filtered
+        .par_iter() // 再度並列イテレーションを開始
+        .cloned() // `par_iter` では参照を扱うため値に変換
+        .reduce(|| identity, op) // 並列化された要素を統合しながら計算
+}
+
+pub fn min<T: Float + Send + Sync>(v: &[T]) -> T {
+    reduce_with_operation(v, T::min, T::max_value())
 }
 
 pub fn max<T: Float + Send + Sync>(v: &[T]) -> T {
-    if v.is_empty() {
-        return T::nan(); // 空のベクタの場合はNaNを返す
-    }
-    v.par_iter() // 並列イテレーションを開始
-        .cloned() // `par_iter` では参照を扱うため値に変換
-        .filter(|&x| !x.is_nan()) // NaN を除外
-        .reduce(|| T::min_value(), T::max) // 並列化された要素を統合しながら最小値を計算
+    reduce_with_operation(v, T::max, T::min_value())
 }
 
 pub fn percentage<T, U>(dividend: T, divisor: T) -> U
@@ -56,6 +66,14 @@ mod tests {
         let v: Vec<f64> = vec![];
         let result = min(&v);
         assert!(result.is_nan());
+
+        let v = vec![f64::NAN, 1.0];
+        let result = min(&v);
+        assert_eq!(result, 1.0);
+
+        let v = vec![f64::NAN];
+        let result = min(&v);
+        assert!(result.is_nan());
     }
 
     #[test]
@@ -73,6 +91,14 @@ mod tests {
         assert_eq!(result, 1.0);
 
         let v: Vec<f64> = vec![];
+        let result = max(&v);
+        assert!(result.is_nan());
+
+        let v = vec![f64::NAN, 1.0];
+        let result = max(&v);
+        assert_eq!(result, 1.0);
+
+        let v = vec![f64::NAN];
         let result = max(&v);
         assert!(result.is_nan());
     }
