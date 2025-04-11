@@ -1,4 +1,4 @@
-use crate::domain::models::company::model::Company;
+use crate::domain::models::company::model;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::infrastructure::company_repository::data_format::csv::Csv;
 use crate::infrastructure::company_repository::data_format::tsv::Tsv;
@@ -11,11 +11,11 @@ use tokio::fs::read;
 
 #[async_trait]
 impl CompanyRepository for FileSystem {
-    async fn get_companies(&self) -> Result<Vec<Company>> {
+    async fn get_companies(&self) -> Result<Vec<model::Company>> {
         todo!()
     }
 
-    async fn get_company(&self, code: &str, _: &str) -> Result<Company> {
+    async fn get_company(&self, code: &str, _: &str) -> Result<model::Company> {
         let file_path = match self.data_format {
             DataFormat::JSON { ref file_path } => file_path,
             DataFormat::CSV { ref file_path, .. } => file_path,
@@ -33,16 +33,15 @@ impl CompanyRepository for FileSystem {
             format!("File not found: {:?} at {}:{}", file_path, file!(), line!())
         })?;
         let companies = match self.data_format {
-            DataFormat::JSON { .. } => {
-                serde_json::from_slice::<Vec<Company>>(&file).with_context(|| {
+            DataFormat::JSON { .. } => serde_json::from_slice::<Vec<model::Company>>(&file)
+                .with_context(|| {
                     format!(
                         "Invalid JSON: {:?} at {}:{}",
                         String::from_utf8_lossy(&file),
                         file!(),
                         line!()
                     )
-                })?
-            }
+                })?,
             DataFormat::CSV { has_headers, .. } => {
                 if has_headers {
                     Csv::from_slice::<true>(file.as_slice())
@@ -61,14 +60,14 @@ impl CompanyRepository for FileSystem {
         };
         companies
             .into_iter()
-            .find(|company: &Company| company.code.eq(code))
+            .find(|company| company.code.eq(code))
             .with_context(|| format!("Not found company: {} at {}:{}", code, file!(), line!()))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::models::company::model::Company;
+    use crate::domain::models::company::model;
     use crate::domain::repository::company_repository::CompanyRepository;
     use crate::infrastructure::company_repository::file_system::FileSystem;
     use crate::infrastructure::data_format::DataFormat;
@@ -86,7 +85,7 @@ mod tests {
         let actual = repository.get_company(code, market).await?;
         assert_eq!(
             actual,
-            Company {
+            model::Company {
                 code: "8473".to_string(),
                 name: "ＳＢＩホールディングス".to_string(),
                 market: "T".to_string(),
@@ -105,7 +104,7 @@ mod tests {
         let company = repository.get_company(code, market).await?;
         assert_eq!(
             company,
-            Company {
+            model::Company {
                 code: "1301".to_string(),
                 name: "極洋".to_string(),
                 market: "T".to_string(),
@@ -119,7 +118,7 @@ mod tests {
     #[should_panic]
     fn get_vec_company_invalid_json_test() {
         let json = br#" {"K": "#;
-        let _ = serde_json::from_slice::<Vec<Company>>(json)
+        let _ = serde_json::from_slice::<Vec<model::Company>>(json)
             .with_context(|| {
                 format!(
                     "Invalid JSON: {:?}). \n{}",

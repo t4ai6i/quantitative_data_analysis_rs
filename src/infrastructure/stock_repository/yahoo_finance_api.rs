@@ -1,4 +1,4 @@
-use crate::domain::models::company::model::Company;
+use crate::domain::models::company::model;
 use crate::domain::models::stock::model::Stocks;
 use crate::domain::repository::stock_repository::StockRepository;
 use crate::infrastructure::data_format::DataFormat;
@@ -18,7 +18,7 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
         end_date: NaiveDate,
     ) -> Result<Stocks> {
         if let DataFormat::YahooFinanceAPI = self.data_format {
-            let symbol = Company::symbol(code, market);
+            let symbol = model::Company::symbol(code, market);
             let start_date = OffsetDateTimeWrapper::from(start_date);
             let end_date = OffsetDateTimeWrapper::from(end_date);
             let retry_future_config = get_common_retry_future_config();

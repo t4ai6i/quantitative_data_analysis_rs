@@ -1,4 +1,4 @@
-use crate::domain::models::company::model::Company;
+use crate::domain::models::company::model;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
@@ -9,13 +9,13 @@ use yahoo_finance_api::YQuoteItem;
 
 #[async_trait]
 impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
-    async fn get_companies(&self) -> Result<Vec<Company>> {
+    async fn get_companies(&self) -> Result<Vec<model::Company>> {
         todo!()
     }
 
-    async fn get_company(&self, code: &str, market: &str) -> Result<Company> {
+    async fn get_company(&self, code: &str, market: &str) -> Result<model::Company> {
         if let DataFormat::YahooFinanceAPI = self.data_format {
-            let name = Company::symbol(code, market);
+            let name = model::Company::symbol(code, market);
             let retry_future_config = get_common_retry_future_config();
             let y_search_result = tryhard::retry_fn(|| self.provider.search_ticker(&name))
                 .with_config(retry_future_config)
@@ -25,7 +25,7 @@ impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
             quotes
                 .into_iter()
                 .find(|quote| quote.symbol.eq(&name))
-                .map(Company::from)
+                .map(model::Company::from)
                 .with_context(|| format!("Code fetching from yahoo! finance not exist: {}", code))
         } else {
             bail!(format!(
@@ -38,14 +38,14 @@ impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
     }
 }
 
-impl From<YQuoteItem> for Company {
+impl From<YQuoteItem> for model::Company {
     fn from(value: YQuoteItem) -> Self {
         let mut split = value.symbol.split('.');
         let code = split
             .next()
             .with_context(|| format!("Unknown symbol: {}", value.symbol))
             .unwrap();
-        Company {
+        model::Company {
             code: code.to_string(),
             name: value.long_name,
             market: value.exchange,
@@ -58,12 +58,12 @@ impl From<YQuoteItem> for Company {
 通信が安定しないためテストを行わないようにした
 #[cfg(test)]
 mod tests {
-    use crate::domain::entity::company::Company;
     use crate::domain::repository::company_repository::CompanyRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
     use yahoo_finance_api::YahooConnector;
+    use crate::domain::models::company::model;
 
     #[tokio::test]
     async fn get_company_test() -> Result<()> {
@@ -75,7 +75,7 @@ mod tests {
         let company = repository.get_company(code, market).await?;
         assert_eq!(
             company,
-            Company {
+            model::Company {
                 code: "8473".to_string(),
                 name: "SBI Holdings, Inc.".to_string(),
                 market: "JPX".to_string(),
@@ -89,7 +89,7 @@ mod tests {
         let company = repository.get_company(code, market).await?;
         assert_eq!(
             company,
-            Company {
+            model::Company {
                 code: "V".to_string(),
                 name: "Visa Inc.".to_string(),
                 market: "NYQ".to_string(),
@@ -110,4 +110,4 @@ mod tests {
         let _ = repository.get_company(code, market).await.unwrap();
     }
 }
-*/
+ */

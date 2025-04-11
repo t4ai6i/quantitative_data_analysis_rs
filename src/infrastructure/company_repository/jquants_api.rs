@@ -5,11 +5,11 @@ use rayon::prelude::*;
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::domain::models::company::model::Company;
+use crate::domain::models::company::model;
 use crate::domain::repository::company_repository::CompanyRepository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
-impl Company {
+impl model::Company {
     fn new(value: &Value) -> Result<Self> {
         let code = value["Code"]
             .as_str()
@@ -33,7 +33,7 @@ const COMPANY_URL: &str = "https://api.jquants.com/v1/listed/info";
 
 #[async_trait]
 impl CompanyRepository for JQuantsAPI {
-    async fn get_companies(&self) -> Result<Vec<Company>> {
+    async fn get_companies(&self) -> Result<Vec<model::Company>> {
         let id_token = self.id_token.as_str();
         let response = Client::new()
             .get(COMPANY_URL)
@@ -46,12 +46,12 @@ impl CompanyRepository for JQuantsAPI {
         };
         let company = companies
             .par_iter()
-            .filter_map(|value| Company::new(value).ok())
+            .filter_map(|value| model::Company::new(value).ok())
             .collect();
         Ok(company)
     }
 
-    async fn get_company(&self, code: &str, _market: &str) -> Result<Company> {
+    async fn get_company(&self, code: &str, _market: &str) -> Result<model::Company> {
         let qs = QueryString::dynamic().with_value("code", code);
         let url = format!("{COMPANY_URL}{qs}");
         let id_token = self.id_token.as_str();
@@ -60,7 +60,7 @@ impl CompanyRepository for JQuantsAPI {
         let company = response["info"]
             .get(0)
             .with_context(|| format!("Not found company. {}", code))?;
-        Company::new(company)
+        model::Company::new(company)
     }
 }
 
@@ -69,7 +69,7 @@ mod tests {
     use anyhow::Result;
     use rstest::*;
 
-    use crate::domain::models::company::model::Company;
+    use crate::domain::models::company::model;
     use crate::domain::repository::company_repository::CompanyRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
@@ -89,7 +89,7 @@ mod tests {
         let data_format = DataFormat::JQuantsAPI;
         let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
         let actual = repository.get_company(code, market).await?;
-        let expected = Company {
+        let expected = model::Company {
             code: "84730".to_string(),
             name: "SBI Holdings,Inc.".to_string(),
             market: "0111".to_string(),
