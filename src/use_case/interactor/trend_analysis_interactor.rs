@@ -13,7 +13,7 @@ use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
 use crate::domain::repositories::company::repository::Company;
-use crate::domain::repositories::statement::repository::StatementRepository;
+use crate::domain::repositories::statement::repository::Statement;
 use crate::domain::repositories::stock_repository::StockRepository;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use crate::use_case::interface::trend_analysis_use_case::{
@@ -49,7 +49,7 @@ impl<'a, SCR, CR, SMR> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, SCR,
 where
     SCR: StockRepository + Sync,
     CR: Company + Sync,
-    SMR: StatementRepository + Sync,
+    SMR: Statement + Sync,
 {
     async fn handle<
         const AFTER_DAYS: usize,

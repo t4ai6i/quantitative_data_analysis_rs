@@ -1,5 +1,5 @@
 use crate::domain::models::statement::model;
-use crate::domain::repositories::statement::repository::StatementRepository;
+use crate::domain::repositories::statement::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use anyhow::{bail, Context};
 use async_trait::async_trait;
@@ -11,7 +11,7 @@ use std::str::FromStr;
 const STATEMENT_URL: &str = "https://api.jquants.com/v1/fins/statements";
 
 #[async_trait]
-impl StatementRepository for JQuantsAPI {
+impl repository::Statement for JQuantsAPI {
     async fn get_statement(&self, code: &str) -> anyhow::Result<model::Statement> {
         let qs = QueryString::dynamic().with_value("code", code);
         let url = format!("{STATEMENT_URL}{qs}");
@@ -55,7 +55,7 @@ impl StatementRepository for JQuantsAPI {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::repositories::statement::repository::StatementRepository;
+    use crate::domain::repositories::statement::repository::Statement;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::utils::jquants_api::setup::Setup;
