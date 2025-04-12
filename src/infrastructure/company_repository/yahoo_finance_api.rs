@@ -1,5 +1,5 @@
 use crate::domain::models::company::model;
-use crate::domain::repository::company_repository::CompanyRepository;
+use crate::domain::repositories::company::repository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 use crate::utils::tryhard::get_common_retry_future_config;
@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use yahoo_finance_api::YQuoteItem;
 
 #[async_trait]
-impl<'a> CompanyRepository for YahooFinanceAPI<'a> {
+impl<'a> repository::Company for YahooFinanceAPI<'a> {
     async fn get_companies(&self) -> Result<Vec<model::Company>> {
         todo!()
     }
@@ -58,7 +58,7 @@ impl From<YQuoteItem> for model::Company {
 通信が安定しないためテストを行わないようにした
 #[cfg(test)]
 mod tests {
-    use crate::domain::repository::company_repository::CompanyRepository;
+    use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
@@ -71,8 +71,8 @@ mod tests {
         let market = "T";
         let data_format = DataFormat::YahooFinanceAPI;
         let provider = YahooConnector::new();
-        let repository = YahooFinanceAPI::new(&provider, data_format);
-        let company = repository.get_company(code, market).await?;
+        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let company = repositories.get_company(code, market).await?;
         assert_eq!(
             company,
             model::Company {
@@ -85,8 +85,8 @@ mod tests {
         let code = "V";
         let market = "";
         let data_format = DataFormat::YahooFinanceAPI;
-        let repository = YahooFinanceAPI::new(&provider, data_format);
-        let company = repository.get_company(code, market).await?;
+        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let company = repositories.get_company(code, market).await?;
         assert_eq!(
             company,
             model::Company {
@@ -106,8 +106,8 @@ mod tests {
         let market = "";
         let provider = YahooConnector::new();
         let data_format = DataFormat::YahooFinanceAPI;
-        let repository = YahooFinanceAPI::new(&provider, data_format);
-        let _ = repository.get_company(code, market).await.unwrap();
+        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let _ = repositories.get_company(code, market).await.unwrap();
     }
 }
  */

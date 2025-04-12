@@ -1,5 +1,5 @@
 use crate::domain::models::statement::model::Statement;
-use crate::domain::repository::statement_repository::StatementRepository;
+use crate::domain::repositories::statement_repository::StatementRepository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use anyhow::{bail, Context};
 use async_trait::async_trait;
@@ -55,7 +55,7 @@ impl StatementRepository for JQuantsAPI {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::repository::statement_repository::StatementRepository;
+    use crate::domain::repositories::statement_repository::StatementRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::utils::jquants_api::setup::Setup;

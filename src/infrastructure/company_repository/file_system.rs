@@ -1,5 +1,5 @@
 use crate::domain::models::company::model;
-use crate::domain::repository::company_repository::CompanyRepository;
+use crate::domain::repositories::company::repository;
 use crate::infrastructure::company_repository::data_format::csv::Csv;
 use crate::infrastructure::company_repository::data_format::tsv::Tsv;
 use crate::infrastructure::data_format::DataFormat;
@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use tokio::fs::read;
 
 #[async_trait]
-impl CompanyRepository for FileSystem {
+impl repository::Company for FileSystem {
     async fn get_companies(&self) -> Result<Vec<model::Company>> {
         todo!()
     }
@@ -68,7 +68,7 @@ impl CompanyRepository for FileSystem {
 #[cfg(test)]
 mod tests {
     use crate::domain::models::company::model;
-    use crate::domain::repository::company_repository::CompanyRepository;
+    use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::company_repository::file_system::FileSystem;
     use crate::infrastructure::data_format::DataFormat;
     use anyhow::{Context, Result};
@@ -76,7 +76,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[tokio::test]
-    async fn get_vec_company_test() -> Result<()> {
+    async fn file_system_test() -> Result<()> {
         let code = "8473";
         let market = "T";
         let file_path = PathBuf::from("./assets/companies.json");
@@ -116,7 +116,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn get_vec_company_invalid_json_test() {
+    fn deserialize_invalid_json_test() {
         let json = br#" {"K": "#;
         let _ = serde_json::from_slice::<Vec<model::Company>>(json)
             .with_context(|| {
@@ -131,7 +131,7 @@ mod tests {
 
     #[tokio::test]
     #[should_panic]
-    async fn get_vec_company_file_read_error_test() {
+    async fn get_company_file_read_error_test() {
         let code = "8473";
         let market = "T";
         let file_path = PathBuf::from("./assets/not_exists.csv");
@@ -145,7 +145,7 @@ mod tests {
 
     #[tokio::test]
     #[should_panic]
-    async fn get_vec_company_not_found_company_error_test() {
+    async fn get_company_not_found_company_error_test() {
         let code = "8473";
         let market = "T";
         let file_path = PathBuf::from("./assets/companies.csv");
@@ -159,7 +159,7 @@ mod tests {
 
     #[tokio::test]
     #[should_panic]
-    async fn get_vec_company_data_format_error_test() {
+    async fn get_company_data_format_error_test() {
         let code = "8473";
         let market = "T";
         let data_format = DataFormat::YahooFinanceAPI;

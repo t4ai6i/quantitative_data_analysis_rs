@@ -9,7 +9,7 @@ use reqwest::Client;
 use std::str::FromStr;
 
 use crate::domain::models::stock::model::{Stock, Stocks};
-use crate::domain::repository::stock_repository::StockRepository;
+use crate::domain::repositories::stock_repository::StockRepository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
 const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
@@ -81,7 +81,7 @@ impl StockRepository for JQuantsAPI {
 }
 #[cfg(test)]
 mod tests {
-    use crate::domain::repository::stock_repository::StockRepository;
+    use crate::domain::repositories::stock_repository::StockRepository;
     use crate::infrastructure::data_format::DataFormat;
     use chrono::NaiveDate;
     use rstest::*;

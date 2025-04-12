@@ -12,9 +12,9 @@ use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
 use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
-use crate::domain::repository::company_repository::CompanyRepository;
-use crate::domain::repository::statement_repository::StatementRepository;
-use crate::domain::repository::stock_repository::StockRepository;
+use crate::domain::repositories::company::repository::Company;
+use crate::domain::repositories::statement_repository::StatementRepository;
+use crate::domain::repositories::stock_repository::StockRepository;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use crate::use_case::interface::trend_analysis_use_case::{
     TrendAnalysisInput, TrendAnalysisUseCase,
@@ -48,7 +48,7 @@ impl<'a, SCR, CR, SMR> TrendAnalysisInteractor<'a, SCR, CR, SMR> {
 impl<'a, SCR, CR, SMR> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, SCR, CR, SMR>
 where
     SCR: StockRepository + Sync,
-    CR: CompanyRepository + Sync,
+    CR: Company + Sync,
     SMR: StatementRepository + Sync,
 {
     async fn handle<

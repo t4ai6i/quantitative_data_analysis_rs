@@ -6,7 +6,7 @@ use reqwest::Client;
 use serde_json::Value;
 
 use crate::domain::models::company::model;
-use crate::domain::repository::company_repository::CompanyRepository;
+use crate::domain::repositories::company::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
 impl model::Company {
@@ -32,7 +32,7 @@ impl model::Company {
 const COMPANY_URL: &str = "https://api.jquants.com/v1/listed/info";
 
 #[async_trait]
-impl CompanyRepository for JQuantsAPI {
+impl repository::Company for JQuantsAPI {
     async fn get_companies(&self) -> Result<Vec<model::Company>> {
         let id_token = self.id_token.as_str();
         let response = Client::new()
@@ -70,7 +70,7 @@ mod tests {
     use rstest::*;
 
     use crate::domain::models::company::model;
-    use crate::domain::repository::company_repository::CompanyRepository;
+    use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::utils::jquants_api::setup::Setup;

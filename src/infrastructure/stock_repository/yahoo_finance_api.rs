@@ -1,6 +1,6 @@
 use crate::domain::models::company::model;
 use crate::domain::models::stock::model::Stocks;
-use crate::domain::repository::stock_repository::StockRepository;
+use crate::domain::repositories::stock_repository::StockRepository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
 use crate::utils::tryhard::get_common_retry_future_config;
@@ -49,7 +49,7 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
 通信が安定しないためテストを行わないようにした
 #[cfg(test)]
 mod tests {
-    use crate::domain::repository::stock_repository::StockRepository;
+    use crate::domain::repositories::stock_repository::StockRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::stock_repository::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
@@ -64,16 +64,16 @@ mod tests {
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
         let data_format = DataFormat::YahooFinanceAPI;
         let provider = YahooConnector::new();
-        let repository = YahooFinanceAPI::new(&provider, data_format);
-        let stocks = repository
+        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let stocks = repositories
             .get_stocks(code, market, start_date, end_date)
             .await?;
         assert_eq!(stocks.len(), 244);
         let code = "V";
         let market = "";
         let data_format = DataFormat::YahooFinanceAPI;
-        let repository = YahooFinanceAPI::new(&provider, data_format);
-        let stocks = repository
+        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let stocks = repositories
             .get_stocks(code, market, start_date, end_date)
             .await?;
         assert_eq!(stocks.len(), 251);
@@ -89,8 +89,8 @@ mod tests {
         let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
         let data_format = DataFormat::YahooFinanceAPI;
-        let repository = YahooFinanceAPI::new(&provider, data_format);
-        let _ = repository
+        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let _ = repositories
             .get_stocks(code, market, start_date, end_date)
             .await
             .unwrap();
