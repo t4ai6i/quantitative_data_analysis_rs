@@ -1,6 +1,6 @@
 use crate::domain::models::company::model;
 use crate::domain::models::stock::model::Stocks;
-use crate::domain::repositories::stock_repository::StockRepository;
+use crate::domain::repositories::stock::repository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
 use crate::utils::tryhard::get_common_retry_future_config;
@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use chrono::NaiveDate;
 
 #[async_trait]
-impl<'a> StockRepository for YahooFinanceAPI<'a> {
+impl<'a> repository::Stock for YahooFinanceAPI<'a> {
     async fn get_stocks(
         &self,
         code: &str,
@@ -32,7 +32,7 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
             let vec_stock = y_response
                 .quotes()
                 .map(Stocks::from)
-                .with_context(|| format!("Failed mapping quotes into VecStock: {}", &symbol))?;
+                .with_context(|| format!("Failed mapping quotes into Stocks: {}", &symbol))?;
             Ok(vec_stock)
         } else {
             bail!(format!(
@@ -49,7 +49,7 @@ impl<'a> StockRepository for YahooFinanceAPI<'a> {
 通信が安定しないためテストを行わないようにした
 #[cfg(test)]
 mod tests {
-    use crate::domain::repositories::stock_repository::StockRepository;
+    use crate::domain::repositories::stock::repository::StockRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::stock_repository::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
@@ -96,4 +96,4 @@ mod tests {
             .unwrap();
     }
 }
-*/
+ */

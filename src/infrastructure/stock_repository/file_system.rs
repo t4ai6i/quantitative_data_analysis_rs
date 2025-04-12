@@ -1,5 +1,5 @@
 use crate::domain::models::stock::model::Stocks;
-use crate::domain::repositories::stock_repository::StockRepository;
+use crate::domain::repositories::stock::repository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
 use crate::infrastructure::from_slice::FromSlice;
@@ -11,14 +11,14 @@ use std::backtrace::Backtrace;
 use tokio::fs::read;
 
 #[async_trait]
-impl StockRepository for FileSystem {
+impl repository::Stock for FileSystem {
     ///
     /// # Examples
     ///
     /// ```
     /// use std::path::PathBuf;
     /// use chrono::NaiveDate;
-    /// use quantitative_data_analysis_rs::domain::repositories::stock_repository::StockRepository;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
     /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
     ///
@@ -72,7 +72,7 @@ impl StockRepository for FileSystem {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::repositories::stock_repository::StockRepository;
+    use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::stock_repository::file_system::FileSystem;
     use anyhow::Result;

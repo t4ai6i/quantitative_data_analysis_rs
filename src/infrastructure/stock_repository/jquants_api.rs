@@ -8,21 +8,22 @@ use query_string_builder::QueryString;
 use reqwest::Client;
 use std::str::FromStr;
 
-use crate::domain::models::stock::model::{Stock, Stocks};
-use crate::domain::repositories::stock_repository::StockRepository;
+use crate::domain::models::stock::model;
+use crate::domain::models::stock::model::Stocks;
+use crate::domain::repositories::stock::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
 const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
 
 #[async_trait]
-impl StockRepository for JQuantsAPI {
+impl repository::Stock for JQuantsAPI {
     async fn get_stocks(
         &self,
         code: &str,
         _market: &str,
         start_date: NaiveDate,
         end_date: NaiveDate,
-    ) -> anyhow::Result<Stocks> {
+    ) -> anyhow::Result<model::Stocks> {
         let qs = QueryString::dynamic()
             .with_value("code", code)
             .with_value("from", start_date.to_string())
@@ -35,7 +36,7 @@ impl StockRepository for JQuantsAPI {
             .send()
             .await?;
         let response = &mut response.json::<serde_json::Value>().await?;
-        let vec_stock: Vec<Stock> = response["daily_quotes"]
+        let vec_stock: Vec<model::Stock> = response["daily_quotes"]
             .as_array()
             .with_context(|| format!("daily_quotes is empty. code = {}", code))?
             .par_iter()
@@ -59,7 +60,7 @@ impl StockRepository for JQuantsAPI {
                     ) => {
                         let date = NaiveDate::from_str(date).unwrap_or(NaiveDate::default());
                         let volume = volume.to_u64().unwrap();
-                        let stock = Stock {
+                        let stock = model::Stock {
                             date,
                             open,
                             high,
@@ -81,7 +82,7 @@ impl StockRepository for JQuantsAPI {
 }
 #[cfg(test)]
 mod tests {
-    use crate::domain::repositories::stock_repository::StockRepository;
+    use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::data_format::DataFormat;
     use chrono::NaiveDate;
     use rstest::*;
