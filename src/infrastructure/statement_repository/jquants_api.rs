@@ -1,5 +1,5 @@
-use crate::domain::models::statement::model::Statement;
-use crate::domain::repositories::statement_repository::StatementRepository;
+use crate::domain::models::statement::model;
+use crate::domain::repositories::statement::repository::StatementRepository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use anyhow::{bail, Context};
 use async_trait::async_trait;
@@ -12,7 +12,7 @@ const STATEMENT_URL: &str = "https://api.jquants.com/v1/fins/statements";
 
 #[async_trait]
 impl StatementRepository for JQuantsAPI {
-    async fn get_statement(&self, code: &str) -> anyhow::Result<Statement> {
+    async fn get_statement(&self, code: &str) -> anyhow::Result<model::Statement> {
         let qs = QueryString::dynamic().with_value("code", code);
         let url = format!("{STATEMENT_URL}{qs}");
         let id_token = self.id_token.as_str();
@@ -41,7 +41,7 @@ impl StatementRepository for JQuantsAPI {
                 let eps = earnings_per_share.parse::<f64>().ok()?;
                 let book_value_per_share = book_value_per_share?;
                 let bps = book_value_per_share.parse::<f64>().ok()?;
-                Some(Statement {
+                Some(model::Statement {
                     code: code.to_string(),
                     disclosed_date,
                     eps,
@@ -49,13 +49,13 @@ impl StatementRepository for JQuantsAPI {
                 })
             })
             .last()
-            .with_context(|| format!("struct Statement couldn't construct. code: {}", code))
+            .with_context(|| format!("struct model::Statement couldn't construct. code: {}", code))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::repositories::statement_repository::StatementRepository;
+    use crate::domain::repositories::statement::repository::StatementRepository;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::utils::jquants_api::setup::Setup;

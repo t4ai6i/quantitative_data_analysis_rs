@@ -1,3 +1,3 @@
 pub mod company;
-pub mod statement_repository;
+pub mod statement;
 pub mod stock_repository;
