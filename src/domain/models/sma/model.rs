@@ -51,7 +51,7 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     /// # Examples
     /// ```
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     ///

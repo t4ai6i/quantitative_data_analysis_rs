@@ -3,7 +3,7 @@ use crate::domain::repositories::stock::repository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
 use crate::infrastructure::from_slice::FromSlice;
-use crate::infrastructure::stock_repository::data_format::csv::Csv;
+use crate::infrastructure::repositories::stock::data_format::csv::Csv;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use chrono::NaiveDate;
@@ -63,9 +63,9 @@ impl repository::Stock for FileSystem {
             }
             _ => vec![],
         };
+
         let mut stocks = Stocks::default();
         stocks.extend(vec_stock);
-
         Ok(stocks)
     }
 }
@@ -74,7 +74,7 @@ impl repository::Stock for FileSystem {
 mod tests {
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::data_format::DataFormat;
-    use crate::infrastructure::stock_repository::file_system::FileSystem;
+    use crate::infrastructure::repositories::stock::file_system::FileSystem;
     use anyhow::Result;
     use chrono::NaiveDate;
     use std::path::PathBuf;

@@ -23,7 +23,7 @@ impl repository::Stock for JQuantsAPI {
         _market: &str,
         start_date: NaiveDate,
         end_date: NaiveDate,
-    ) -> anyhow::Result<model::Stocks> {
+    ) -> anyhow::Result<Stocks> {
         let qs = QueryString::dynamic()
             .with_value("code", code)
             .with_value("from", start_date.to_string())

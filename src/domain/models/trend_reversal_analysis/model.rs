@@ -116,7 +116,7 @@ mod tests {
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
     use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::stock_repository::data_format::csv::Csv;
+    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
     use chrono::NaiveDate;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");

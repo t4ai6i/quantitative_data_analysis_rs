@@ -39,7 +39,7 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// use quantitative_data_analysis_rs::domain::models::macps::model::MACPS;
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListTrio, SMAs};
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     ///
     /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///

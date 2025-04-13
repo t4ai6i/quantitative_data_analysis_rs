@@ -59,7 +59,7 @@ impl FromSlice for Csv {
 mod tests {
     use super::*;
     use crate::infrastructure::from_slice::FromSlice;
-    const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
+    const CSV_8473: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
 
     #[test]
     fn vec_stock_test() {

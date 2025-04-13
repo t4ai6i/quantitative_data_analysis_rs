@@ -181,7 +181,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListPair, SMAs};
     /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     ///
     /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///

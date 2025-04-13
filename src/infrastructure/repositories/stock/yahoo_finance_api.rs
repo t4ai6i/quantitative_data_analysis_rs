@@ -1,12 +1,14 @@
+use rayon::prelude::*;
+
 use crate::domain::models::company::model;
-use crate::domain::models::stock::model::Stocks;
+use crate::domain::models::stock::model::{Stock, Stocks};
 use crate::domain::repositories::stock::repository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
 use crate::utils::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 
 #[async_trait]
 impl<'a> repository::Stock for YahooFinanceAPI<'a> {
@@ -17,31 +19,56 @@ impl<'a> repository::Stock for YahooFinanceAPI<'a> {
         start_date: NaiveDate,
         end_date: NaiveDate,
     ) -> Result<Stocks> {
-        if let DataFormat::YahooFinanceAPI = self.data_format {
-            let symbol = model::Company::symbol(code, market);
-            let start_date = OffsetDateTimeWrapper::from(start_date);
-            let end_date = OffsetDateTimeWrapper::from(end_date);
-            let retry_future_config = get_common_retry_future_config();
-            let y_response = tryhard::retry_fn(|| {
-                self.provider
-                    .get_quote_history(&symbol, start_date.0, end_date.0)
-            })
-            .with_config(retry_future_config)
-            .await
-            .with_context(|| format!("Failed fetching symbol: {}", &symbol))?;
-            let vec_stock = y_response
-                .quotes()
-                .map(Stocks::from)
-                .with_context(|| format!("Failed mapping quotes into Stocks: {}", &symbol))?;
-            Ok(vec_stock)
-        } else {
-            bail!(format!(
+        if self.data_format.ne(&DataFormat::YahooFinanceAPI) {
+            bail!(
                 "Unsupported data format: {:?} at {}:{}",
                 self.data_format,
                 file!(),
                 line!()
-            ));
+            );
         }
+        let symbol = model::Company::symbol(code, market);
+        let start_date = OffsetDateTimeWrapper::from(start_date);
+        let end_date = OffsetDateTimeWrapper::from(end_date);
+        let retry_future_config = get_common_retry_future_config();
+        let y_response = tryhard::retry_fn(|| {
+            self.provider
+                .get_quote_history(&symbol, start_date.0, end_date.0)
+        });
+        let y_response = y_response
+            .with_config(retry_future_config)
+            .await
+            .with_context(|| {
+                format!(
+                    "Failed get_quote_history(). symbol: {}, start_date: {}, end_date: {}",
+                    &symbol,
+                    &start_date.0.to_string(),
+                    &end_date.0.to_string()
+                )
+            })?;
+
+        let vec_stock: Vec<Stock> = y_response
+            .quotes()
+            .with_context(|| format!("Failed fetching quotes: {}", &symbol))?
+            .par_iter()
+            .map(|quote| {
+                let date =
+                    NaiveDateTime::from_timestamp_opt(quote.timestamp as u32 as i64, 0).unwrap();
+                Stock {
+                    date: date.date(),
+                    open: quote.open,
+                    high: quote.high,
+                    low: quote.low,
+                    close: quote.close,
+                    adj_close: quote.adjclose,
+                    volume: quote.volume,
+                }
+            })
+            .collect();
+
+        let mut stocks = Stocks::default();
+        stocks.extend(vec_stock);
+        Ok(stocks)
     }
 }
 
@@ -49,12 +76,12 @@ impl<'a> repository::Stock for YahooFinanceAPI<'a> {
 通信が安定しないためテストを行わないようにした
 #[cfg(test)]
 mod tests {
-    use crate::domain::repositories::stock::repository::StockRepository;
+    use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::data_format::DataFormat;
-    use crate::infrastructure::stock_repository::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
     use chrono::NaiveDate;
     use yahoo_finance_api::YahooConnector;
+    use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 
     #[tokio::test]
     async fn get_vec_stock_test() -> Result<()> {

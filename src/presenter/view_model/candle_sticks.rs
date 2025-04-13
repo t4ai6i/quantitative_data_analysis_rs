@@ -13,7 +13,7 @@ impl<const N: usize> CandleSticksExt for CandleSticks<N> {
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     /// use crate::quantitative_data_analysis_rs::presenter::view_model::candle_sticks::CandleSticksExt;
     ///
     /// const CSV: &[u8] = include_bytes!("../../../assets/9223.T.csv");

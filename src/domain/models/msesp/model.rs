@@ -45,7 +45,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::msesp::model::MSESPes;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     ///
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
@@ -88,7 +88,7 @@ mod tests {
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::domain::models::msesp::model::MSESPes;
     use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::stock_repository::data_format::csv::Csv;
+    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
     use chrono::NaiveDate;
     use rayon::prelude::*;
 

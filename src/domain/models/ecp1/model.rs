@@ -41,7 +41,7 @@ impl From<&[Stock]> for ECP1s {
     /// ```
     /// use quantitative_data_analysis_rs::domain::models::ecp1::model::ECP1s;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     ///
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
@@ -83,7 +83,7 @@ mod tests {
     };
     use crate::domain::models::ecp1::model::ECP1s;
     use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::stock_repository::data_format::csv::Csv;
+    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
 
     const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
 
