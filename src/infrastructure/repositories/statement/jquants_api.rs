@@ -5,6 +5,7 @@ use anyhow::{bail, Context};
 use async_trait::async_trait;
 use chrono::NaiveDate;
 use query_string_builder::QueryString;
+use rayon::prelude::*;
 use reqwest::Client;
 use std::str::FromStr;
 
@@ -25,7 +26,7 @@ impl repository::Statement for JQuantsAPI {
         // 上記の条件を満たしているもので最新を選択。API Docに以下の記述があるため、日付でのソートは行っていない。
         // 「DisclosureNumber: APIから出力されるjsonは開示番号で昇順に並んでいます。」
         response
-            .iter()
+            .par_iter()
             .filter_map(|statement| {
                 let disclosed_date = statement["DisclosedDate"].as_str();
                 let type_of_current_period = statement["TypeOfCurrentPeriod"].as_str();
@@ -48,7 +49,7 @@ impl repository::Statement for JQuantsAPI {
                     bps,
                 })
             })
-            .last()
+            .reduce_with(|_a, b| b)
             .with_context(|| format!("struct model::Statement couldn't construct. code: {}", code))
     }
 }
