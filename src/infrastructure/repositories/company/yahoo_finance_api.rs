@@ -1,11 +1,30 @@
+use rayon::prelude::*;
+
 use crate::domain::models::company::model;
 use crate::domain::repositories::company::repository;
-use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 use crate::utils::tryhard::get_common_retry_future_config;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Error, Result};
 use async_trait::async_trait;
 use yahoo_finance_api::YQuoteItem;
+
+impl TryFrom<YQuoteItem> for model::Company {
+    type Error = Error;
+
+    fn try_from(value: YQuoteItem) -> std::result::Result<Self, Self::Error> {
+        let code = value
+            .symbol
+            .split('.')
+            .next()
+            .with_context(|| format!("Cannot split quote.symbol: {}", value.symbol))?;
+        Ok(model::Company {
+            code: code.to_owned(),
+            name: value.long_name,
+            market: value.exchange,
+            symbol: value.symbol,
+        })
+    }
+}
 
 #[async_trait]
 impl<'a> repository::Company for YahooFinanceAPI<'a> {
@@ -14,43 +33,18 @@ impl<'a> repository::Company for YahooFinanceAPI<'a> {
     }
 
     async fn get_company(&self, code: &str, market: &str) -> Result<model::Company> {
-        if let DataFormat::YahooFinanceAPI = self.data_format {
-            let name = model::Company::symbol(code, market);
-            let retry_future_config = get_common_retry_future_config();
-            let y_search_result = tryhard::retry_fn(|| self.provider.search_ticker(&name))
-                .with_config(retry_future_config)
-                .await
-                .with_context(|| format!("Failed fetching code: {}", code))?;
-            let quotes = y_search_result.quotes;
-            quotes
-                .into_iter()
-                .find(|quote| quote.symbol.eq(&name))
-                .map(model::Company::from)
-                .with_context(|| format!("Code fetching from yahoo! finance not exist: {}", code))
-        } else {
-            bail!(format!(
-                "Unsupported data format: {:?} at {}:{}",
-                self.data_format,
-                file!(),
-                line!()
-            ));
-        }
-    }
-}
-
-impl From<YQuoteItem> for model::Company {
-    fn from(value: YQuoteItem) -> Self {
-        let mut split = value.symbol.split('.');
-        let code = split
-            .next()
-            .with_context(|| format!("Unknown symbol: {}", value.symbol))
-            .unwrap();
-        model::Company {
-            code: code.to_string(),
-            name: value.long_name,
-            market: value.exchange,
-            symbol: value.symbol,
-        }
+        let name = model::Company::symbol(code, market);
+        let retry_future_config = get_common_retry_future_config();
+        let quotes = tryhard::retry_fn(|| self.provider.search_ticker(&name))
+            .with_config(retry_future_config)
+            .await
+            .with_context(|| format!("Failed fetching code: {}", code))?
+            .quotes;
+        let quote = quotes
+            .into_par_iter()
+            .find_first(|quote| quote.symbol.eq(&name))
+            .with_context(|| format!("Not found company: {}", &name))?;
+        TryFrom::try_from(quote)
     }
 }
 

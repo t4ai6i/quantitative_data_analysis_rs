@@ -74,7 +74,7 @@ mod tests {
         let token = setup.await?;
         let code = "8473";
         let data_format = DataFormat::JQuantsAPI;
-        let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
+        let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
         let actual = repository.get_statement(code).await;
         assert!(actual.is_ok());
         Ok(())

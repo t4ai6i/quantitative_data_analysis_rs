@@ -35,7 +35,7 @@ impl FromSlice for Tsv {
 mod tests {
     use super::*;
     use crate::infrastructure::from_slice::FromSlice;
-    const COMPANIES: &[u8] = include_bytes!("../../../../assets/companies.tsv");
+    const COMPANIES: &[u8] = include_bytes!("../../../../../assets/companies.tsv");
 
     #[test]
     fn vec_company_test() {

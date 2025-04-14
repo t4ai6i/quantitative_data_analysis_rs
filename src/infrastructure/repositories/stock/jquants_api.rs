@@ -103,7 +103,7 @@ mod tests {
         let start_date = NaiveDate::from_ymd_opt(2023, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2023, 12, 31).unwrap();
         let data_format = DataFormat::JQuantsAPI;
-        let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
+        let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
         let stocks = repository
             .get_stocks(code, market, start_date, end_date)
             .await?;

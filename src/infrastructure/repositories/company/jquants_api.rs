@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Context, Error, Result};
 use async_trait::async_trait;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
@@ -9,8 +9,13 @@ use crate::domain::models::company::model;
 use crate::domain::repositories::company::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
-impl model::Company {
-    fn new(value: &Value) -> Result<Self> {
+struct Response<'a>(&'a Value);
+
+impl TryFrom<Response<'_>> for model::Company {
+    type Error = Error;
+
+    fn try_from(value: Response<'_>) -> std::result::Result<Self, Self::Error> {
+        let Response(value) = value;
         let code = value["Code"]
             .as_str()
             .with_context(|| "[Code] not found".to_string())?;
@@ -46,7 +51,7 @@ impl repository::Company for JQuantsAPI {
         };
         let company = companies
             .par_iter()
-            .filter_map(|value| model::Company::new(value).ok())
+            .filter_map(|value| TryFrom::try_from(Response(value)).ok())
             .collect();
         Ok(company)
     }
@@ -57,10 +62,10 @@ impl repository::Company for JQuantsAPI {
         let id_token = self.id_token.as_str();
         let response = Client::new().get(url).bearer_auth(id_token).send().await?;
         let response = &response.json::<Value>().await?;
-        let company = response["info"]
+        let value = response["info"]
             .get(0)
             .with_context(|| format!("Not found company. {}", code))?;
-        model::Company::new(company)
+        TryFrom::try_from(Response(value))
     }
 }
 
@@ -87,7 +92,7 @@ mod tests {
         let code = "8473";
         let market = "T";
         let data_format = DataFormat::JQuantsAPI;
-        let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
+        let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
         let actual = repository.get_company(code, market).await?;
         let expected = model::Company {
             code: "84730".to_string(),
@@ -104,7 +109,7 @@ mod tests {
     async fn get_companies_test(#[future] setup: Result<Token>) -> Result<()> {
         let token = setup.await?;
         let data_format = DataFormat::JQuantsAPI;
-        let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
+        let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
         let company = repository.get_companies().await;
         assert!(company.is_ok());
         Ok(())

@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
 
     // JQUANTS APIを用いたレポジトリの準備
     let data_format = DataFormat::JQuantsAPI;
-    let repository = JQuantsAPI::new(&token.id_token.value, data_format)?;
+    let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
 
     // StockRepositoryとCompanyRepositoryは、JQuantsAPIを用いる
     let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);

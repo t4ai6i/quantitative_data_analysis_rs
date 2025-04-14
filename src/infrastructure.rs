@@ -1,4 +1,3 @@
-pub mod company_repository;
 pub mod data_format;
 pub mod file_system;
 pub mod from_slice;

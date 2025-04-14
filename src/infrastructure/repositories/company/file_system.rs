@@ -1,10 +1,12 @@
+use rayon::prelude::*;
+
 use crate::domain::models::company::model;
 use crate::domain::repositories::company::repository;
-use crate::infrastructure::company_repository::data_format::csv::Csv;
-use crate::infrastructure::company_repository::data_format::tsv::Tsv;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
 use crate::infrastructure::from_slice::FromSlice;
+use crate::infrastructure::repositories::company::data_format::csv::Csv;
+use crate::infrastructure::repositories::company::data_format::tsv::Tsv;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use tokio::fs::read;
@@ -59,8 +61,8 @@ impl repository::Company for FileSystem {
             _ => vec![],
         };
         companies
-            .into_iter()
-            .find(|company| company.code.eq(code))
+            .into_par_iter()
+            .find_first(|company| company.code.eq(code))
             .with_context(|| format!("Not found company: {} at {}:{}", code, file!(), line!()))
     }
 }
@@ -69,8 +71,8 @@ impl repository::Company for FileSystem {
 mod tests {
     use crate::domain::models::company::model;
     use crate::domain::repositories::company::repository::Company;
-    use crate::infrastructure::company_repository::file_system::FileSystem;
     use crate::infrastructure::data_format::DataFormat;
+    use crate::infrastructure::repositories::company::file_system::FileSystem;
     use anyhow::{Context, Result};
     use std::backtrace::Backtrace;
     use std::path::PathBuf;

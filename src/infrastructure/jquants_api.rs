@@ -91,7 +91,7 @@ pub struct JQuantsAPI {
 }
 
 impl JQuantsAPI {
-    pub fn new(id_token: impl Into<String>, data_format: DataFormat) -> Result<Self> {
+    pub fn new(id_token: String, data_format: DataFormat) -> Result<Self> {
         if data_format.ne(&DataFormat::JQuantsAPI) {
             bail!(
                 "Unsupported data format: {:?} at {}:{}",
@@ -101,7 +101,7 @@ impl JQuantsAPI {
             );
         }
         Ok(Self {
-            id_token: Into::into(id_token),
+            id_token,
             data_format,
         })
     }
@@ -134,10 +134,10 @@ impl JQuantsAPI {
         let response = Client::new().post(auth_refresh_url).send().await?;
         let body = response.bytes().await?;
         let id_token: serde_json::Value = serde_json::from_slice(&body)?;
-        let id_token = id_token["idToken"].to_string();
+        let id_token = id_token["idToken"].as_str().unwrap();
         let now = Utc::now().with_timezone(&Tokyo).naive_local();
         Ok(IdToken {
-            value: id_token,
+            value: id_token.to_string(),
             expires_in: now.checked_add_days(Days::new(1)).unwrap(),
         })
     }
