@@ -50,7 +50,12 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let vec_stock = Csv::from_slice::<true>(CSV_9223);
+    /// let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_9223)
+    ///     .into_iter()
+    ///     .partition(Result::is_ok);
+    /// let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
+    /// let vec_stock = Csv::from_deserialize(successes);
+    /// let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
     /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// let _ = MSESPes::from(candle_sticks.as_slice());
     /// ```
@@ -97,7 +102,12 @@ mod tests {
 
     #[test]
     fn from_test() {
-        let vec_stock = Csv::from_slice::<true>(CSV_8473);
+        let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_8473)
+            .into_iter()
+            .partition(Result::is_ok);
+        let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
+        let vec_stock = Csv::from_deserialize(successes);
+        let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
         let candle_sticks =
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
         let MSESPes(vec_msesp) = MSESPes::from(candle_sticks.as_slice());

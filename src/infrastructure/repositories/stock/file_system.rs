@@ -4,11 +4,10 @@ use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
 use crate::infrastructure::from_slice::FromSlice;
 use crate::infrastructure::repositories::stock::data_format::csv::Csv;
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use chrono::NaiveDate;
 use std::backtrace::Backtrace;
-use tokio::fs::read;
 
 #[async_trait]
 impl repository::Stock for FileSystem {
@@ -40,32 +39,20 @@ impl repository::Stock for FileSystem {
     /// }
     /// ```
     async fn get_stocks(&self, _: &str, _: &str, _: NaiveDate, _: NaiveDate) -> Result<Stocks> {
-        let DataFormat::CSV { ref file_path, .. } = self.data_format else {
-            bail!(format!(
+        let file = self.read_file().await?;
+        let mut vec_stock = match self.data_format {
+            DataFormat::CSV { has_headers, .. } if has_headers => {
+                Csv::process_tabular_data(&file, has_headers)?
+            }
+            _ => bail!(
                 "Unsupported data format: {:?}\n{}",
                 self.data_format,
                 Backtrace::force_capture()
-            ));
-        };
-        let file = read(file_path).await.with_context(|| {
-            format!(
-                "File not found: {:?}). \n{}",
-                file_path,
-                Backtrace::force_capture()
-            )
-        })?;
-        let vec_stock = match self.data_format {
-            DataFormat::CSV { has_headers, .. } if has_headers => {
-                Csv::from_slice::<true>(file.as_slice())
-            }
-            DataFormat::CSV { has_headers, .. } if !has_headers => {
-                Csv::from_slice::<false>(file.as_slice())
-            }
-            _ => vec![],
+            ),
         };
 
         let mut stocks = Stocks::default();
-        stocks.extend(vec_stock);
+        std::mem::swap(&mut vec_stock, &mut stocks);
         Ok(stocks)
     }
 }

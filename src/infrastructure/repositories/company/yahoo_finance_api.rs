@@ -2,6 +2,7 @@ use rayon::prelude::*;
 
 use crate::domain::models::company::model;
 use crate::domain::repositories::company::repository;
+use crate::infrastructure::symbol::Symbol;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 use crate::utils::tryhard::get_common_retry_future_config;
 use anyhow::{Context, Error, Result};
@@ -33,17 +34,17 @@ impl<'a> repository::Company for YahooFinanceAPI<'a> {
     }
 
     async fn get_company(&self, code: &str, market: &str) -> Result<model::Company> {
-        let name = model::Company::symbol(code, market);
+        let symbol = Symbol::try_from((code, market))?;
         let retry_future_config = get_common_retry_future_config();
-        let quotes = tryhard::retry_fn(|| self.provider.search_ticker(&name))
+        let quotes = tryhard::retry_fn(|| self.provider.search_ticker(&symbol))
             .with_config(retry_future_config)
             .await
             .with_context(|| format!("Failed fetching code: {}", code))?
             .quotes;
         let quote = quotes
             .into_par_iter()
-            .find_first(|quote| quote.symbol.eq(&name))
-            .with_context(|| format!("Not found company: {}", &name))?;
+            .find_first(|quote| quote.symbol.eq(symbol.as_str()))
+            .with_context(|| format!("Not found company: {}", symbol.as_str()))?;
         TryFrom::try_from(quote)
     }
 }

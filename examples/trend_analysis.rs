@@ -139,7 +139,7 @@ async fn main() -> Result<()> {
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
     let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);
 
-    // TODO: 実行時間が長くなるのでコメントアウト
+    // 実行時間が長くなるのでコメントアウト
     // let presenter =
     //     trend_analysis_presenter::chart::Chart::new("chalk", 2560.0, 720.0, DATE_FORMAT);
     // let controller = TrendAnalysisController::new(&interactor, &presenter);

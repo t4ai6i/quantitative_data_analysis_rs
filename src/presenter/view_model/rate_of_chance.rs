@@ -37,7 +37,12 @@ mod tests {
 
     #[test]
     fn table_chart_summary_test() -> Result<()> {
-        let vec_stock = Csv::from_slice::<true>(CSV_8473);
+        let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_8473)
+            .into_iter()
+            .partition(Result::is_ok);
+        let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
+        let vec_stock = Csv::from_deserialize(successes);
+        let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
         let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
         let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
         let sma_list_pair = SMAListPair {

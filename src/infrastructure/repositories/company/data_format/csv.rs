@@ -1,5 +1,7 @@
 use crate::domain::models::company::model::Company;
 use crate::infrastructure::from_slice::{DataFormat, FromSlice};
+use crate::infrastructure::symbol::Symbol;
+use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -16,18 +18,20 @@ pub struct Csv {
     pub day_before: String,
 }
 
-impl From<Csv> for Company {
-    fn from(value: Csv) -> Self {
+impl TryFrom<Csv> for Company {
+    type Error = Error;
+
+    fn try_from(value: Csv) -> Result<Self, Self::Error> {
         let Csv {
             code, name, market, ..
         } = value;
-        let symbol = Self::symbol(&code, &market);
-        Self {
+        let mut symbol = Symbol::try_from((code.as_str(), market.as_str()))?;
+        Ok(Self {
             code,
             name,
             market,
-            symbol,
-        }
+            symbol: std::mem::take(&mut symbol),
+        })
     }
 }
 

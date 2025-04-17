@@ -1,9 +1,9 @@
 use rayon::prelude::*;
 
-use crate::domain::models::company::model;
 use crate::domain::models::stock::model::{Stock, Stocks};
 use crate::domain::repositories::stock::repository;
 use crate::infrastructure::data_format::DataFormat;
+use crate::infrastructure::symbol::Symbol;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
 use crate::utils::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
@@ -27,7 +27,7 @@ impl<'a> repository::Stock for YahooFinanceAPI<'a> {
                 line!()
             );
         }
-        let symbol = model::Company::symbol(code, market);
+        let symbol = Symbol::try_from((code, market))?;
         let start_date = OffsetDateTimeWrapper::from(start_date);
         let end_date = OffsetDateTimeWrapper::from(end_date);
         let retry_future_config = get_common_retry_future_config();
@@ -41,7 +41,7 @@ impl<'a> repository::Stock for YahooFinanceAPI<'a> {
             .with_context(|| {
                 format!(
                     "Failed get_quote_history(). symbol: {}, start_date: {}, end_date: {}",
-                    &symbol,
+                    symbol.as_str(),
                     &start_date.0.to_string(),
                     &end_date.0.to_string()
                 )
@@ -49,7 +49,7 @@ impl<'a> repository::Stock for YahooFinanceAPI<'a> {
 
         let vec_stock: Vec<Stock> = y_response
             .quotes()
-            .with_context(|| format!("Failed fetching quotes: {}", &symbol))?
+            .with_context(|| format!("Failed fetching quotes: {}", symbol.as_str()))?
             .par_iter()
             .map(|quote| {
                 let date =

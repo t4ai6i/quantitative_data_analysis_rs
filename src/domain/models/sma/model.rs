@@ -59,7 +59,13 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     /// const DAYS_5: usize = 5;
     /// const DAYS_25: usize = 25;
     ///
-    /// let vec_stock = Csv::from_slice::<true>(CSV_8473);
+    /// let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_8473)
+    ///     .into_iter()
+    ///     .partition(Result::is_ok);
+    /// let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
+    /// let vec_stock = Csv::from_deserialize(successes);
+    /// let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
+    ///
     /// let smas_5 = SMAs::<DAYS_5>::from(vec_stock.as_slice());
     /// assert_eq!(smas_5.len(), 242);
     ///

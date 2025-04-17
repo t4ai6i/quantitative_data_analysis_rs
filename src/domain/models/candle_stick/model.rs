@@ -40,7 +40,6 @@ pub struct CandleStick<const N: usize> {
     pub is_doji: bool,
 }
 
-// TODO: Move to domain/services/candle_stick/service.rs, because it is a service layer.
 impl<const N: usize> CandleStick<N> {
     fn get_size(high: f64, low: f64) -> f64 {
         high - low
@@ -154,11 +153,16 @@ impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     ///
-    /// const CSV_9233: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
+    /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let stocks  = Csv::from_slice::<true>(CSV_9233);
-    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
+    /// let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_9223)
+    ///     .into_iter()
+    ///     .partition(Result::is_ok);
+    /// let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
+    /// let vec_stock = Csv::from_deserialize(successes);
+    /// let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
+    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// assert_eq!(candle_sticks.len(), 35);
     /// ```
     fn try_from(value: &[Stock]) -> Result<Self, Self::Error> {

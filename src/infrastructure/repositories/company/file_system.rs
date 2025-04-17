@@ -1,4 +1,5 @@
 use rayon::prelude::*;
+use std::backtrace::Backtrace;
 
 use crate::domain::models::company::model;
 use crate::domain::repositories::company::repository;
@@ -9,7 +10,6 @@ use crate::infrastructure::repositories::company::data_format::csv::Csv;
 use crate::infrastructure::repositories::company::data_format::tsv::Tsv;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use tokio::fs::read;
 
 #[async_trait]
 impl repository::Company for FileSystem {
@@ -18,52 +18,34 @@ impl repository::Company for FileSystem {
     }
 
     async fn get_company(&self, code: &str, _: &str) -> Result<model::Company> {
-        let file_path = match self.data_format {
-            DataFormat::JSON { ref file_path } => file_path,
-            DataFormat::CSV { ref file_path, .. } => file_path,
-            DataFormat::TSV { ref file_path, .. } => file_path,
-            _ => {
-                bail!(format!(
-                    "Unsupported data format: {:?} at {}:{}",
+        let file = self.read_file().await?;
+        let companies = if let DataFormat::JSON { .. } = self.data_format {
+            serde_json::from_slice::<Vec<model::Company>>(&file)?
+        } else {
+            match self.data_format {
+                DataFormat::CSV { has_headers, .. } => {
+                    Csv::process_tabular_data(&file, has_headers)?
+                }
+                DataFormat::TSV { has_headers, .. } => {
+                    Tsv::process_tabular_data(&file, has_headers)?
+                }
+                _ => bail!(
+                    "Unsupported data format: {:?}\n{}",
                     self.data_format,
-                    file!(),
-                    line!()
-                ));
+                    Backtrace::force_capture()
+                ),
             }
-        };
-        let file = read(file_path).await.with_context(|| {
-            format!("File not found: {:?} at {}:{}", file_path, file!(), line!())
-        })?;
-        let companies = match self.data_format {
-            DataFormat::JSON { .. } => serde_json::from_slice::<Vec<model::Company>>(&file)
-                .with_context(|| {
-                    format!(
-                        "Invalid JSON: {:?} at {}:{}",
-                        String::from_utf8_lossy(&file),
-                        file!(),
-                        line!()
-                    )
-                })?,
-            DataFormat::CSV { has_headers, .. } => {
-                if has_headers {
-                    Csv::from_slice::<true>(file.as_slice())
-                } else {
-                    Csv::from_slice::<false>(file.as_slice())
-                }
-            }
-            DataFormat::TSV { has_headers, .. } => {
-                if has_headers {
-                    Tsv::from_slice::<true>(file.as_slice())
-                } else {
-                    Tsv::from_slice::<false>(file.as_slice())
-                }
-            }
-            _ => vec![],
         };
         companies
             .into_par_iter()
             .find_first(|company| company.code.eq(code))
-            .with_context(|| format!("Not found company: {} at {}:{}", code, file!(), line!()))
+            .with_context(|| {
+                format!(
+                    "Not found company: {}\n{}",
+                    code,
+                    Backtrace::force_capture()
+                )
+            })
     }
 }
 
@@ -73,8 +55,7 @@ mod tests {
     use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::repositories::company::file_system::FileSystem;
-    use anyhow::{Context, Result};
-    use std::backtrace::Backtrace;
+    use anyhow::Result;
     use std::path::PathBuf;
 
     #[tokio::test]
@@ -120,15 +101,7 @@ mod tests {
     #[should_panic]
     fn deserialize_invalid_json_test() {
         let json = br#" {"K": "#;
-        let _ = serde_json::from_slice::<Vec<model::Company>>(json)
-            .with_context(|| {
-                format!(
-                    "Invalid JSON: {:?}). \n{}",
-                    String::from_utf8_lossy(json),
-                    Backtrace::force_capture()
-                )
-            })
-            .unwrap();
+        let _ = serde_json::from_slice::<Vec<model::Company>>(json).unwrap();
     }
 
     #[tokio::test]
