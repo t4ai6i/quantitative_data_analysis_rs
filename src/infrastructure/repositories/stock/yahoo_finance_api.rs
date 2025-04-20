@@ -5,7 +5,7 @@ use crate::domain::repositories::stock::repository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::symbol::Symbol;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
-use crate::utils::tryhard::get_common_retry_future_config;
+use crate::shared::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use chrono::{NaiveDate, NaiveDateTime};

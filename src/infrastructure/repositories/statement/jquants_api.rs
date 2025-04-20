@@ -59,7 +59,7 @@ mod tests {
     use crate::domain::repositories::statement::repository::Statement;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
-    use crate::utils::jquants_api::setup::Setup;
+    use crate::shared::jquants_api::setup::Setup;
     use anyhow::Result;
     use rstest::*;
 

@@ -1,7 +1,7 @@
 use crate::domain::models::macos::model::Pattern;
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
-use crate::utils::custom_date_format;
+use crate::shared::custom_date_format;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 

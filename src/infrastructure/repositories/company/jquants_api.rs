@@ -78,7 +78,7 @@ mod tests {
     use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
-    use crate::utils::jquants_api::setup::Setup;
+    use crate::shared::jquants_api::setup::Setup;
 
     #[fixture]
     async fn setup() -> Result<Token> {

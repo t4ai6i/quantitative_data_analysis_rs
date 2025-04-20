@@ -1,6 +1,6 @@
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
 use crate::domain::models::trend_reversal_analysis::model;
-use crate::utils::custom_date_format;
+use crate::shared::custom_date_format;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 

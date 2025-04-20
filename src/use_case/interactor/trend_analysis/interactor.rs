@@ -16,9 +16,9 @@ use crate::domain::repositories::company::repository::Company;
 use crate::domain::repositories::statement::repository::Statement;
 use crate::domain::repositories::stock::repository::Stock;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
+use crate::shared::iterator::{FromEnd, VecT};
 use crate::use_case::interface::trend_analysis::input;
 use crate::use_case::interface::trend_analysis::use_case;
-use crate::utils::iterator::{FromEnd, VecT};
 use anyhow::Result;
 use async_trait::async_trait;
 

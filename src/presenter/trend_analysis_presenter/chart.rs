@@ -19,7 +19,7 @@ use crate::presenter::{
         stocks::StocksExt,
     },
 };
-use crate::utils::float;
+use crate::shared::float;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Chart {

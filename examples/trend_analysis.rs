@@ -12,8 +12,8 @@ use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::TrendAna
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter;
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter::TrendSummaryResponse;
 use quantitative_data_analysis_rs::presenter::view_model::analysis::Analysis;
+use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::use_case::interactor;
-use quantitative_data_analysis_rs::utils::jquants_api::setup::Setup;
 
 const AFTER_DAYS_5: usize = 5;
 const FROM_END_DAYS_7: isize = 7;

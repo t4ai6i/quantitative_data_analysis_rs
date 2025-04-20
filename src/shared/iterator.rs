@@ -21,7 +21,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use quantitative_data_analysis_rs::utils::iterator::{FromEnd, VecT};
+    /// use quantitative_data_analysis_rs::shared::iterator::{FromEnd, VecT};
     /// let vec = vec![0, 1, 2, 3, 4];
     /// let vec = VecT(vec.as_slice());
     /// let actual = vec.get_from_end(0);
@@ -42,7 +42,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::iterator::{FromEnd, VecT};
+    use crate::shared::iterator::{FromEnd, VecT};
 
     #[test]
     fn from_end_test() {

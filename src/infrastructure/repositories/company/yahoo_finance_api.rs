@@ -4,7 +4,7 @@ use crate::domain::models::company::model;
 use crate::domain::repositories::company::repository;
 use crate::infrastructure::symbol::Symbol;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
-use crate::utils::tryhard::get_common_retry_future_config;
+use crate::shared::tryhard::get_common_retry_future_config;
 use anyhow::{Context, Error, Result};
 use async_trait::async_trait;
 use yahoo_finance_api::YQuoteItem;

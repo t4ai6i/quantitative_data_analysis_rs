@@ -88,7 +88,7 @@ mod tests {
     use rstest::*;
 
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
-    use crate::utils::jquants_api::setup::Setup;
+    use crate::shared::jquants_api::setup::Setup;
 
     #[fixture]
     async fn setup() -> anyhow::Result<Token> {

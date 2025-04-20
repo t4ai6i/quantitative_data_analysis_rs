@@ -1,7 +1,7 @@
 use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross, Neither};
 use crate::domain::models::macos::model::{AnalysisPattern, Pattern, PatternRateOfChangePair};
 use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
-use crate::utils::float::percentage;
+use crate::shared::float::percentage;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
