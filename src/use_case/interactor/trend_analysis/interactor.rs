@@ -16,7 +16,7 @@ use crate::domain::repositories::company::repository::Company;
 use crate::domain::repositories::statement::repository::Statement;
 use crate::domain::repositories::stock::repository::Stock;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
-use crate::shared::iterator::{FromEnd, VecT};
+use crate::shared::iterator::{FromEnd, SliceWrapper};
 use crate::use_case::interface::trend_analysis::input;
 use crate::use_case::interface::trend_analysis::use_case;
 use anyhow::Result;
@@ -95,7 +95,8 @@ where
         };
         let macps = MACPS::from((stocks.as_slice(), sma_list_trio));
 
-        let stocks_from_end_days = VecT(stocks.as_slice()).get_from_end(FROM_END_DAYS);
+        let stocks_from_end_days =
+            SliceWrapper::from(stocks.as_slice()).get_from_end(FROM_END_DAYS);
         let ecp1s = ECP1s::from(stocks_from_end_days.as_slice());
 
         let stocks_macoses_pair = StocksMACOSESPair {
@@ -111,7 +112,7 @@ where
         let candle_sticks =
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks_from_end_days.as_slice())?;
         let candle_sticks_from_end_days =
-            VecT(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
+            SliceWrapper::from(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
         let ecp2s = ECP2s::from(candle_sticks_from_end_days.as_slice());
         let msespes = MSESPes::from(candle_sticks_from_end_days.as_slice());
         // 相場転換を分析
