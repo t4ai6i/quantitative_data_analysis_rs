@@ -16,23 +16,22 @@ use crate::domain::repositories::company::repository::Company;
 use crate::domain::repositories::statement::repository::Statement;
 use crate::domain::repositories::stock::repository::Stock;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
-use crate::use_case::interface::trend_analysis_use_case::{
-    TrendAnalysisInput, TrendAnalysisUseCase,
-};
+use crate::use_case::interface::trend_analysis::input;
+use crate::use_case::interface::trend_analysis::use_case;
 use crate::utils::iterator::{FromEnd, VecT};
 use anyhow::Result;
 use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct TrendAnalysisInteractor<'a, SCR, CR, SMR> {
-    stock_repository: &'a SCR,
+pub struct TrendAnalysis<'a, SR, CR, SMR> {
+    stock_repository: &'a SR,
     company_repository: &'a CR,
     statement_repository: &'a SMR,
 }
 
-impl<'a, SCR, CR, SMR> TrendAnalysisInteractor<'a, SCR, CR, SMR> {
+impl<'a, SR, CR, SMR> TrendAnalysis<'a, SR, CR, SMR> {
     pub fn new(
-        stock_repository: &'a SCR,
+        stock_repository: &'a SR,
         company_repository: &'a CR,
         statement_repository: &'a SMR,
     ) -> Self {
@@ -45,9 +44,9 @@ impl<'a, SCR, CR, SMR> TrendAnalysisInteractor<'a, SCR, CR, SMR> {
 }
 
 #[async_trait]
-impl<'a, SCR, CR, SMR> TrendAnalysisUseCase for TrendAnalysisInteractor<'a, SCR, CR, SMR>
+impl<'a, SR, CR, SMR> use_case::TrendAnalysis for TrendAnalysis<'a, SR, CR, SMR>
 where
-    SCR: Stock + Sync,
+    SR: Stock + Sync,
     CR: Company + Sync,
     SMR: Statement + Sync,
 {
@@ -57,7 +56,7 @@ where
         const MARUBOZU_MIN_RATE: usize,
     >(
         &self,
-        input: TrendAnalysisInput,
+        input: input::TrendAnalysis,
     ) -> Result<TrendAnalysisOutput<AFTER_DAYS, MARUBOZU_MIN_RATE>> {
         let company = self
             .company_repository

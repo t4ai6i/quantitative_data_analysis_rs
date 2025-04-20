@@ -3,8 +3,7 @@ use chrono::NaiveDate;
 use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
-use quantitative_data_analysis_rs::controller::trend_analysis_controller::TrendAnalysisController;
-use quantitative_data_analysis_rs::controller::trend_summary_controller::TrendSummaryController;
+use quantitative_data_analysis_rs::controller;
 use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
 use quantitative_data_analysis_rs::infrastructure::jquants_api::JQuantsAPI;
 use quantitative_data_analysis_rs::presenter::display_macos_pattern::DisplayMACOSPattern;
@@ -13,8 +12,7 @@ use quantitative_data_analysis_rs::presenter::trend_analysis_presenter::TrendAna
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter;
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter::TrendSummaryResponse;
 use quantitative_data_analysis_rs::presenter::view_model::analysis::Analysis;
-use quantitative_data_analysis_rs::use_case::interactor::trend_analysis_interactor::TrendAnalysisInteractor;
-use quantitative_data_analysis_rs::use_case::interactor::trend_summary_interactor::TrendSummaryInteractor;
+use quantitative_data_analysis_rs::use_case::interactor;
 use quantitative_data_analysis_rs::utils::jquants_api::setup::Setup;
 
 const AFTER_DAYS_5: usize = 5;
@@ -32,12 +30,17 @@ async fn main() -> Result<()> {
     let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
 
     // StockRepositoryとCompanyRepositoryは、JQuantsAPIを用いる
-    let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);
+    let interactor = interactor::trend_analysis::interactor::TrendAnalysis::new(
+        &repository,
+        &repository,
+        &repository,
+    );
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter =
         trend_analysis_presenter::chart::Chart::new("chalk", 2560.0, 720.0, DATE_FORMAT);
     // 指定された証券コードのトレンド解析を行う
-    let controller = TrendAnalysisController::new(&interactor, &presenter);
+    let controller =
+        controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis_response = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "8473",
@@ -67,10 +70,15 @@ async fn main() -> Result<()> {
     // };
 
     // 運用では、NocoDBで取り扱えるJSON形式でトレンド解析とサマリーを出力する
-    let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);
+    let interactor = interactor::trend_analysis::interactor::TrendAnalysis::new(
+        &repository,
+        &repository,
+        &repository,
+    );
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_analysis_presenter::json::JSON;
-    let controller = TrendAnalysisController::new(&interactor, &presenter);
+    let controller =
+        controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis_response = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "8473",
@@ -81,11 +89,12 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = TrendSummaryInteractor;
+    let interactor = interactor::trend_summary::interactor::TrendSummary;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_summary_presenter::json::JSON;
-    let controller = TrendSummaryController::new(&interactor, &presenter);
+    let controller =
+        controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
     if let TrendSummaryResponse::JSON { data } = controller
         .analyze(vec_trend_analysis_response, DisplayMACOSPattern::All)
         .await?
@@ -137,7 +146,11 @@ async fn main() -> Result<()> {
     };
 
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
-    let interactor = TrendAnalysisInteractor::new(&repository, &repository, &repository);
+    let interactor = interactor::trend_analysis::interactor::TrendAnalysis::new(
+        &repository,
+        &repository,
+        &repository,
+    );
 
     // 実行時間が長くなるのでコメントアウト
     // let presenter =
@@ -157,7 +170,8 @@ async fn main() -> Result<()> {
     // }
 
     let presenter = trend_analysis_presenter::json::JSON;
-    let controller = TrendAnalysisController::new(&interactor, &presenter);
+    let controller =
+        controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis_response = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "9223",
@@ -168,10 +182,11 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = TrendSummaryInteractor;
+    let interactor = interactor::trend_summary::interactor::TrendSummary;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     let presenter = trend_summary_presenter::json::JSON;
-    let controller = TrendSummaryController::new(&interactor, &presenter);
+    let controller =
+        controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
 
     if let TrendSummaryResponse::JSON { data } = controller
         .analyze(vec_trend_analysis_response, DisplayMACOSPattern::All)

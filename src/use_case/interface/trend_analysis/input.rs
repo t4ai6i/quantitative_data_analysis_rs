@@ -1,12 +1,8 @@
-use anyhow::Result;
-use async_trait::async_trait;
+use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use chrono::NaiveDate;
 
-use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
-use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
-
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
-pub struct TrendAnalysisInput {
+pub struct TrendAnalysis {
     pub code: String,
     pub market: String,
     pub start_date: NaiveDate,
@@ -14,7 +10,7 @@ pub struct TrendAnalysisInput {
     pub display_macos_pattern: DisplayMACOSPattern,
 }
 
-impl TrendAnalysisInput {
+impl TrendAnalysis {
     pub fn new(
         code: impl Into<String>,
         market: impl Into<String>,
@@ -30,16 +26,4 @@ impl TrendAnalysisInput {
             display_macos_pattern,
         }
     }
-}
-
-#[async_trait]
-pub trait TrendAnalysisUseCase {
-    async fn handle<
-        const AFTER_DAYS: usize,
-        const FROM_END_DAYS: isize,
-        const MARUBOZU_MIN_RATE: usize,
-    >(
-        &self,
-        input: TrendAnalysisInput,
-    ) -> Result<TrendAnalysisOutput<AFTER_DAYS, MARUBOZU_MIN_RATE>>;
 }

@@ -1,2 +1,2 @@
-pub mod trend_analysis_interactor;
-pub mod trend_summary_interactor;
+pub mod trend_analysis;
+pub mod trend_summary;
