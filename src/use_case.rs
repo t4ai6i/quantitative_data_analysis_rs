@@ -1,2 +1,2 @@
-pub mod interactor;
-pub mod interface;
+pub mod interactors;
+pub mod interfaces;

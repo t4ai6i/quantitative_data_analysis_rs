@@ -3,8 +3,8 @@ use chrono::NaiveDate;
 
 use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
 use crate::presenter::trend_analysis_presenter::{TrendAnalysisPresenter, TrendAnalysisResponse};
-use crate::use_case::interface::trend_analysis::input;
-use crate::use_case::interface::trend_analysis::use_case;
+use crate::use_case::interfaces::trend_analysis::input;
+use crate::use_case::interfaces::trend_analysis::use_case;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysis<'a, I, P> {

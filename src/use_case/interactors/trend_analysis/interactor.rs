@@ -15,8 +15,8 @@ use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis
 use crate::domain::repositories;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use crate::shared::iterator::{FromEnd, SliceWrapper};
-use crate::use_case::interface::trend_analysis::input;
-use crate::use_case::interface::trend_analysis::use_case;
+use crate::use_case::interfaces::trend_analysis::input;
+use crate::use_case::interfaces::trend_analysis::use_case;
 use anyhow::Result;
 use async_trait::async_trait;
 

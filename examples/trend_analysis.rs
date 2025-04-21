@@ -13,7 +13,7 @@ use quantitative_data_analysis_rs::presenter::trend_summary_presenter;
 use quantitative_data_analysis_rs::presenter::trend_summary_presenter::TrendSummaryResponse;
 use quantitative_data_analysis_rs::presenter::view_model::analysis::Analysis;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
-use quantitative_data_analysis_rs::use_case::interactor;
+use quantitative_data_analysis_rs::use_case::interactors;
 
 const AFTER_DAYS_5: usize = 5;
 const FROM_END_DAYS_7: isize = 7;
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
     let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
 
     // StockRepositoryとCompanyRepositoryは、JQuantsAPIを用いる
-    let interactor = interactor::trend_analysis::interactor::TrendAnalysis::new(
+    let interactor = interactors::trend_analysis::interactor::TrendAnalysis::new(
         &repository,
         &repository,
         &repository,
@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
     // };
 
     // 運用では、NocoDBで取り扱えるJSON形式でトレンド解析とサマリーを出力する
-    let interactor = interactor::trend_analysis::interactor::TrendAnalysis::new(
+    let interactor = interactors::trend_analysis::interactor::TrendAnalysis::new(
         &repository,
         &repository,
         &repository,
@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = interactor::trend_summary::interactor::TrendSummary;
+    let interactor = interactors::trend_summary::interactor::TrendSummary;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = trend_summary_presenter::json::JSON;
@@ -146,7 +146,7 @@ async fn main() -> Result<()> {
     };
 
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
-    let interactor = interactor::trend_analysis::interactor::TrendAnalysis::new(
+    let interactor = interactors::trend_analysis::interactor::TrendAnalysis::new(
         &repository,
         &repository,
         &repository,
@@ -182,7 +182,7 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = interactor::trend_summary::interactor::TrendSummary;
+    let interactor = interactors::trend_summary::interactor::TrendSummary;
     let vec_trend_analysis_response = vec![trend_analysis_response];
     let presenter = trend_summary_presenter::json::JSON;
     let controller =

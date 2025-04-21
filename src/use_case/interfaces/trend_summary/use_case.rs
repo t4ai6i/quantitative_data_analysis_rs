@@ -1,5 +1,5 @@
 use crate::presenter::trend_summary_presenter::TrendSummaryOutput;
-use crate::use_case::interface::trend_summary::input;
+use crate::use_case::interfaces::trend_summary::input;
 use anyhow::Result;
 use async_trait::async_trait;
 
