@@ -12,9 +12,7 @@ use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
 use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
-use crate::domain::repositories::company::repository::Company;
-use crate::domain::repositories::statement::repository::Statement;
-use crate::domain::repositories::stock::repository::Stock;
+use crate::domain::repositories;
 use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
 use crate::shared::iterator::{FromEnd, SliceWrapper};
 use crate::use_case::interface::trend_analysis::input;
@@ -46,9 +44,9 @@ impl<'a, SR, CR, SMR> TrendAnalysis<'a, SR, CR, SMR> {
 #[async_trait]
 impl<'a, SR, CR, SMR> use_case::TrendAnalysis for TrendAnalysis<'a, SR, CR, SMR>
 where
-    SR: Stock + Sync,
-    CR: Company + Sync,
-    SMR: Statement + Sync,
+    SR: repositories::stock::repository::Stock + Sync,
+    CR: repositories::company::repository::Company + Sync,
+    SMR: repositories::statement::repository::Statement + Sync,
 {
     async fn handle<
         const AFTER_DAYS: usize,
