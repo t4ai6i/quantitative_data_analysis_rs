@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::backtrace::Backtrace;
 
 use anyhow::{Context, Result};
@@ -5,19 +6,16 @@ use charts_rs::{
     Align, BarChart, Box, CandlestickChart, ChildChart, Color, LegendCategory, MultiChart, Series,
     SeriesCategory, TableChart,
 };
-use itertools::Itertools;
 
 use crate::domain::models::macos::model::Pattern;
-use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
-use crate::presenter::{
-    trend_analysis_presenter::{
-        TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
-    },
-    view_model::{
-        candle_sticks::CandleSticksExt, macos_analysis_closes::MACOSAnalysisClosesExt,
-        macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSesExt, smas::SMAsExt,
-        stocks::StocksExt,
-    },
+use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::presenters::trend_analysis::output;
+use crate::presenter::presenters::trend_analysis::presenter;
+use crate::presenter::presenters::trend_analysis::response;
+use crate::presenter::view_model::{
+    candle_sticks::CandleSticksExt, macos_analysis_closes::MACOSAnalysisClosesExt,
+    macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSesExt, smas::SMAsExt,
+    stocks::StocksExt,
 };
 use crate::shared::float;
 
@@ -45,11 +43,11 @@ impl Chart {
     }
 }
 
-impl TrendAnalysisPresenter for Chart {
+impl presenter::TrendAnalysis for Chart {
     fn handle<const N: usize, const M: usize>(
         &self,
-        output: TrendAnalysisOutput<N, M>,
-    ) -> Result<TrendAnalysisResponse> {
+        output: output::TrendAnalysis<N, M>,
+    ) -> Result<response::TrendAnalysis> {
         let mut charts = MultiChart::new();
         charts.margin = 5.0.into();
 
@@ -60,16 +58,16 @@ impl TrendAnalysisPresenter for Chart {
         let ohlcs: Vec<f32> = output
             .stocks
             .collect_ohlc()
-            .iter()
+            .par_iter()
             .map(|value| *value as _)
-            .collect_vec();
+            .collect();
         let min = float::min(&ohlcs) - 10.0;
         let max = float::max(&ohlcs) + 10.0;
 
         let x_axis_data_days = output.stocks.collect_date_string(self.date_format.as_str());
 
-        let series_list = match output.display_macos_pattern {
-            DisplayMACOSPattern::All => {
+        let series_list = match output.macos_pattern_filter {
+            MACOSPatternFilter::All => {
                 let dead_macoses = output
                     .macoses
                     .collect_vec_sma_25_close_macos(Pattern::DeadCross);
@@ -85,7 +83,7 @@ impl TrendAnalysisPresenter for Chart {
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
-            DisplayMACOSPattern::GoldenOnly => {
+            MACOSPatternFilter::GoldenOnly => {
                 let golden_macoses = output
                     .macoses
                     .collect_vec_sma_25_close_macos(Pattern::GoldenCross);
@@ -97,7 +95,7 @@ impl TrendAnalysisPresenter for Chart {
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
-            DisplayMACOSPattern::DeadOnly => {
+            MACOSPatternFilter::DeadOnly => {
                 let dead_macoses = output
                     .macoses
                     .collect_vec_sma_25_close_macos(Pattern::DeadCross);
@@ -128,18 +126,18 @@ impl TrendAnalysisPresenter for Chart {
         candlestick_chart.series_list[1].start_index = 25;
         candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[2].start_index = 50;
-        match output.display_macos_pattern {
-            DisplayMACOSPattern::All => {
+        match output.macos_pattern_filter {
+            MACOSPatternFilter::All => {
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
                 candlestick_chart.series_list[4].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[4].start_index = 6;
             }
-            DisplayMACOSPattern::GoldenOnly => {
+            MACOSPatternFilter::GoldenOnly => {
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
             }
-            DisplayMACOSPattern::DeadOnly => {
+            MACOSPatternFilter::DeadOnly => {
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
             }
@@ -158,12 +156,12 @@ impl TrendAnalysisPresenter for Chart {
         let volumes: Vec<f32> = output
             .stocks
             .collect_volume()
-            .iter()
+            .par_iter()
             .map(|value| *value as _)
-            .collect_vec();
+            .collect();
 
-        let series_list = match output.display_macos_pattern {
-            DisplayMACOSPattern::All => {
+        let series_list = match output.macos_pattern_filter {
+            MACOSPatternFilter::All => {
                 let dead_macoses = output
                     .macoses
                     .collect_vec_sma_25_volume_macos(Pattern::DeadCross);
@@ -178,7 +176,7 @@ impl TrendAnalysisPresenter for Chart {
                     Series::from(("Volume", volumes)),
                 ]
             }
-            DisplayMACOSPattern::GoldenOnly => {
+            MACOSPatternFilter::GoldenOnly => {
                 let golden_macoses = output
                     .macoses
                     .collect_vec_sma_25_volume_macos(Pattern::GoldenCross);
@@ -189,7 +187,7 @@ impl TrendAnalysisPresenter for Chart {
                     Series::from(("Volume", volumes)),
                 ]
             }
-            DisplayMACOSPattern::DeadOnly => {
+            MACOSPatternFilter::DeadOnly => {
                 let dead_macoses = output
                     .macoses
                     .collect_vec_sma_25_volume_macos(Pattern::DeadCross);
@@ -210,18 +208,18 @@ impl TrendAnalysisPresenter for Chart {
         volume_chart.series_list[0].start_index = 5;
         volume_chart.series_list[1].category = Some(SeriesCategory::Line);
         volume_chart.series_list[1].start_index = 25;
-        match output.display_macos_pattern {
-            DisplayMACOSPattern::All => {
+        match output.macos_pattern_filter {
+            MACOSPatternFilter::All => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
                 volume_chart.series_list[3].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[3].start_index = 6;
             }
-            DisplayMACOSPattern::GoldenOnly => {
+            MACOSPatternFilter::GoldenOnly => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
             }
-            DisplayMACOSPattern::DeadOnly => {
+            MACOSPatternFilter::DeadOnly => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
             }
@@ -231,10 +229,10 @@ impl TrendAnalysisPresenter for Chart {
         let mut rows = output.macos_analysis_closes.table_chart_header();
         let mut body = output
             .macos_analysis_closes
-            .table_chart_rows(&output.display_macos_pattern);
+            .table_chart_rows(&output.macos_pattern_filter);
         rows.append(&mut body);
         let rate_of_chance = output.macos_analysis_closes.rate_of_chance();
-        let mut summary = rate_of_chance.table_chart_summary(&output.display_macos_pattern);
+        let mut summary = rate_of_chance.table_chart_summary(&output.macos_pattern_filter);
         rows.append(&mut summary);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "CloseCrossTrendAnalysis".to_string();
@@ -244,7 +242,7 @@ impl TrendAnalysisPresenter for Chart {
         let mut rows = output.macos_analysis_volumes.table_chart_header();
         let mut body = output
             .macos_analysis_volumes
-            .table_chart_rows(&output.display_macos_pattern);
+            .table_chart_rows(&output.macos_pattern_filter);
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "VolumeCrossTrendAnalysis".to_string();
@@ -266,15 +264,12 @@ impl TrendAnalysisPresenter for Chart {
         table_chart.width = self.width;
         charts.add(ChildChart::Table(table_chart, None));
 
-        // ECP1/ECP2の結果をテーブルで表示
-        // output.vec_ecp2
-
-        Ok(TrendAnalysisResponse::Chart {
+        Ok(response::TrendAnalysis::Chart {
             company,
             body: charts
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
-            display_macos_pattern: output.display_macos_pattern,
+            macos_pattern_filter: output.macos_pattern_filter,
             rate_of_chance: output.rate_of_chance,
             latest_chance: output.latest_chance,
         })

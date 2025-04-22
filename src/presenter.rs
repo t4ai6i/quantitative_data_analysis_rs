@@ -1,4 +1,3 @@
-pub mod display_macos_pattern;
-pub mod trend_analysis_presenter;
-pub mod trend_summary_presenter;
+pub mod macos_pattern_filter;
+pub mod presenters;
 pub mod view_model;

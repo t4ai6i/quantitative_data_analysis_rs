@@ -1,13 +1,13 @@
 use crate::domain::models::macos_analysis::close::model::RateOfChance;
-use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 
 impl RateOfChance {
-    pub fn to_string(&self, display_macos_pattern: &DisplayMACOSPattern) -> String {
-        let rate_of_chance = display_macos_pattern.get_rate_of_chance(self);
+    pub fn to_string(&self, macos_pattern_filter: &MACOSPatternFilter) -> String {
+        let rate_of_chance = macos_pattern_filter.get_rate_of_chance(self);
         format!("{:.0}%", rate_of_chance)
     }
 
-    pub fn table_chart_summary(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
+    pub fn table_chart_summary(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>> {
         let rate_of_chance = self.to_string(pattern);
         vec![vec![
             "".to_string(),
@@ -30,7 +30,7 @@ mod tests {
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::repositories::stock::data_format::csv::Csv;
-    use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+    use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 
     const CSV_8473: &[u8] = include_bytes!("../../../assets/8473.T.csv");
     const AFTER_DAYS: usize = 5;
@@ -56,7 +56,7 @@ mod tests {
         };
         let macos_analysis_closes = MACOSAnalysisCloses::<AFTER_DAYS>::from(&stocks_macoses_pair);
         let rate_of_chance = macos_analysis_closes.rate_of_chance();
-        let summary = rate_of_chance.table_chart_summary(&DisplayMACOSPattern::All);
+        let summary = rate_of_chance.table_chart_summary(&MACOSPatternFilter::All);
         assert_eq!(
             summary,
             vec![vec![
@@ -68,7 +68,7 @@ mod tests {
                 "".to_string(),
             ]]
         );
-        let summary = rate_of_chance.table_chart_summary(&DisplayMACOSPattern::GoldenOnly);
+        let summary = rate_of_chance.table_chart_summary(&MACOSPatternFilter::GoldenOnly);
         assert_eq!(
             summary,
             vec![vec![
@@ -80,7 +80,7 @@ mod tests {
                 "".to_string(),
             ]]
         );
-        let summary = rate_of_chance.table_chart_summary(&DisplayMACOSPattern::DeadOnly);
+        let summary = rate_of_chance.table_chart_summary(&MACOSPatternFilter::DeadOnly);
         assert_eq!(
             summary,
             vec![vec![

@@ -1,6 +1,6 @@
 use crate::domain::models::macos::model::Pattern;
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
-use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::shared::custom_date_format;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
@@ -13,13 +13,13 @@ pub struct MACOSAnalysis {
     pub rate_of_chance: f64,
 }
 
-impl From<(DisplayMACOSPattern, RateOfChance, LatestChance)> for MACOSAnalysis {
-    fn from(value: (DisplayMACOSPattern, RateOfChance, LatestChance)) -> Self {
-        let (display_macos_pattern, rate_of_chance, latest_chance) = value;
-        let latest_chance = display_macos_pattern.get_latest_chance(&latest_chance);
+impl From<(MACOSPatternFilter, RateOfChance, LatestChance)> for MACOSAnalysis {
+    fn from(value: (MACOSPatternFilter, RateOfChance, LatestChance)) -> Self {
+        let (macos_pattern_filter, rate_of_chance, latest_chance) = value;
+        let latest_chance = macos_pattern_filter.get_latest_chance(&latest_chance);
         let pattern = Pattern::from(latest_chance);
         let latest_chance = NaiveDate::from(latest_chance);
-        let rate_of_chance = display_macos_pattern.get_rate_of_chance(&rate_of_chance);
+        let rate_of_chance = macos_pattern_filter.get_rate_of_chance(&rate_of_chance);
         Self {
             pattern,
             latest_chance,

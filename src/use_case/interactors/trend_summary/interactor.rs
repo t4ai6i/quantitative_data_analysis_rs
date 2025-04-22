@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 
-use crate::presenter::trend_summary_presenter::TrendSummaryOutput;
+use crate::presenter::presenters::trend_summary::output;
 use crate::use_case::interfaces::trend_summary::input;
 use crate::use_case::interfaces::trend_summary::use_case;
 
@@ -10,7 +10,7 @@ pub struct TrendSummary;
 
 #[async_trait]
 impl use_case::TrendSummary for TrendSummary {
-    async fn handle(&self, input: input::TrendSummary) -> Result<TrendSummaryOutput> {
-        Ok(TrendSummaryOutput::new(input.vec_trend_analysis_response))
+    async fn handle(&self, input: input::TrendSummary) -> Result<output::TrendSummary> {
+        Ok(output::TrendSummary::new(input.vec_trend_analysis_response))
     }
 }

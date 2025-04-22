@@ -1,11 +1,11 @@
 use crate::domain::models::macos::model::AnalysisPattern;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
-use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use rayon::prelude::*;
 
 pub trait MACOSAnalysisClosesExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
-    fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>>;
+    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>>;
 }
 
 impl<const N: usize> MACOSAnalysisClosesExt for MACOSAnalysisCloses<N> {
@@ -20,7 +20,7 @@ impl<const N: usize> MACOSAnalysisClosesExt for MACOSAnalysisCloses<N> {
         ]]
     }
 
-    fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
+    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>> {
         self.par_iter()
             .filter(|macos_analysis_close| {
                 pattern.is_display_by_macos_pattern(&macos_analysis_close.pattern)

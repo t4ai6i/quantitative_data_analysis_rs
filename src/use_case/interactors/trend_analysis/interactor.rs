@@ -13,7 +13,7 @@ use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
 use crate::domain::repositories;
-use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
+use crate::presenter::presenters::trend_analysis::output;
 use crate::shared::iterator::{FromEnd, SliceWrapper};
 use crate::use_case::interfaces::trend_analysis::input;
 use crate::use_case::interfaces::trend_analysis::use_case;
@@ -55,7 +55,7 @@ where
     >(
         &self,
         input: input::TrendAnalysis,
-    ) -> Result<TrendAnalysisOutput<AFTER_DAYS, MARUBOZU_MIN_RATE>> {
+    ) -> Result<output::TrendAnalysis<AFTER_DAYS, MARUBOZU_MIN_RATE>> {
         let company = self
             .company_repository
             .get_company(input.code.as_str(), input.market.as_str())
@@ -126,7 +126,7 @@ where
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };
         let indicator_analysis = IndicatorAnalysis::from(indicator_analysis_set);
 
-        let output = TrendAnalysisOutput {
+        let output = output::TrendAnalysis {
             company,
             stocks,
             smas_5,
@@ -141,7 +141,7 @@ where
             candle_sticks,
             trend_reversal_analysis,
             indicator_analysis,
-            display_macos_pattern: input.display_macos_pattern,
+            macos_pattern_filter: input.macos_pattern_filter,
         };
         Ok(output)
     }

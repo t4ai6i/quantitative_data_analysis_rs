@@ -1,18 +1,18 @@
-use crate::presenter::trend_analysis_presenter::{
-    TrendAnalysisOutput, TrendAnalysisPresenter, TrendAnalysisResponse,
-};
+use crate::presenter::presenters::trend_analysis::output;
+use crate::presenter::presenters::trend_analysis::presenter;
+use crate::presenter::presenters::trend_analysis::response;
 use anyhow::Result;
 
 pub struct JSON;
 
-impl TrendAnalysisPresenter for JSON {
+impl presenter::TrendAnalysis for JSON {
     fn handle<const N: usize, const M: usize>(
         &self,
-        output: TrendAnalysisOutput<N, M>,
-    ) -> Result<TrendAnalysisResponse> {
-        Ok(TrendAnalysisResponse::Json {
+        output: output::TrendAnalysis<N, M>,
+    ) -> Result<response::TrendAnalysis> {
+        Ok(response::TrendAnalysis::Json {
             company: output.company,
-            display_macos_pattern: output.display_macos_pattern,
+            macos_pattern_filter: output.macos_pattern_filter,
             rate_of_chance: output.rate_of_chance,
             latest_chance: output.latest_chance,
             ecp1s: output.ecp1s,

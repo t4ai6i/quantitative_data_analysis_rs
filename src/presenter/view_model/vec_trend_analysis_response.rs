@@ -1,13 +1,13 @@
 use crate::domain::models::company::model::Company;
 use crate::domain::models::macos::model::Pattern;
-use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
+use crate::presenter::presenters::trend_analysis::response::TrendAnalysis;
 use crate::presenter::view_model::analysis::Analysis;
 use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
 use crate::presenter::view_model::trend_reversal_analysis::TrendReversalAnalysis;
 use itertools::Itertools;
 
-pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysisResponse>);
+pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysis>);
 
 pub trait VecTrendAnalysisResponseExt {
     fn table_chart_rows(self) -> Vec<Vec<String>>;
@@ -19,18 +19,18 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
         self.0
             .into_iter()
             .filter_map(|response| match response {
-                TrendAnalysisResponse::Chart {
+                TrendAnalysis::Chart {
                     company,
-                    display_macos_pattern,
+                    macos_pattern_filter,
                     rate_of_chance,
                     latest_chance,
                     ..
                 } => {
                     let Company { code, symbol, .. } = company;
-                    let latest_chance = display_macos_pattern.get_latest_chance(&latest_chance);
+                    let latest_chance = macos_pattern_filter.get_latest_chance(&latest_chance);
                     let macos = Pattern::from(latest_chance).to_string();
                     let latest_chance = latest_chance.to_string();
-                    let rate_of_chance = rate_of_chance.to_string(&display_macos_pattern);
+                    let rate_of_chance = rate_of_chance.to_string(&macos_pattern_filter);
                     Some(vec![code, symbol, macos, latest_chance, rate_of_chance])
                 }
                 _ => None,
@@ -42,9 +42,9 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
         self.0
             .into_iter()
             .filter_map(|response| match response {
-                TrendAnalysisResponse::Json {
+                TrendAnalysis::Json {
                     company,
-                    display_macos_pattern,
+                    macos_pattern_filter,
                     rate_of_chance,
                     latest_chance,
                     ecp1s,
@@ -53,7 +53,7 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 } => {
                     let Company { code, symbol, .. } = company;
                     let macos_analysis =
-                        MACOSAnalysis::from((display_macos_pattern, rate_of_chance, latest_chance));
+                        MACOSAnalysis::from((macos_pattern_filter, rate_of_chance, latest_chance));
                     let ecp1_analysis = BuySellSignalAnalysis::from(ecp1s.as_slice());
                     let trend_reversal_analysis =
                         TrendReversalAnalysis::from(trend_reversal_analysis);

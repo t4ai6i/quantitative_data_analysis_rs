@@ -1,8 +1,8 @@
 use anyhow::Result;
 
-use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
-use crate::presenter::trend_analysis_presenter::TrendAnalysisResponse;
-use crate::presenter::trend_summary_presenter::{TrendSummaryPresenter, TrendSummaryResponse};
+use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::presenters::trend_summary::presenter;
+use crate::presenter::presenters::{trend_analysis, trend_summary};
 use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
 use crate::use_case::interfaces::trend_summary::input;
 use crate::use_case::interfaces::trend_summary::use_case;
@@ -16,7 +16,7 @@ pub struct TrendSummary<'a, I, P> {
 impl<'a, I, P> TrendSummary<'a, I, P>
 where
     I: use_case::TrendSummary,
-    P: TrendSummaryPresenter,
+    P: presenter::TrendSummary,
 {
     pub fn new(interactor: &'a I, presenter: &'a P) -> Self {
         Self {
@@ -27,12 +27,12 @@ where
 
     pub async fn analyze(
         &self,
-        vec_trend_analysis_response: Vec<TrendAnalysisResponse>,
-        display_macos_pattern: DisplayMACOSPattern,
-    ) -> Result<TrendSummaryResponse> {
+        vec_trend_analysis_response: Vec<trend_analysis::response::TrendAnalysis>,
+        macos_pattern_filter: MACOSPatternFilter,
+    ) -> Result<trend_summary::response::TrendSummary> {
         let input = input::TrendSummary::new(VecTrendAnalysisResponse(vec_trend_analysis_response));
         let output = self.interactor.handle(input).await?;
-        let response = self.presenter.handle(output, display_macos_pattern)?;
+        let response = self.presenter.handle(output, macos_pattern_filter)?;
         Ok(response)
     }
 }

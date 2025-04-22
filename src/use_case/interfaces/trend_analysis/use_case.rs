@@ -1,4 +1,4 @@
-use crate::presenter::trend_analysis_presenter::TrendAnalysisOutput;
+use crate::presenter::presenters::trend_analysis::output;
 use crate::use_case::interfaces::trend_analysis::input;
 use anyhow::Result;
 use async_trait::async_trait;
@@ -12,5 +12,5 @@ pub trait TrendAnalysis {
     >(
         &self,
         input: input::TrendAnalysis,
-    ) -> Result<TrendAnalysisOutput<AFTER_DAYS, MARUBOZU_MIN_RATE>>;
+    ) -> Result<output::TrendAnalysis<AFTER_DAYS, MARUBOZU_MIN_RATE>>;
 }

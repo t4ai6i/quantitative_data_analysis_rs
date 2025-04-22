@@ -1,11 +1,11 @@
 use itertools::Itertools;
 
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
-use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 
 pub trait VecVolumeMACOSTrendAnalysisExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
-    fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>>;
+    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>>;
 }
 
 impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
@@ -17,7 +17,7 @@ impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
         ]]
     }
 
-    fn table_chart_rows(&self, pattern: &DisplayMACOSPattern) -> Vec<Vec<String>> {
+    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>> {
         self.iter()
             .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
             .map(|trend_analysis| {

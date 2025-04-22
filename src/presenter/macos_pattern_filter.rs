@@ -1,46 +1,46 @@
 use chrono::NaiveDate;
 use strum::Display;
 
-use crate::domain::models::macos;
+use crate::domain::models::macos::model;
 use crate::domain::models::macos::model::AnalysisPattern;
 use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 
+/// どのMovingAverageCrossoverStrategyパターンを表示するか
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Display)]
-pub enum DisplayMACOSPattern {
+pub enum MACOSPatternFilter {
     #[default]
     All,
     GoldenOnly,
     DeadOnly,
 }
 
-/// View向けMovingAverageCrossoverStrategyパターン
-impl DisplayMACOSPattern {
+impl MACOSPatternFilter {
     /// 指定されたMACOSPatternと比較
-    pub fn is_display_by_macos_pattern(&self, pattern: &macos::model::Pattern) -> bool {
+    pub fn is_display_by_macos_pattern(&self, pattern: &model::Pattern) -> bool {
         match self {
-            DisplayMACOSPattern::All => true,
-            DisplayMACOSPattern::GoldenOnly => pattern.eq(&GoldenCross),
-            DisplayMACOSPattern::DeadOnly => pattern.eq(&DeadCross),
+            MACOSPatternFilter::All => true,
+            MACOSPatternFilter::GoldenOnly => pattern.eq(&GoldenCross),
+            MACOSPatternFilter::DeadOnly => pattern.eq(&DeadCross),
         }
     }
 
     pub fn get_rate_of_chance(self, rate_of_chance: &RateOfChance) -> f64 {
         match self {
-            DisplayMACOSPattern::All => rate_of_chance.whole,
-            DisplayMACOSPattern::GoldenOnly => rate_of_chance.golden,
-            DisplayMACOSPattern::DeadOnly => rate_of_chance.dead,
+            MACOSPatternFilter::All => rate_of_chance.whole,
+            MACOSPatternFilter::GoldenOnly => rate_of_chance.golden,
+            MACOSPatternFilter::DeadOnly => rate_of_chance.dead,
         }
     }
 
     pub fn get_latest_chance(self, latest_chance: &LatestChance) -> LatestChance {
         match self {
-            DisplayMACOSPattern::All => *latest_chance,
-            DisplayMACOSPattern::GoldenOnly => LatestChance {
+            MACOSPatternFilter::All => *latest_chance,
+            MACOSPatternFilter::GoldenOnly => LatestChance {
                 golden_cross: latest_chance.golden_cross,
                 dead_cross: None,
             },
-            DisplayMACOSPattern::DeadOnly => LatestChance {
+            MACOSPatternFilter::DeadOnly => LatestChance {
                 golden_cross: None,
                 dead_cross: latest_chance.dead_cross,
             },
@@ -57,7 +57,7 @@ impl DisplayMACOSPattern {
             dead_cross: latest_dead_chance,
         } = latest_chance;
         match self {
-            DisplayMACOSPattern::All => {
+            MACOSPatternFilter::All => {
                 if latest_golden_chance.is_none() || latest_dead_chance.is_none() {
                     return None;
                 };
@@ -75,7 +75,7 @@ impl DisplayMACOSPattern {
                     None
                 }
             }
-            DisplayMACOSPattern::GoldenOnly => {
+            MACOSPatternFilter::GoldenOnly => {
                 if latest_golden_chance.is_none() {
                     return None;
                 };
@@ -86,7 +86,7 @@ impl DisplayMACOSPattern {
                     None
                 }
             }
-            DisplayMACOSPattern::DeadOnly => {
+            MACOSPatternFilter::DeadOnly => {
                 if latest_dead_chance.is_none() {
                     return None;
                 };
@@ -107,7 +107,7 @@ mod tests {
     use chrono::NaiveDate;
 
     use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
-    use crate::presenter::display_macos_pattern::DisplayMACOSPattern;
+    use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 
     #[test]
     fn display_macos_direction_test() -> Result<()> {
@@ -120,10 +120,10 @@ mod tests {
             golden_cross: NaiveDate::from_ymd_opt(2023, 12, 12),
             dead_cross: NaiveDate::from_ymd_opt(2022, 12, 12),
         };
-        let display_macos_pattern = DisplayMACOSPattern::All;
-        let actual = display_macos_pattern.get_rate_of_chance(&rate_of_chance);
+        let macos_pattern_filter = MACOSPatternFilter::All;
+        let actual = macos_pattern_filter.get_rate_of_chance(&rate_of_chance);
         assert_eq!(actual, 0.0);
-        let actual = display_macos_pattern.get_latest_chance(&latest_chance);
+        let actual = macos_pattern_filter.get_latest_chance(&latest_chance);
         assert_eq!(
             actual,
             LatestChance {
@@ -131,10 +131,10 @@ mod tests {
                 dead_cross: NaiveDate::from_ymd_opt(2022, 12, 12),
             }
         );
-        let display_macos_pattern = DisplayMACOSPattern::GoldenOnly;
-        let actual = display_macos_pattern.get_rate_of_chance(&rate_of_chance);
+        let macos_pattern_filter = MACOSPatternFilter::GoldenOnly;
+        let actual = macos_pattern_filter.get_rate_of_chance(&rate_of_chance);
         assert_eq!(actual, 1.0);
-        let actual = display_macos_pattern.get_latest_chance(&latest_chance);
+        let actual = macos_pattern_filter.get_latest_chance(&latest_chance);
         assert_eq!(
             actual,
             LatestChance {
@@ -142,10 +142,10 @@ mod tests {
                 dead_cross: None,
             }
         );
-        let display_macos_pattern = DisplayMACOSPattern::DeadOnly;
-        let actual = display_macos_pattern.get_rate_of_chance(&rate_of_chance);
+        let macos_pattern_filter = MACOSPatternFilter::DeadOnly;
+        let actual = macos_pattern_filter.get_rate_of_chance(&rate_of_chance);
         assert_eq!(actual, 2.0);
-        let actual = display_macos_pattern.get_latest_chance(&latest_chance);
+        let actual = macos_pattern_filter.get_latest_chance(&latest_chance);
         assert_eq!(
             actual,
             LatestChance {
