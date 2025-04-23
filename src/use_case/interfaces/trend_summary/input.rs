@@ -1,4 +1,4 @@
-use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
+use crate::presenter::view_models::vec_trend_analysis_response::VecTrendAnalysisResponse;
 
 pub struct TrendSummary {
     pub vec_trend_analysis_response: VecTrendAnalysisResponse,

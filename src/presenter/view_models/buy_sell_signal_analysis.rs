@@ -1,5 +1,5 @@
 use crate::domain::models::buy_sell_signal::model::BuySellSignal as EntityBuySellSignal;
-use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
+use crate::presenter::view_models::buy_sell_signal::BuySellSignal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 

@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_summary::presenter;
 use crate::presenter::presenters::{trend_analysis, trend_summary};
-use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponse;
+use crate::presenter::view_models::vec_trend_analysis_response::VecTrendAnalysisResponse;
 use crate::use_case::interfaces::trend_summary::input;
 use crate::use_case::interfaces::trend_summary::use_case;
 

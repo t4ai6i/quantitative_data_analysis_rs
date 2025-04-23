@@ -1,10 +1,10 @@
 use crate::domain::models::company::model::Company;
 use crate::domain::models::macos::model::Pattern;
 use crate::presenter::presenters::trend_analysis::response::TrendAnalysis;
-use crate::presenter::view_model::analysis::Analysis;
-use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
-use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
-use crate::presenter::view_model::trend_reversal_analysis::TrendReversalAnalysis;
+use crate::presenter::view_models::analysis::Analysis;
+use crate::presenter::view_models::buy_sell_signal_analysis::BuySellSignalAnalysis;
+use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
+use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
 use itertools::Itertools;
 
 pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysis>);

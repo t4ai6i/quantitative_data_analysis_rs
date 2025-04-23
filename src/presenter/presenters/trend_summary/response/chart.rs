@@ -7,7 +7,7 @@ use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_summary::output;
 use crate::presenter::presenters::trend_summary::presenter;
 use crate::presenter::presenters::trend_summary::response;
-use crate::presenter::view_model::vec_trend_analysis_response::VecTrendAnalysisResponseExt;
+use crate::presenter::view_models::vec_trend_analysis_response::VecTrendAnalysisResponseExt;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Chart {

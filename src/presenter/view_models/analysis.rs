@@ -1,7 +1,7 @@
 use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
-use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
-use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
-use crate::presenter::view_model::trend_reversal_analysis::TrendReversalAnalysis;
+use crate::presenter::view_models::buy_sell_signal_analysis::BuySellSignalAnalysis;
+use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
+use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -22,11 +22,11 @@ mod tests {
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
     use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
     use crate::domain::models::macos::model::Pattern;
-    use crate::presenter::view_model::analysis::Analysis;
-    use crate::presenter::view_model::buy_sell_signal::BuySellSignal;
-    use crate::presenter::view_model::buy_sell_signal_analysis::BuySellSignalAnalysis;
-    use crate::presenter::view_model::macos_analysis::MACOSAnalysis;
-    use crate::presenter::view_model::trend_reversal_analysis::TrendReversalAnalysis;
+    use crate::presenter::view_models::analysis::Analysis;
+    use crate::presenter::view_models::buy_sell_signal::BuySellSignal;
+    use crate::presenter::view_models::buy_sell_signal_analysis::BuySellSignalAnalysis;
+    use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
+    use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
 
     #[test]
     fn serde_test() {
