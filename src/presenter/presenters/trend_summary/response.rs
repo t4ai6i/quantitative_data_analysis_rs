@@ -1,4 +1,4 @@
-use crate::presenter::view_models::analysis::Analysis;
+use crate::presenter::view_models::analysis::view_model::Analysis;
 
 pub mod chart;
 pub mod json;

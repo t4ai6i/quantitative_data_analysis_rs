@@ -1,7 +1,7 @@
 use crate::domain::models::company::model::Company;
 use crate::domain::models::macos::model::Pattern;
 use crate::presenter::presenters::trend_analysis::response::TrendAnalysis;
-use crate::presenter::view_models::analysis::Analysis;
+use crate::presenter::view_models::analysis::view_model::Analysis;
 use crate::presenter::view_models::buy_sell_signal_analysis::BuySellSignalAnalysis;
 use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
 use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;

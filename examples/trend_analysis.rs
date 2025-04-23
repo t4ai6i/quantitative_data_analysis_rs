@@ -4,7 +4,7 @@ use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
 use quantitative_data_analysis_rs::presenter::macos_pattern_filter::MACOSPatternFilter;
-use quantitative_data_analysis_rs::presenter::view_models::analysis::Analysis;
+use quantitative_data_analysis_rs::presenter::view_models::analysis::view_model::Analysis;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
 
