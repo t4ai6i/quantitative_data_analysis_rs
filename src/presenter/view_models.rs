@@ -12,10 +12,3 @@ pub mod smas;
 pub mod stocks;
 pub mod trend_reversal_analysis;
 pub mod vec_trend_analysis_response;
-
-use std::sync::LazyLock;
-
-static DATE_FORMAT: LazyLock<String> = LazyLock::new(|| {
-    let date_format = "%Y/%m/%d";
-    date_format.to_string()
-});

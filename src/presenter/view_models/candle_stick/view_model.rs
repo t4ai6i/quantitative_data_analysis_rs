@@ -1,5 +1,5 @@
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleSticks};
-use crate::presenter::view_models::DATE_FORMAT;
+use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
 use rayon::prelude::*;
 use std::ops::Mul;
 
@@ -17,7 +17,7 @@ impl<const N: usize> CandleSticksExt for CandleSticks<N> {
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     /// use crate::quantitative_data_analysis_rs::presenter::view_models::candle_stick::view_model::CandleSticksExt;
     ///
-    /// const CSV_9223: &[u8] = include_bytes!("../../../assets/9223.T.csv");
+    /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
@@ -30,7 +30,10 @@ impl<const N: usize> CandleSticksExt for CandleSticks<N> {
     fn table_chart_rows(&self) -> Vec<Vec<String>> {
         self.par_iter()
             .map(|candle_stick| {
-                let date = candle_stick.date.format(DATE_FORMAT.as_str()).to_string();
+                let date = candle_stick
+                    .date
+                    .format(SLASH_DELIMITED_DATE_FORMAT.as_str())
+                    .to_string();
                 let bullish_bearish = match candle_stick.bullish_bearish {
                     BullishBearishType::Neither => "⏹️".to_string(),
                     BullishBearishType::Bullish => "⤴️".to_string(),

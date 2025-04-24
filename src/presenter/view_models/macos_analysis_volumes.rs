@@ -2,7 +2,7 @@ use itertools::Itertools;
 
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
-use crate::presenter::view_models::DATE_FORMAT;
+use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
 
 pub trait VecVolumeMACOSTrendAnalysisExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
@@ -24,7 +24,7 @@ impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
             .map(|trend_analysis| {
                 let date = trend_analysis
                     .date_of_event
-                    .format(DATE_FORMAT.as_str())
+                    .format(SLASH_DELIMITED_DATE_FORMAT.as_str())
                     .to_string();
                 let pattern = trend_analysis.pattern.to_string();
                 let volume_on_macos = trend_analysis.volume.to_string();
