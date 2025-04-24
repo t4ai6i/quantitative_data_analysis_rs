@@ -124,12 +124,14 @@ mod tests {
 
     #[test]
     fn trend_reversal_analysis_test() {
-        let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_8473)
+        let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
             .into_iter()
-            .partition(Result::is_ok);
-        let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
-        let vec_stock = Csv::from_deserialize(successes);
-        let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
+            .map(|s| s.unwrap())
+            .collect();
+        let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+            .into_iter()
+            .map(|s| s.unwrap())
+            .collect();
         let candle_sticks =
             CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
         let ecp2s = ECP2s::from(candle_sticks.as_slice());

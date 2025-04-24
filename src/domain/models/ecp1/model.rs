@@ -45,12 +45,10 @@ impl From<&[Stock]> for ECP1s {
     ///
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
-    /// let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_9223)
-    ///     .into_iter()
-    ///     .partition(Result::is_ok);
-    /// let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
-    /// let vec_stock = Csv::from_deserialize(successes);
-    /// let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
+    /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
+    ///     .into_iter().map(|s| s.unwrap()).collect();
+    /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+    ///     .into_iter().map(|s| s.unwrap()).collect();
     /// let _ = ECP1s::from(vec_stock.as_slice());
     /// ```
     fn from(value: &[Stock]) -> Self {
@@ -94,12 +92,14 @@ mod tests {
 
     #[test]
     fn from_test() {
-        let (successes, _): (Vec<_>, Vec<_>) = Csv::from_slice::<true>(CSV_9223)
+        let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
             .into_iter()
-            .partition(Result::is_ok);
-        let successes: Vec<_> = successes.into_iter().map(|e| e.unwrap()).collect();
-        let vec_stock = Csv::from_deserialize(successes);
-        let vec_stock: Vec<_> = vec_stock.into_iter().map(|e| e.unwrap()).collect();
+            .map(|s| s.unwrap())
+            .collect();
+        let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+            .into_iter()
+            .map(|s| s.unwrap())
+            .collect();
         let ecp1s = ECP1s::from(vec_stock.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
             TupleVecBuySellSignal::from(ecp1s.as_slice()).0;
