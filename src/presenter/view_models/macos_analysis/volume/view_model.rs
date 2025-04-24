@@ -1,15 +1,14 @@
-use itertools::Itertools;
-
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-pub trait VecVolumeMACOSTrendAnalysisExt {
+pub trait MACOSTrendAnalysisVolumesExt {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
     fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>>;
 }
 
-impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
+impl MACOSTrendAnalysisVolumesExt for MACOSAnalysisVolumes {
     fn table_chart_header(&self) -> Vec<Vec<String>> {
         vec![vec![
             "date".to_string(),
@@ -19,7 +18,7 @@ impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
     }
 
     fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>> {
-        self.iter()
+        self.par_iter()
             .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
             .map(|trend_analysis| {
                 let date = trend_analysis
@@ -30,6 +29,6 @@ impl VecVolumeMACOSTrendAnalysisExt for MACOSAnalysisVolumes {
                 let volume_on_macos = trend_analysis.volume.to_string();
                 vec![date, pattern, volume_on_macos]
             })
-            .collect_vec()
+            .collect()
     }
 }

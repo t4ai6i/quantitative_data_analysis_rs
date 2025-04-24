@@ -130,7 +130,7 @@ impl From<PatternRateOfChangePair> for AnalysisPattern {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
-pub struct MACOSes(pub(crate) Vec<MACOS>);
+pub struct MACOSes(Vec<MACOS>);
 
 impl MACOSes {
     /// Retrieves the latest date based on the closing value that matches a specified pattern.

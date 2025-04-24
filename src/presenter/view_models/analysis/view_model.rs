@@ -1,6 +1,6 @@
 use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
 use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
-use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
+use crate::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
 use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +25,7 @@ mod tests {
     use crate::domain::models::macos::model::Pattern;
     use crate::presenter::view_models::analysis::view_model::Analysis;
     use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
-    use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
+    use crate::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
     use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
 
     #[test]
