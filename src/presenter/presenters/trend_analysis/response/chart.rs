@@ -13,7 +13,7 @@ use crate::presenter::presenters::trend_analysis::output;
 use crate::presenter::presenters::trend_analysis::presenter;
 use crate::presenter::presenters::trend_analysis::response;
 use crate::presenter::view_models::{
-    candle_sticks::CandleSticksExt, macos_analysis_closes::MACOSAnalysisClosesExt,
+    candle_stick::view_model::CandleSticksExt, macos_analysis_closes::MACOSAnalysisClosesExt,
     macos_analysis_volumes::VecVolumeMACOSTrendAnalysisExt, macoses::MACOSesExt, smas::SMAsExt,
     stocks::StocksExt,
 };

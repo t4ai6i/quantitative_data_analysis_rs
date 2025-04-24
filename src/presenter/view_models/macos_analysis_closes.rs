@@ -1,6 +1,7 @@
 use crate::domain::models::macos::model::AnalysisPattern;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::view_models::DATE_FORMAT;
 use rayon::prelude::*;
 
 pub trait MACOSAnalysisClosesExt {
@@ -35,7 +36,7 @@ impl<const N: usize> MACOSAnalysisClosesExt for MACOSAnalysisCloses<N> {
                 };
                 let date_of_event = macos_analysis_close
                     .date_of_event
-                    .format("%Y/%m/%d")
+                    .format(DATE_FORMAT.as_str())
                     .to_string();
                 let pattern = macos_analysis_close.pattern.to_string();
                 let rate_of_change = format!("{:+.3}%", macos_analysis_close.rate_of_change);

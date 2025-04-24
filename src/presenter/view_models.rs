@@ -1,6 +1,6 @@
 pub mod analysis;
 pub mod buy_sell_signal_analysis;
-pub mod candle_sticks;
+pub mod candle_stick;
 pub mod latest_chance;
 pub mod macos_analysis;
 pub mod macos_analysis_closes;
@@ -12,3 +12,10 @@ pub mod smas;
 pub mod stocks;
 pub mod trend_reversal_analysis;
 pub mod vec_trend_analysis_response;
+
+use std::sync::LazyLock;
+
+static DATE_FORMAT: LazyLock<String> = LazyLock::new(|| {
+    let date_format = "%Y/%m/%d";
+    date_format.to_string()
+});
