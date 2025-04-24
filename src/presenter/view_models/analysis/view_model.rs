@@ -1,5 +1,5 @@
 use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
-use crate::presenter::view_models::buy_sell_signal_analysis::BuySellSignalAnalysis;
+use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
 use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
 use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
 use serde::{Deserialize, Serialize};
@@ -19,12 +19,12 @@ mod tests {
     use chrono::NaiveDate;
     use indoc::indoc;
 
+    use crate::domain::models::buy_sell_signal::model::BuySellSignal;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
     use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
     use crate::domain::models::macos::model::Pattern;
     use crate::presenter::view_models::analysis::view_model::Analysis;
-    use crate::presenter::view_models::buy_sell_signal::BuySellSignal;
-    use crate::presenter::view_models::buy_sell_signal_analysis::BuySellSignalAnalysis;
+    use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
     use crate::presenter::view_models::macos_analysis::MACOSAnalysis;
     use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
 
@@ -65,10 +65,13 @@ mod tests {
             latest_chance: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
             rate_of_chance: 32.7,
         };
-        let ecp1_analysis = BuySellSignalAnalysis(vec![BuySellSignal {
-            r#type: BuySellSignalType::Stay,
-            date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
-        }]);
+        let ecp1_analysis = BuySellSignalAnalysis::from(
+            [BuySellSignal {
+                r#type: BuySellSignalType::Stay,
+                date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
+            }]
+            .as_slice(),
+        );
         let trend_reversal_analysis = TrendReversalAnalysis {
             r#type: BuySellSignalType::Buy,
             macos_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),

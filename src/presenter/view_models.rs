@@ -1,5 +1,4 @@
 pub mod analysis;
-pub mod buy_sell_signal;
 pub mod buy_sell_signal_analysis;
 pub mod candle_sticks;
 pub mod latest_chance;
