@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
-    let trend_analysis_response = controller
+    let trend_analysis = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "8473",
             "T",
@@ -76,13 +76,13 @@ async fn main() -> Result<()> {
         .await?;
 
     let interactor = use_case::interactors::trend_summary::interactor::TrendSummary;
-    let vec_trend_analysis_response = vec![trend_analysis_response];
+    let vec_trend_analysis = vec![trend_analysis];
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::trend_summary::response::json::JSON;
     let controller =
         controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
     if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
-        .analyze(vec_trend_analysis_response, MACOSPatternFilter::All)
+        .analyze(vec_trend_analysis, MACOSPatternFilter::All)
         .await?
     {
         let vec = data
@@ -141,7 +141,7 @@ async fn main() -> Result<()> {
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
-    let trend_analysis_response = controller
+    let trend_analysis = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "9223",
             "T",
@@ -152,13 +152,13 @@ async fn main() -> Result<()> {
         .await?;
 
     let interactor = use_case::interactors::trend_summary::interactor::TrendSummary;
-    let vec_trend_analysis_response = vec![trend_analysis_response];
+    let vec_trend_analysis = vec![trend_analysis];
     let presenter = presenter::presenters::trend_summary::response::json::JSON;
     let controller =
         controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
 
     if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
-        .analyze(vec_trend_analysis_response, MACOSPatternFilter::All)
+        .analyze(vec_trend_analysis, MACOSPatternFilter::All)
         .await?
     {
         let vec = data

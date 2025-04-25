@@ -1,3 +1,5 @@
+use deref_derive::{Deref, DerefMut};
+
 use crate::domain::models::company::model::Company;
 use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
@@ -27,3 +29,6 @@ pub enum TrendAnalysis {
         indicator_analysis: IndicatorAnalysis,
     },
 }
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
+pub struct TrendAnalyses(pub Vec<TrendAnalysis>);

@@ -11,6 +11,6 @@ pub struct TrendSummary;
 #[async_trait]
 impl use_case::TrendSummary for TrendSummary {
     async fn handle(&self, input: input::TrendSummary) -> Result<output::TrendSummary> {
-        Ok(output::TrendSummary::new(input.vec_trend_analysis_response))
+        Ok(output::TrendSummary::new(input.trend_analyses))
     }
 }

@@ -1,13 +1,11 @@
-use crate::presenter::view_models::vec_trend_analysis_response::VecTrendAnalysisResponse;
+use crate::presenter::presenters::trend_analysis::response::TrendAnalyses;
 
 pub struct TrendSummary {
-    pub vec_trend_analysis_response: VecTrendAnalysisResponse,
+    pub trend_analyses: TrendAnalyses,
 }
 
 impl TrendSummary {
-    pub fn new(vec_trend_analysis_response: VecTrendAnalysisResponse) -> Self {
-        Self {
-            vec_trend_analysis_response,
-        }
+    pub fn new(trend_analyses: TrendAnalyses) -> Self {
+        Self { trend_analyses }
     }
 }

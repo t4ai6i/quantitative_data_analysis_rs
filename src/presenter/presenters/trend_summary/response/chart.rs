@@ -7,7 +7,7 @@ use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_summary::output;
 use crate::presenter::presenters::trend_summary::presenter;
 use crate::presenter::presenters::trend_summary::response;
-use crate::presenter::view_models::vec_trend_analysis_response::VecTrendAnalysisResponseExt;
+use crate::presenter::view_models::trend_analysis::view_model::TrendAnalyses;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Chart {
@@ -40,7 +40,7 @@ impl presenter::TrendSummary for Chart {
             "latest".to_string(),
             chance_rate,
         ]];
-        let mut body = output.vec_trend_analysis_response.table_chart_rows();
+        let mut body = output.trend_analyses.table_chart_rows();
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.width = self.width;

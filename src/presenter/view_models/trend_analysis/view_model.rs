@@ -1,23 +1,23 @@
+use rayon::prelude::*;
+
 use crate::domain::models::company::model::Company;
 use crate::domain::models::macos::model::Pattern;
+use crate::presenter::presenters::trend_analysis::response;
 use crate::presenter::presenters::trend_analysis::response::TrendAnalysis;
 use crate::presenter::view_models::analysis::view_model::Analysis;
 use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
 use crate::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
 use crate::presenter::view_models::trend_reversal_analysis::view_model::TrendReversalAnalysis;
-use itertools::Itertools;
 
-pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysis>);
-
-pub trait VecTrendAnalysisResponseExt {
+pub trait TrendAnalyses {
     fn table_chart_rows(self) -> Vec<Vec<String>>;
     fn vec_json(self) -> Vec<Analysis>;
 }
 
-impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
+impl TrendAnalyses for response::TrendAnalyses {
     fn table_chart_rows(self) -> Vec<Vec<String>> {
         self.0
-            .into_iter()
+            .into_par_iter()
             .filter_map(|response| match response {
                 TrendAnalysis::Chart {
                     company,
@@ -42,12 +42,12 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 }
                 _ => None,
             })
-            .collect_vec()
+            .collect()
     }
 
     fn vec_json(self) -> Vec<Analysis> {
         self.0
-            .into_iter()
+            .into_par_iter()
             .filter_map(|response| match response {
                 TrendAnalysis::Json {
                     company,
@@ -75,6 +75,6 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                 }
                 _ => None,
             })
-            .collect_vec()
+            .collect()
     }
 }
