@@ -42,6 +42,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     ///
     /// # Examples
     /// ```
+    /// use rayon::prelude::*;
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::msesp::model::MSESPes;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
@@ -51,9 +52,9 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// let _ = MSESPes::from(candle_sticks.as_slice());
     /// ```
@@ -83,6 +84,9 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+    use rayon::prelude::*;
+
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::Sell;
     use crate::domain::models::buy_sell_signal::model::{
         BuySellSignal,
@@ -92,8 +96,6 @@ mod tests {
     use crate::domain::models::msesp::model::MSESPes;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::repositories::stock::data_format::csv::Csv;
-    use chrono::NaiveDate;
-    use rayon::prelude::*;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
@@ -101,11 +103,11 @@ mod tests {
     #[test]
     fn from_test() {
         let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let candle_sticks =

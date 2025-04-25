@@ -178,6 +178,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     ///
     /// # Examples
     /// ```
+    /// use rayon::prelude::*;
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListPair, SMAs};
     /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
@@ -186,9 +187,9 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
     /// let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
     /// let sma_list_pair = SMAListPair {

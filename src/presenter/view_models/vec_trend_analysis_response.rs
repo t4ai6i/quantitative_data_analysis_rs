@@ -30,8 +30,15 @@ impl VecTrendAnalysisResponseExt for VecTrendAnalysisResponse {
                     let latest_chance = macos_pattern_filter.get_latest_chance(&latest_chance);
                     let macos = Pattern::from(latest_chance).to_string();
                     let latest_chance = latest_chance.to_string();
-                    let rate_of_chance = rate_of_chance.to_string(&macos_pattern_filter);
-                    Some(vec![code, symbol, macos, latest_chance, rate_of_chance])
+                    let rate_of_chance_percent =
+                        macos_pattern_filter.format_rate_of_chance_percent(&rate_of_chance);
+                    Some(vec![
+                        code,
+                        symbol,
+                        macos,
+                        latest_chance,
+                        rate_of_chance_percent,
+                    ])
                 }
                 _ => None,
             })

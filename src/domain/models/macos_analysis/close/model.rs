@@ -201,24 +201,26 @@ impl<const N: usize> MACOSAnalysisCloses<N> {
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+    use rayon::prelude::*;
+
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
     use crate::domain::models::sma::model::{SMAListPair, SMAs};
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::repositories::stock::data_format::csv::Csv;
-    use chrono::NaiveDate;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
 
     #[test]
     fn macos_analysis_close_test() {
         let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let smas_5 = SMAs::<5>::from(vec_stock.as_slice());

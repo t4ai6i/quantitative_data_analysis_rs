@@ -148,6 +148,7 @@ impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
     ///
     /// # Examples
     /// ```
+    /// use rayon::prelude::*;
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
@@ -157,9 +158,9 @@ impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// assert_eq!(candle_sticks.len(), 35);
     /// ```

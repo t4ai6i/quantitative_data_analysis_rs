@@ -50,6 +50,7 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// # Examples
     /// ```
+    /// use rayon::prelude::*;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
     /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
@@ -60,9 +61,9 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     /// const DAYS_25: usize = 25;
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     ///
     /// let smas_5 = SMAs::<DAYS_5>::from(vec_stock.as_slice());
     /// assert_eq!(smas_5.len(), 242);

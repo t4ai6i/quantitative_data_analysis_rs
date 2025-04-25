@@ -39,6 +39,7 @@ impl From<&[Stock]> for ECP1s {
     ///
     /// # Examples
     /// ```
+    /// use rayon::prelude::*;
     /// use quantitative_data_analysis_rs::domain::models::ecp1::model::ECP1s;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
@@ -46,9 +47,9 @@ impl From<&[Stock]> for ECP1s {
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let _ = ECP1s::from(vec_stock.as_slice());
     /// ```
     fn from(value: &[Stock]) -> Self {
@@ -78,6 +79,7 @@ impl From<&[Stock]> for ECP1s {
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
+    use rayon::prelude::*;
 
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
@@ -93,11 +95,11 @@ mod tests {
     #[test]
     fn from_test() {
         let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let ecp1s = ECP1s::from(vec_stock.as_slice());

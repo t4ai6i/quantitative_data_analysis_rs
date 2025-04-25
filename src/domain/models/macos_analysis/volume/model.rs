@@ -52,17 +52,18 @@ mod tests {
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::repositories::stock::data_format::csv::Csv;
+    use rayon::prelude::*;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
 
     #[test]
     fn macos_analysis_volume_test() {
         let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let smas_5 = SMAs::<5>::from(vec_stock.as_slice());

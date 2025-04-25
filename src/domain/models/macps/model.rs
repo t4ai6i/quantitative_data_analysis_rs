@@ -35,6 +35,7 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// # Examples
     /// ```
     /// use chrono::NaiveDate;
+    /// use rayon::prelude::*;
     /// use quantitative_data_analysis_rs::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
     /// use quantitative_data_analysis_rs::domain::models::macps::model::MACPS;
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListTrio, SMAs};
@@ -44,9 +45,9 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
     /// let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
     /// let smas_50 = SMAs::<50>::from(vec_stock.as_slice());

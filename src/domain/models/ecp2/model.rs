@@ -58,6 +58,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
     ///
     /// # Examples
     /// ```
+    /// use rayon::prelude::*;
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::ecp2::model::ECP2s;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
@@ -67,9 +68,9 @@ impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
     /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_iter().map(|s| s.unwrap()).collect();
+    ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// let _ = ECP2s::from(candle_sticks.as_slice());
     /// ```
@@ -100,6 +101,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
+    use rayon::prelude::*;
 
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
@@ -117,11 +119,11 @@ mod tests {
     #[test]
     fn from_test() {
         let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_iter()
+            .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
         let candle_sticks =

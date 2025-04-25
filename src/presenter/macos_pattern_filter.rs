@@ -99,6 +99,14 @@ impl MACOSPatternFilter {
             }
         }
     }
+
+    /// 指定された RateOfChance を、フィルターに基づいて選択し、
+    /// パーセンテージ形式の文字列にフォーマットします。
+    /// 例: 75.0 -> "75%"
+    pub fn format_rate_of_chance_percent(&self, rate_of_chance: &RateOfChance) -> String {
+        let specific_rate = self.get_rate_of_chance(rate_of_chance);
+        format!("{:.0}%", specific_rate)
+    }
 }
 
 #[cfg(test)]
