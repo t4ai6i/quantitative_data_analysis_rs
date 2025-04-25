@@ -1,7 +1,7 @@
 use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
 use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
 use crate::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
-use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
+use crate::presenter::view_models::trend_reversal_analysis::view_model::TrendReversalAnalysis;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -26,7 +26,7 @@ mod tests {
     use crate::presenter::view_models::analysis::view_model::Analysis;
     use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
     use crate::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
-    use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
+    use crate::presenter::view_models::trend_reversal_analysis::view_model::TrendReversalAnalysis;
 
     #[test]
     fn serde_test() {

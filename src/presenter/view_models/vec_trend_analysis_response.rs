@@ -4,7 +4,7 @@ use crate::presenter::presenters::trend_analysis::response::TrendAnalysis;
 use crate::presenter::view_models::analysis::view_model::Analysis;
 use crate::presenter::view_models::buy_sell_signal_analysis::view_model::BuySellSignalAnalysis;
 use crate::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
-use crate::presenter::view_models::trend_reversal_analysis::TrendReversalAnalysis;
+use crate::presenter::view_models::trend_reversal_analysis::view_model::TrendReversalAnalysis;
 use itertools::Itertools;
 
 pub struct VecTrendAnalysisResponse(pub Vec<TrendAnalysis>);
