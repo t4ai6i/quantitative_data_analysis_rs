@@ -1,15 +1,16 @@
-use crate::domain::models::macos::model::AnalysisPattern;
-use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
-use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
 use rayon::prelude::*;
 
-pub trait MACOSAnalysisClosesExt {
+use crate::domain::models::macos::model::AnalysisPattern;
+use crate::domain::models::macos_analysis::close::model;
+use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
+
+pub trait MACOSAnalysisCloses {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
     fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>>;
 }
 
-impl<const N: usize> MACOSAnalysisClosesExt for MACOSAnalysisCloses<N> {
+impl<const N: usize> MACOSAnalysisCloses for model::MACOSAnalysisCloses<N> {
     fn table_chart_header(&self) -> Vec<Vec<String>> {
         vec![vec![
             "date".to_string(),

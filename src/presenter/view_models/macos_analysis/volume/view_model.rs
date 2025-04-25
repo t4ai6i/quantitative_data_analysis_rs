@@ -1,14 +1,15 @@
-use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
+use rayon::prelude::*;
+
+use crate::domain::models::macos_analysis::volume::model;
 use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-pub trait MACOSTrendAnalysisVolumesExt {
+pub trait MACOSTrendAnalysisVolumes {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
     fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>>;
 }
 
-impl MACOSTrendAnalysisVolumesExt for MACOSAnalysisVolumes {
+impl MACOSTrendAnalysisVolumes for model::MACOSAnalysisVolumes {
     fn table_chart_header(&self) -> Vec<Vec<String>> {
         vec![vec![
             "date".to_string(),

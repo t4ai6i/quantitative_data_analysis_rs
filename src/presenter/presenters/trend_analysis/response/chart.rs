@@ -12,12 +12,11 @@ use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_analysis::output;
 use crate::presenter::presenters::trend_analysis::presenter;
 use crate::presenter::presenters::trend_analysis::response;
-use crate::presenter::view_models::macos_analysis::close::view_model::MACOSAnalysisClosesExt;
-use crate::presenter::view_models::macos_analysis::view_model::MACOSesExt;
-use crate::presenter::view_models::macos_analysis::volume::view_model::MACOSTrendAnalysisVolumesExt;
-use crate::presenter::view_models::{
-    candle_stick::view_model::CandleSticksExt, smas::SMAsExt, stocks::StocksExt,
-};
+use crate::presenter::view_models::macos_analysis::close::view_model::MACOSAnalysisCloses;
+use crate::presenter::view_models::macos_analysis::view_model::MACOSes;
+use crate::presenter::view_models::macos_analysis::volume::view_model::MACOSTrendAnalysisVolumes;
+use crate::presenter::view_models::sma::view_model::SMAs;
+use crate::presenter::view_models::{candle_stick::view_model::CandleSticks, stocks::StocksExt};
 use crate::shared::float;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -53,9 +52,9 @@ impl presenter::TrendAnalysis for Chart {
         charts.margin = 5.0.into();
 
         let company = output.company;
-        let sma_5_averages = output.smas_5.collect_average_close();
-        let sma_25_averages = output.smas_25.collect_average_close();
-        let sma_50_averages = output.smas_50.collect_average_close();
+        let sma_5_averages = output.smas_5.sma_n_closes();
+        let sma_25_averages = output.smas_25.sma_n_closes();
+        let sma_50_averages = output.smas_50.sma_n_closes();
         let ohlcs: Vec<f32> = output
             .stocks
             .collect_ohlc()
@@ -144,8 +143,8 @@ impl presenter::TrendAnalysis for Chart {
         candlestick_chart.candlestick_down_border_color = Color::from((0, 40, 143));
         charts.add(ChildChart::Candlestick(candlestick_chart, None));
 
-        let sma_5_averages = output.smas_5.collect_average_volume();
-        let sma_25_averages = output.smas_25.collect_average_volume();
+        let sma_5_averages = output.smas_5.sma_n_volumes();
+        let sma_25_averages = output.smas_25.sma_n_volumes();
         let volumes: Vec<f32> = output
             .stocks
             .collect_volume()

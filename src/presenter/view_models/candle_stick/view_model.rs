@@ -1,22 +1,25 @@
-use crate::domain::models::candle_stick::model::{BullishBearishType, CandleSticks};
-use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
-use rayon::prelude::*;
 use std::ops::Mul;
 
-pub trait CandleSticksExt {
+use rayon::prelude::*;
+
+use crate::domain::models::candle_stick::model;
+use crate::domain::models::candle_stick::model::BullishBearishType;
+use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
+
+pub trait CandleSticks {
     fn table_chart_rows(&self) -> Vec<Vec<String>>;
 }
 
-impl<const N: usize> CandleSticksExt for CandleSticks<N> {
+impl<const N: usize> CandleSticks for model::CandleSticks<N> {
     ///
     /// # Examples
     /// ```
     /// use rayon::prelude::*;
-    /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
+    /// use quantitative_data_analysis_rs::domain::models::candle_stick::model;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
-    /// use quantitative_data_analysis_rs::presenter::view_models::candle_stick::view_model::CandleSticksExt;
+    /// use quantitative_data_analysis_rs::presenter::view_models::candle_stick::view_model::CandleSticks;
     ///
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
@@ -25,7 +28,7 @@ impl<const N: usize> CandleSticksExt for CandleSticks<N> {
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+    /// let candle_sticks = model::CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// let _ = candle_sticks.table_chart_rows();
     /// ```
     fn table_chart_rows(&self) -> Vec<Vec<String>> {

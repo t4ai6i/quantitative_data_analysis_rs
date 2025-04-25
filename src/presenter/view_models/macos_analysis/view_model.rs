@@ -1,4 +1,5 @@
-use crate::domain::models::macos::model::{MACOSes, Pattern, MACOS};
+use crate::domain::models::macos::model;
+use crate::domain::models::macos::model::{Pattern, MACOS};
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::shared::custom_date_format;
@@ -30,12 +31,12 @@ impl From<(MACOSPatternFilter, RateOfChance, LatestChance)> for MACOSAnalysis {
     }
 }
 
-pub trait MACOSesExt {
+pub trait MACOSes {
     fn sma_25_closes(&self, filter_pattern: Pattern) -> Vec<f32>;
     fn sma_25_volumes(&self, filter_pattern: Pattern) -> Vec<f32>;
 }
 
-impl MACOSesExt for MACOSes {
+impl MACOSes for model::MACOSes {
     fn sma_25_closes(&self, filter_pattern: Pattern) -> Vec<f32> {
         self.par_iter()
             .map(|macos| {
