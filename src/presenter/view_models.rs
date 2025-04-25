@@ -6,6 +6,6 @@ pub mod macos_analysis;
 pub mod macps_analysis;
 pub mod rate_of_chance;
 pub mod sma;
-pub mod stocks;
+pub mod stock;
 pub mod trend_reversal_analysis;
 pub mod vec_trend_analysis_response;

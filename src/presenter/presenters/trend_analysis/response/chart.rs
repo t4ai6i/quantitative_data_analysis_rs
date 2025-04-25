@@ -12,11 +12,12 @@ use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_analysis::output;
 use crate::presenter::presenters::trend_analysis::presenter;
 use crate::presenter::presenters::trend_analysis::response;
+use crate::presenter::view_models::candle_stick::view_model::CandleSticks;
 use crate::presenter::view_models::macos_analysis::close::view_model::MACOSAnalysisCloses;
 use crate::presenter::view_models::macos_analysis::view_model::MACOSes;
 use crate::presenter::view_models::macos_analysis::volume::view_model::MACOSTrendAnalysisVolumes;
 use crate::presenter::view_models::sma::view_model::SMAs;
-use crate::presenter::view_models::{candle_stick::view_model::CandleSticks, stocks::StocksExt};
+use crate::presenter::view_models::stock::view_model::Stocks;
 use crate::shared::float;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -57,14 +58,14 @@ impl presenter::TrendAnalysis for Chart {
         let sma_50_averages = output.smas_50.sma_n_closes();
         let ohlcs: Vec<f32> = output
             .stocks
-            .collect_ohlc()
+            .ohlces()
             .par_iter()
             .map(|value| *value as _)
             .collect();
         let min = float::min(&ohlcs) - 10.0;
         let max = float::max(&ohlcs) + 10.0;
 
-        let x_axis_data_days = output.stocks.collect_date_string(self.date_format.as_str());
+        let x_axis_data_days = output.stocks.formatted_dates(self.date_format.as_str());
 
         let series_list = match output.macos_pattern_filter {
             MACOSPatternFilter::All => {
@@ -147,7 +148,7 @@ impl presenter::TrendAnalysis for Chart {
         let sma_25_averages = output.smas_25.sma_n_volumes();
         let volumes: Vec<f32> = output
             .stocks
-            .collect_volume()
+            .volumes()
             .par_iter()
             .map(|value| *value as _)
             .collect();
