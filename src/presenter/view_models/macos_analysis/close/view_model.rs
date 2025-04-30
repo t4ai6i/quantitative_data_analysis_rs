@@ -2,12 +2,12 @@ use rayon::prelude::*;
 
 use crate::domain::models::macos::model::AnalysisPattern;
 use crate::domain::models::macos_analysis::close::model;
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
 
 pub trait MACOSAnalysisCloses {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
-    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>>;
+    fn table_chart_rows(&self, pattern: &CrossoverPatternFilter) -> Vec<Vec<String>>;
 }
 
 impl<const N: usize> MACOSAnalysisCloses for model::MACOSAnalysisCloses<N> {
@@ -22,11 +22,9 @@ impl<const N: usize> MACOSAnalysisCloses for model::MACOSAnalysisCloses<N> {
         ]]
     }
 
-    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>> {
+    fn table_chart_rows(&self, pattern: &CrossoverPatternFilter) -> Vec<Vec<String>> {
         self.par_iter()
-            .filter(|macos_analysis_close| {
-                pattern.is_display_by_macos_pattern(&macos_analysis_close.pattern)
-            })
+            .filter(|macos_analysis_close| pattern.matches_filter(&macos_analysis_close.pattern))
             .map(|macos_analysis_close| {
                 let chance_loss = match macos_analysis_close.analysis_pattern {
                     AnalysisPattern::None => "❔".to_string(),

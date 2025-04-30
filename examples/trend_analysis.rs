@@ -3,8 +3,8 @@ use chrono::NaiveDate;
 use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
-use quantitative_data_analysis_rs::presenter::macos_pattern_filter::MACOSPatternFilter;
 use quantitative_data_analysis_rs::presenter::view_models::analysis::view_model::Analysis;
+use quantitative_data_analysis_rs::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
 
@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
-            MACOSPatternFilter::All,
+            CrossoverPatternFilter::Both,
         )
         .await?;
     if let presenter::presenters::trend_analysis::response::TrendAnalysis::Chart {
@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
-            MACOSPatternFilter::All,
+            CrossoverPatternFilter::Both,
         )
         .await?;
 
@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
     let controller =
         controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
     if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
-        .analyze(vec_trend_analysis, MACOSPatternFilter::All)
+        .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
         .await?
     {
         let vec = data
@@ -147,7 +147,7 @@ async fn main() -> Result<()> {
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
             NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
-            MACOSPatternFilter::All,
+            CrossoverPatternFilter::Both,
         )
         .await?;
 
@@ -158,7 +158,7 @@ async fn main() -> Result<()> {
         controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
 
     if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
-        .analyze(vec_trend_analysis, MACOSPatternFilter::All)
+        .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
         .await?
     {
         let vec = data

@@ -2461,7 +2461,7 @@ close after 5 days
 ✅
 </text>
 <text font-size="14" x="863.3" y="96" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1290" y="96" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 +0.262%
@@ -2481,7 +2481,7 @@ Golden
 ❌
 </text>
 <text font-size="14" x="863.3" y="136" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1290" y="136" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 +1.304%
@@ -2501,7 +2501,7 @@ Dead
 ❌
 </text>
 <text font-size="14" x="863.3" y="176" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1290" y="176" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 -2.654%
@@ -2521,7 +2521,7 @@ Golden
 ❌
 </text>
 <text font-size="14" x="863.3" y="216" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1290" y="216" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 +1.226%
@@ -2541,7 +2541,7 @@ Dead
 ❌
 </text>
 <text font-size="14" x="863.3" y="256" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1290" y="256" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 -0.484%
@@ -2561,7 +2561,7 @@ Golden
 ✅
 </text>
 <text font-size="14" x="863.3" y="296" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1290" y="296" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 -0.559%
@@ -2581,7 +2581,7 @@ Dead
 ❌
 </text>
 <text font-size="14" x="863.3" y="336" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1290" y="336" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 -0.525%
@@ -2601,7 +2601,7 @@ Golden
 ❌
 </text>
 <text font-size="14" x="863.3" y="376" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1290" y="376" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 +2.261%
@@ -2621,7 +2621,7 @@ Dead
 ❌
 </text>
 <text font-size="14" x="863.3" y="416" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1290" y="416" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 -1.623%
@@ -2641,7 +2641,7 @@ Golden
 ❌
 </text>
 <text font-size="14" x="863.3" y="456" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1290" y="456" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 +1.388%
@@ -2661,7 +2661,7 @@ Dead
 ✅
 </text>
 <text font-size="14" x="863.3" y="496" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1290" y="496" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 +5.666%
@@ -2705,7 +2705,7 @@ volume
 2022/11/10
 </text>
 <text font-size="14" x="863.3" y="96" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="96" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1942600
@@ -2716,7 +2716,7 @@ Golden
 2022/12/07
 </text>
 <text font-size="14" x="863.3" y="136" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="136" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1341800
@@ -2727,7 +2727,7 @@ Dead
 2022/12/08
 </text>
 <text font-size="14" x="863.3" y="176" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="176" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2449800
@@ -2738,7 +2738,7 @@ Golden
 2022/12/12
 </text>
 <text font-size="14" x="863.3" y="216" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="216" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 963300
@@ -2749,7 +2749,7 @@ Dead
 2022/12/21
 </text>
 <text font-size="14" x="863.3" y="256" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="256" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2322600
@@ -2760,7 +2760,7 @@ Golden
 2022/12/27
 </text>
 <text font-size="14" x="863.3" y="296" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="296" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1003600
@@ -2771,7 +2771,7 @@ Dead
 2022/12/29
 </text>
 <text font-size="14" x="863.3" y="336" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="336" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 3721100
@@ -2782,7 +2782,7 @@ Golden
 2023/01/23
 </text>
 <text font-size="14" x="863.3" y="376" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="376" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 944400
@@ -2793,7 +2793,7 @@ Dead
 2023/02/09
 </text>
 <text font-size="14" x="863.3" y="416" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="416" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1801200
@@ -2804,7 +2804,7 @@ Golden
 2023/02/15
 </text>
 <text font-size="14" x="863.3" y="456" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="456" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1215900
@@ -2815,7 +2815,7 @@ Dead
 2023/02/20
 </text>
 <text font-size="14" x="863.3" y="496" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="496" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2597900
@@ -2826,7 +2826,7 @@ Golden
 2023/02/28
 </text>
 <text font-size="14" x="863.3" y="536" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="536" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1514600
@@ -2837,7 +2837,7 @@ Dead
 2023/03/10
 </text>
 <text font-size="14" x="863.3" y="576" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="576" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 3557900
@@ -2848,7 +2848,7 @@ Golden
 2023/03/24
 </text>
 <text font-size="14" x="863.3" y="616" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="616" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1277100
@@ -2859,7 +2859,7 @@ Dead
 2023/03/30
 </text>
 <text font-size="14" x="863.3" y="656" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="656" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 3110500
@@ -2870,7 +2870,7 @@ Golden
 2023/04/06
 </text>
 <text font-size="14" x="863.3" y="696" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="696" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2453500
@@ -2881,7 +2881,7 @@ Dead
 2023/05/12
 </text>
 <text font-size="14" x="863.3" y="736" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="736" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2648500
@@ -2892,7 +2892,7 @@ Golden
 2023/05/30
 </text>
 <text font-size="14" x="863.3" y="776" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="776" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 826100
@@ -2903,7 +2903,7 @@ Dead
 2023/05/31
 </text>
 <text font-size="14" x="863.3" y="816" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="816" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2834400
@@ -2914,7 +2914,7 @@ Golden
 2023/06/02
 </text>
 <text font-size="14" x="863.3" y="856" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="856" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1124500
@@ -2925,7 +2925,7 @@ Dead
 2023/06/06
 </text>
 <text font-size="14" x="863.3" y="896" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="896" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1375300
@@ -2936,7 +2936,7 @@ Golden
 2023/06/07
 </text>
 <text font-size="14" x="863.3" y="936" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="936" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1608100
@@ -2947,7 +2947,7 @@ Dead
 2023/06/14
 </text>
 <text font-size="14" x="863.3" y="976" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="976" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2088900
@@ -2958,7 +2958,7 @@ Golden
 2023/06/23
 </text>
 <text font-size="14" x="863.3" y="1016" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="1016" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1544300
@@ -2969,7 +2969,7 @@ Dead
 2023/07/05
 </text>
 <text font-size="14" x="863.3" y="1056" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="1056" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 4494900
@@ -2980,7 +2980,7 @@ Golden
 2023/07/12
 </text>
 <text font-size="14" x="863.3" y="1096" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="1096" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1230100
@@ -2991,7 +2991,7 @@ Dead
 2023/07/20
 </text>
 <text font-size="14" x="863.3" y="1136" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="1136" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1516600
@@ -3002,7 +3002,7 @@ Golden
 2023/07/24
 </text>
 <text font-size="14" x="863.3" y="1176" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="1176" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1148700
@@ -3013,7 +3013,7 @@ Dead
 2023/08/02
 </text>
 <text font-size="14" x="863.3" y="1216" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="1216" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1930300
@@ -3024,7 +3024,7 @@ Golden
 2023/08/07
 </text>
 <text font-size="14" x="863.3" y="1256" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="1256" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1874300
@@ -3035,7 +3035,7 @@ Dead
 2023/08/08
 </text>
 <text font-size="14" x="863.3" y="1296" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="1296" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 2020500
@@ -3046,7 +3046,7 @@ Golden
 2023/08/15
 </text>
 <text font-size="14" x="863.3" y="1336" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Dead
+DeadCross
 </text>
 <text font-size="14" x="1716.7" y="1336" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1151100
@@ -3057,7 +3057,7 @@ Dead
 2023/09/01
 </text>
 <text font-size="14" x="863.3" y="1376" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
-Golden
+GoldenCross
 </text>
 <text font-size="14" x="1716.7" y="1376" dy="15" dominant-baseline="middle" font-family="Roboto" fill="#FFFFFF">
 1866700

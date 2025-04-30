@@ -1,7 +1,7 @@
 use crate::domain::models::macos::model;
-use crate::domain::models::macos::model::{Pattern, MACOS};
+use crate::domain::models::macos::model::MACOS;
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::shared::custom_date_format;
 use charts_rs::NIL_VALUE;
 use chrono::NaiveDate;
@@ -10,19 +10,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct MACOSAnalysis {
-    pub pattern: Pattern,
+    pub pattern: model::Pattern,
     #[serde(with = "custom_date_format")]
     pub latest_chance: NaiveDate,
     pub rate_of_chance: f64,
 }
 
-impl From<(MACOSPatternFilter, RateOfChance, LatestChance)> for MACOSAnalysis {
-    fn from(value: (MACOSPatternFilter, RateOfChance, LatestChance)) -> Self {
-        let (macos_pattern_filter, rate_of_chance, latest_chance) = value;
-        let latest_chance = macos_pattern_filter.get_latest_chance(&latest_chance);
-        let pattern = Pattern::from(latest_chance);
+impl From<(CrossoverPatternFilter, RateOfChance, LatestChance)> for MACOSAnalysis {
+    fn from(value: (CrossoverPatternFilter, RateOfChance, LatestChance)) -> Self {
+        let (crossover_pattern_filter, rate_of_chance, latest_chance) = value;
+        let latest_chance = crossover_pattern_filter.get_latest_chance(&latest_chance);
+        let pattern = model::Pattern::from(latest_chance);
         let latest_chance = NaiveDate::from(latest_chance);
-        let rate_of_chance = macos_pattern_filter.get_rate_of_chance(&rate_of_chance);
+        let rate_of_chance = crossover_pattern_filter.get_rate_of_chance(&rate_of_chance);
         Self {
             pattern,
             latest_chance,
@@ -32,12 +32,12 @@ impl From<(MACOSPatternFilter, RateOfChance, LatestChance)> for MACOSAnalysis {
 }
 
 pub trait MACOSes {
-    fn sma_25_closes(&self, filter_pattern: Pattern) -> Vec<f32>;
-    fn sma_25_volumes(&self, filter_pattern: Pattern) -> Vec<f32>;
+    fn sma_25_closes(&self, filter_pattern: model::Pattern) -> Vec<f32>;
+    fn sma_25_volumes(&self, filter_pattern: model::Pattern) -> Vec<f32>;
 }
 
 impl MACOSes for model::MACOSes {
-    fn sma_25_closes(&self, filter_pattern: Pattern) -> Vec<f32> {
+    fn sma_25_closes(&self, filter_pattern: model::Pattern) -> Vec<f32> {
         self.par_iter()
             .map(|macos| {
                 let MACOS {
@@ -53,7 +53,7 @@ impl MACOSes for model::MACOSes {
             .collect()
     }
 
-    fn sma_25_volumes(&self, filter_pattern: Pattern) -> Vec<f32> {
+    fn sma_25_volumes(&self, filter_pattern: model::Pattern) -> Vec<f32> {
         self.par_iter()
             .map(|macos| {
                 let MACOS {
@@ -70,7 +70,7 @@ impl MACOSes for model::MACOSes {
     }
 }
 
-impl Pattern {
+impl model::Pattern {
     fn value_if_patterns_match(&self, rhs: Self, value: Option<f64>) -> f32 {
         if self.eq(&rhs) {
             value.map_or(NIL_VALUE, |value| value as _)

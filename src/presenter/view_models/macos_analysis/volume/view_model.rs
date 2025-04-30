@@ -1,12 +1,12 @@
 use rayon::prelude::*;
 
 use crate::domain::models::macos_analysis::volume::model;
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::shared::custom_date_format::SLASH_DELIMITED_DATE_FORMAT;
 
 pub trait MACOSTrendAnalysisVolumes {
     fn table_chart_header(&self) -> Vec<Vec<String>>;
-    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>>;
+    fn table_chart_rows(&self, pattern: &CrossoverPatternFilter) -> Vec<Vec<String>>;
 }
 
 impl MACOSTrendAnalysisVolumes for model::MACOSAnalysisVolumes {
@@ -18,9 +18,9 @@ impl MACOSTrendAnalysisVolumes for model::MACOSAnalysisVolumes {
         ]]
     }
 
-    fn table_chart_rows(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>> {
+    fn table_chart_rows(&self, pattern: &CrossoverPatternFilter) -> Vec<Vec<String>> {
         self.par_iter()
-            .filter(|trend_analysis| pattern.is_display_by_macos_pattern(&trend_analysis.pattern))
+            .filter(|trend_analysis| pattern.matches_filter(&trend_analysis.pattern))
             .map(|trend_analysis| {
                 let date = trend_analysis
                     .date_of_event

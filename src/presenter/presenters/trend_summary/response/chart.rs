@@ -3,10 +3,10 @@ use std::backtrace::Backtrace;
 use anyhow::{Context, Result};
 use charts_rs::TableChart;
 
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_summary::output;
 use crate::presenter::presenters::trend_summary::presenter;
 use crate::presenter::presenters::trend_summary::response;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::presenter::view_models::trend_analysis::view_model::TrendAnalyses;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
@@ -30,9 +30,9 @@ impl presenter::TrendSummary for Chart {
     fn handle(
         &self,
         output: output::TrendSummary,
-        macos_pattern_filter: MACOSPatternFilter,
+        crossover_pattern_filter: CrossoverPatternFilter,
     ) -> Result<response::TrendSummary> {
-        let chance_rate = format!("chance rate({})", macos_pattern_filter);
+        let chance_rate = format!("chance rate({})", crossover_pattern_filter);
         let mut rows = vec![vec![
             "code".to_string(),
             "symbol".to_string(),

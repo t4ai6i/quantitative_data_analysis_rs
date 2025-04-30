@@ -1,8 +1,8 @@
 use crate::domain::models::macos_analysis::close::model::RateOfChance;
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 
 impl RateOfChance {
-    pub fn table_chart_summary(&self, pattern: &MACOSPatternFilter) -> Vec<Vec<String>> {
+    pub fn table_chart_summary(&self, pattern: &CrossoverPatternFilter) -> Vec<Vec<String>> {
         let rate_of_chance = pattern.format_rate_of_chance_percent(self);
         vec![vec![
             "".to_string(),
@@ -26,7 +26,7 @@ mod tests {
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
     use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::repositories::stock::data_format::csv::Csv;
-    use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+    use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const AFTER_DAYS: usize = 5;
@@ -54,7 +54,7 @@ mod tests {
         };
         let macos_analysis_closes = MACOSAnalysisCloses::<AFTER_DAYS>::from(&stocks_macoses_pair);
         let rate_of_chance = macos_analysis_closes.rate_of_chance();
-        let summary = rate_of_chance.table_chart_summary(&MACOSPatternFilter::All);
+        let summary = rate_of_chance.table_chart_summary(&CrossoverPatternFilter::Both);
         assert_eq!(
             summary,
             vec![vec![
@@ -66,7 +66,7 @@ mod tests {
                 "".to_string(),
             ]]
         );
-        let summary = rate_of_chance.table_chart_summary(&MACOSPatternFilter::GoldenOnly);
+        let summary = rate_of_chance.table_chart_summary(&CrossoverPatternFilter::GoldenOnly);
         assert_eq!(
             summary,
             vec![vec![
@@ -78,7 +78,7 @@ mod tests {
                 "".to_string(),
             ]]
         );
-        let summary = rate_of_chance.table_chart_summary(&MACOSPatternFilter::DeadOnly);
+        let summary = rate_of_chance.table_chart_summary(&CrossoverPatternFilter::DeadOnly);
         assert_eq!(
             summary,
             vec![vec![

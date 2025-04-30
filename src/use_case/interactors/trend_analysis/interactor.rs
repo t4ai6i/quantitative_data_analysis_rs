@@ -98,7 +98,7 @@ where
         let ecp1s = ECP1s::from(stocks_from_end_days.as_slice());
 
         let stocks_macoses_pair = StocksMACOSESPair {
-            stocks: stocks_from_end_days.as_slice(),
+            stocks: stocks.as_slice(),
             macoses: macoses.as_slice(),
         };
         let macos_analysis_closes = MACOSAnalysisCloses::<AFTER_DAYS>::from(&stocks_macoses_pair);
@@ -107,8 +107,7 @@ where
 
         let macos_analysis_volumes = MACOSAnalysisVolumes::from(&stocks_macoses_pair);
 
-        let candle_sticks =
-            CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks_from_end_days.as_slice())?;
+        let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
         let candle_sticks_from_end_days =
             SliceWrapper::from(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
         let ecp2s = ECP2s::from(candle_sticks_from_end_days.as_slice());
@@ -122,7 +121,7 @@ where
         };
         let trend_reversal_analysis = TrendReversalAnalysis::from(trend_reversal_analysis_set);
 
-        let indicator = Indicator::from((stocks_from_end_days.as_slice(), &statement));
+        let indicator = Indicator::from((stocks.as_slice(), &statement));
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };
         let indicator_analysis = IndicatorAnalysis::from(indicator_analysis_set);
 
@@ -141,7 +140,7 @@ where
             candle_sticks,
             trend_reversal_analysis,
             indicator_analysis,
-            macos_pattern_filter: input.macos_pattern_filter,
+            crossover_pattern_filter: input.crossover_pattern_filter,
         };
         Ok(output)
     }

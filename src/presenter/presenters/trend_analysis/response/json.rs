@@ -12,7 +12,7 @@ impl presenter::TrendAnalysis for JSON {
     ) -> Result<response::TrendAnalysis> {
         Ok(response::TrendAnalysis::Json {
             company: output.company,
-            macos_pattern_filter: output.macos_pattern_filter,
+            crossover_pattern_filter: output.crossover_pattern_filter,
             rate_of_chance: output.rate_of_chance,
             latest_chance: output.latest_chance,
             ecp1s: output.ecp1s,

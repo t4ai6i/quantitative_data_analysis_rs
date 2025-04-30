@@ -1,4 +1,4 @@
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use chrono::NaiveDate;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
@@ -7,7 +7,7 @@ pub struct TrendAnalysis {
     pub market: String,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
-    pub macos_pattern_filter: MACOSPatternFilter,
+    pub crossover_pattern_filter: CrossoverPatternFilter,
 }
 
 impl TrendAnalysis {
@@ -16,14 +16,14 @@ impl TrendAnalysis {
         market: impl Into<String>,
         start_date: NaiveDate,
         end_date: NaiveDate,
-        macos_pattern_filter: MACOSPatternFilter,
+        crossover_pattern_filter: CrossoverPatternFilter,
     ) -> Self {
         Self {
             code: code.into(),
             market: market.into(),
             start_date,
             end_date,
-            macos_pattern_filter,
+            crossover_pattern_filter,
         }
     }
 }

@@ -21,17 +21,17 @@ impl TrendAnalyses for response::TrendAnalyses {
             .filter_map(|response| match response {
                 TrendAnalysis::Chart {
                     company,
-                    macos_pattern_filter,
+                    crossover_pattern_filter,
                     rate_of_chance,
                     latest_chance,
                     ..
                 } => {
                     let Company { code, symbol, .. } = company;
-                    let latest_chance = macos_pattern_filter.get_latest_chance(&latest_chance);
+                    let latest_chance = crossover_pattern_filter.get_latest_chance(&latest_chance);
                     let macos = Pattern::from(latest_chance).to_string();
                     let latest_chance = latest_chance.to_string();
                     let rate_of_chance_percent =
-                        macos_pattern_filter.format_rate_of_chance_percent(&rate_of_chance);
+                        crossover_pattern_filter.format_rate_of_chance_percent(&rate_of_chance);
                     Some(vec![
                         code,
                         symbol,
@@ -51,7 +51,7 @@ impl TrendAnalyses for response::TrendAnalyses {
             .filter_map(|response| match response {
                 TrendAnalysis::Json {
                     company,
-                    macos_pattern_filter,
+                    crossover_pattern_filter,
                     rate_of_chance,
                     latest_chance,
                     ecp1s,
@@ -59,8 +59,11 @@ impl TrendAnalyses for response::TrendAnalyses {
                     indicator_analysis,
                 } => {
                     let Company { code, symbol, .. } = company;
-                    let macos_analysis =
-                        MACOSAnalysis::from((macos_pattern_filter, rate_of_chance, latest_chance));
+                    let macos_analysis = MACOSAnalysis::from((
+                        crossover_pattern_filter,
+                        rate_of_chance,
+                        latest_chance,
+                    ));
                     let ecp1_analysis = BuySellSignalAnalysis::from(ecp1s.as_slice());
                     let trend_reversal_analysis =
                         TrendReversalAnalysis::from(trend_reversal_analysis);

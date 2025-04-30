@@ -5,7 +5,7 @@ use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 
 pub mod chart;
 pub mod json;
@@ -14,14 +14,14 @@ pub mod json;
 pub enum TrendAnalysis {
     Chart {
         company: Company,
-        macos_pattern_filter: MACOSPatternFilter,
+        crossover_pattern_filter: CrossoverPatternFilter,
         rate_of_chance: RateOfChance,
         latest_chance: LatestChance,
         body: String,
     },
     Json {
         company: Company,
-        macos_pattern_filter: MACOSPatternFilter,
+        crossover_pattern_filter: CrossoverPatternFilter,
         rate_of_chance: RateOfChance,
         latest_chance: LatestChance,
         ecp1s: ECP1s,

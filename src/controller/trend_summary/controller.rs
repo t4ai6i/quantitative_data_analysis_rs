@@ -1,9 +1,9 @@
 use anyhow::Result;
 
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_analysis::response::TrendAnalyses;
 use crate::presenter::presenters::trend_summary::presenter;
 use crate::presenter::presenters::{trend_analysis, trend_summary};
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::use_case::interfaces::trend_summary::input;
 use crate::use_case::interfaces::trend_summary::use_case;
 
@@ -28,11 +28,11 @@ where
     pub async fn analyze(
         &self,
         vec_trend_analysis: Vec<trend_analysis::response::TrendAnalysis>,
-        macos_pattern_filter: MACOSPatternFilter,
+        crossover_pattern_filter: CrossoverPatternFilter,
     ) -> Result<trend_summary::response::TrendSummary> {
         let input = input::TrendSummary::new(TrendAnalyses(vec_trend_analysis));
         let output = self.interactor.handle(input).await?;
-        let response = self.presenter.handle(output, macos_pattern_filter)?;
+        let response = self.presenter.handle(output, crossover_pattern_filter)?;
         Ok(response)
     }
 }

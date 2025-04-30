@@ -5,6 +5,7 @@ pub mod latest_chance;
 pub mod macos_analysis;
 pub mod macps_analysis;
 pub mod rate_of_chance;
+pub mod shared;
 pub mod sma;
 pub mod stock;
 pub mod trend_analysis;

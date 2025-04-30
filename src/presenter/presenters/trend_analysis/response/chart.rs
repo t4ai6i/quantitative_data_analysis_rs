@@ -8,7 +8,6 @@ use charts_rs::{
 };
 
 use crate::domain::models::macos::model::Pattern;
-use crate::presenter::macos_pattern_filter::MACOSPatternFilter;
 use crate::presenter::presenters::trend_analysis::output;
 use crate::presenter::presenters::trend_analysis::presenter;
 use crate::presenter::presenters::trend_analysis::response;
@@ -16,6 +15,7 @@ use crate::presenter::view_models::candle_stick::view_model::CandleSticks;
 use crate::presenter::view_models::macos_analysis::close::view_model::MACOSAnalysisCloses;
 use crate::presenter::view_models::macos_analysis::view_model::MACOSes;
 use crate::presenter::view_models::macos_analysis::volume::view_model::MACOSTrendAnalysisVolumes;
+use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::presenter::view_models::sma::view_model::SMAs;
 use crate::presenter::view_models::stock::view_model::Stocks;
 use crate::shared::float;
@@ -67,8 +67,8 @@ impl presenter::TrendAnalysis for Chart {
 
         let x_axis_data_days = output.stocks.formatted_dates(self.date_format.as_str());
 
-        let series_list = match output.macos_pattern_filter {
-            MACOSPatternFilter::All => {
+        let series_list = match output.crossover_pattern_filter {
+            CrossoverPatternFilter::Both => {
                 let dead_macoses = output.macoses.sma_25_closes(Pattern::DeadCross);
                 let golden_macoses = output.macoses.sma_25_closes(Pattern::GoldenCross);
                 vec![
@@ -80,7 +80,7 @@ impl presenter::TrendAnalysis for Chart {
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
-            MACOSPatternFilter::GoldenOnly => {
+            CrossoverPatternFilter::GoldenOnly => {
                 let golden_macoses = output.macoses.sma_25_closes(Pattern::GoldenCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
@@ -90,7 +90,7 @@ impl presenter::TrendAnalysis for Chart {
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
-            MACOSPatternFilter::DeadOnly => {
+            CrossoverPatternFilter::DeadOnly => {
                 let dead_macoses = output.macoses.sma_25_closes(Pattern::DeadCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
@@ -119,18 +119,18 @@ impl presenter::TrendAnalysis for Chart {
         candlestick_chart.series_list[1].start_index = 25;
         candlestick_chart.series_list[2].category = Some(SeriesCategory::Line);
         candlestick_chart.series_list[2].start_index = 50;
-        match output.macos_pattern_filter {
-            MACOSPatternFilter::All => {
+        match output.crossover_pattern_filter {
+            CrossoverPatternFilter::Both => {
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
                 candlestick_chart.series_list[4].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[4].start_index = 6;
             }
-            MACOSPatternFilter::GoldenOnly => {
+            CrossoverPatternFilter::GoldenOnly => {
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
             }
-            MACOSPatternFilter::DeadOnly => {
+            CrossoverPatternFilter::DeadOnly => {
                 candlestick_chart.series_list[3].category = Some(SeriesCategory::Line);
                 candlestick_chart.series_list[3].start_index = 6;
             }
@@ -153,8 +153,8 @@ impl presenter::TrendAnalysis for Chart {
             .map(|value| *value as _)
             .collect();
 
-        let series_list = match output.macos_pattern_filter {
-            MACOSPatternFilter::All => {
+        let series_list = match output.crossover_pattern_filter {
+            CrossoverPatternFilter::Both => {
                 let dead_macoses = output.macoses.sma_25_volumes(Pattern::DeadCross);
                 let golden_macoses = output.macoses.sma_25_volumes(Pattern::GoldenCross);
                 vec![
@@ -165,7 +165,7 @@ impl presenter::TrendAnalysis for Chart {
                     Series::from(("Volume", volumes)),
                 ]
             }
-            MACOSPatternFilter::GoldenOnly => {
+            CrossoverPatternFilter::GoldenOnly => {
                 let golden_macoses = output.macoses.sma_25_volumes(Pattern::GoldenCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
@@ -174,7 +174,7 @@ impl presenter::TrendAnalysis for Chart {
                     Series::from(("Volume", volumes)),
                 ]
             }
-            MACOSPatternFilter::DeadOnly => {
+            CrossoverPatternFilter::DeadOnly => {
                 let dead_macoses = output.macoses.sma_25_volumes(Pattern::DeadCross);
                 vec![
                     Series::from(("SMA5", sma_5_averages)),
@@ -193,18 +193,18 @@ impl presenter::TrendAnalysis for Chart {
         volume_chart.series_list[0].start_index = 5;
         volume_chart.series_list[1].category = Some(SeriesCategory::Line);
         volume_chart.series_list[1].start_index = 25;
-        match output.macos_pattern_filter {
-            MACOSPatternFilter::All => {
+        match output.crossover_pattern_filter {
+            CrossoverPatternFilter::Both => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
                 volume_chart.series_list[3].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[3].start_index = 6;
             }
-            MACOSPatternFilter::GoldenOnly => {
+            CrossoverPatternFilter::GoldenOnly => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
             }
-            MACOSPatternFilter::DeadOnly => {
+            CrossoverPatternFilter::DeadOnly => {
                 volume_chart.series_list[2].category = Some(SeriesCategory::Line);
                 volume_chart.series_list[2].start_index = 6;
             }
@@ -214,10 +214,10 @@ impl presenter::TrendAnalysis for Chart {
         let mut rows = output.macos_analysis_closes.table_chart_header();
         let mut body = output
             .macos_analysis_closes
-            .table_chart_rows(&output.macos_pattern_filter);
+            .table_chart_rows(&output.crossover_pattern_filter);
         rows.append(&mut body);
         let rate_of_chance = output.macos_analysis_closes.rate_of_chance();
-        let mut summary = rate_of_chance.table_chart_summary(&output.macos_pattern_filter);
+        let mut summary = rate_of_chance.table_chart_summary(&output.crossover_pattern_filter);
         rows.append(&mut summary);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "CloseCrossTrendAnalysis".to_string();
@@ -227,7 +227,7 @@ impl presenter::TrendAnalysis for Chart {
         let mut rows = output.macos_analysis_volumes.table_chart_header();
         let mut body = output
             .macos_analysis_volumes
-            .table_chart_rows(&output.macos_pattern_filter);
+            .table_chart_rows(&output.crossover_pattern_filter);
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
         table_chart.title_text = "VolumeCrossTrendAnalysis".to_string();
@@ -254,7 +254,7 @@ impl presenter::TrendAnalysis for Chart {
             body: charts
                 .svg()
                 .with_context(|| format!("{}", Backtrace::force_capture()))?,
-            macos_pattern_filter: output.macos_pattern_filter,
+            crossover_pattern_filter: output.crossover_pattern_filter,
             rate_of_chance: output.rate_of_chance,
             latest_chance: output.latest_chance,
         })
