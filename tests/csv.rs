@@ -1,8 +1,8 @@
 use anyhow::Context;
 use csv::{ReaderBuilder, Writer};
 use indoc::indoc;
-use quantitative_data_analysis_rs::infrastructure::stock_repository::data_format::csv::Csv;
-use quantitative_data_analysis_rs::presenter::view_model::macos_analysis::MACOSAnalysis;
+use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
+use quantitative_data_analysis_rs::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
 
 const CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
 
@@ -37,9 +37,9 @@ fn csv_sandbox() {
     assert_eq!(actual, expected);
 
     let json = indoc! {r#"{
-            "type":"Golden",
+            "pattern":"GoldenCross",
             "latest_chance":"2023-08-30",
-            "chance_rate":27.27272727272727
+            "rate_of_chance":27.27272727272727
         }"#};
     let macos_analysis: MACOSAnalysis = serde_json::from_str(json).unwrap();
     let mut builder = Writer::from_writer(vec![]);
@@ -47,6 +47,6 @@ fn csv_sandbox() {
     let data = String::from_utf8(builder.into_inner().unwrap()).unwrap();
     assert_eq!(
         data,
-        "type,latest_chance,chance_rate\nGolden,2023-08-30,27.27272727272727\n"
+        "pattern,latest_chance,rate_of_chance\nGoldenCross,2023-08-30,27.27272727272727\n"
     );
 }

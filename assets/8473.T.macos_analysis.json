@@ -1,7 +1,7 @@
 [
   {
-    "type": "Golden",
+    "pattern": "GoldenCross",
     "latest_chance": "2023-08-30",
-    "chance_rate": 27.27272727272727
+    "rate_of_chance": 27.27272727272727
   }
 ]

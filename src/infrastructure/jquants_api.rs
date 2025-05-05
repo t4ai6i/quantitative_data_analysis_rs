@@ -33,20 +33,6 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn has_refresh_token_expired(&self, now: NaiveDateTime) -> bool {
-        if self.refresh_token.expires_in < now {
-            return true;
-        }
-        false
-    }
-
-    pub fn has_id_token_expired(&self, now: NaiveDateTime) -> bool {
-        if self.id_token.expires_in < now {
-            return true;
-        }
-        false
-    }
-
     pub async fn update_token(
         token: io::Result<Vec<u8>>,
         mailaddress: impl Into<String>,
@@ -65,9 +51,9 @@ impl Token {
             }
             Ok(body) => {
                 let token: Token = serde_json::from_slice(&body)?;
-                let has_refresh_token_expired = token.has_refresh_token_expired(now);
-                let has_id_token_expired = token.has_id_token_expired(now);
-                match (has_refresh_token_expired, has_id_token_expired) {
+                let is_refresh_token_expired = token.is_refresh_token_expired(now);
+                let is_id_token_expired = token.is_id_token_expired(now);
+                match (is_refresh_token_expired, is_id_token_expired) {
                     (true, _) => {
                         let refresh_token =
                             JQuantsAPI::get_refresh_token(mailaddress, password).await?;
@@ -89,6 +75,14 @@ impl Token {
         };
         Ok(token)
     }
+
+    fn is_refresh_token_expired(&self, now: NaiveDateTime) -> bool {
+        self.refresh_token.expires_in < now
+    }
+
+    fn is_id_token_expired(&self, now: NaiveDateTime) -> bool {
+        self.id_token.expires_in < now
+    }
 }
 
 pub struct JQuantsAPI {
@@ -97,20 +91,17 @@ pub struct JQuantsAPI {
 }
 
 impl JQuantsAPI {
-    pub fn new(id_token: impl Into<String>, data_format: DataFormat) -> Result<Self> {
-        match data_format {
-            DataFormat::JQuantsAPI => (),
-            _ => {
-                bail!(format!(
-                    "Unsupported data format: {:?} at {}:{}",
-                    data_format,
-                    file!(),
-                    line!()
-                ));
-            }
-        };
+    pub fn new(id_token: String, data_format: DataFormat) -> Result<Self> {
+        if data_format.ne(&DataFormat::JQuantsAPI) {
+            bail!(
+                "Unsupported data format: {:?} at {}:{}",
+                data_format,
+                file!(),
+                line!()
+            );
+        }
         Ok(Self {
-            id_token: Into::into(id_token),
+            id_token,
             data_format,
         })
     }
@@ -177,8 +168,8 @@ mod tests {
             id_token,
         };
         let now = Utc::now().with_timezone(&Tokyo).naive_local();
-        assert!(!token.has_refresh_token_expired(now));
-        assert!(!token.has_id_token_expired(now));
+        assert!(!token.is_refresh_token_expired(now));
+        assert!(!token.is_id_token_expired(now));
         Ok(())
     }
 }

@@ -1,9 +1,9 @@
 use csv::WriterBuilder;
-use quantitative_data_analysis_rs::domain::repository::company_repository::CompanyRepository;
-use quantitative_data_analysis_rs::infrastructure::company_repository::data_format::tsv::Tsv;
+use quantitative_data_analysis_rs::domain::repositories::company::repository::Company;
 use quantitative_data_analysis_rs::infrastructure::data_format::DataFormat;
 use quantitative_data_analysis_rs::infrastructure::jquants_api::JQuantsAPI;
-use quantitative_data_analysis_rs::utils::jquants_api::setup::Setup;
+use quantitative_data_analysis_rs::infrastructure::repositories::company::data_format::tsv::Tsv;
+use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use tokio::fs::write;
 
 #[tokio::main]

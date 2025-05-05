@@ -3,7 +3,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub enum DataFormat {
     #[default]
-    Any,
+    Unknown,
     JSON {
         file_path: PathBuf,
     },
