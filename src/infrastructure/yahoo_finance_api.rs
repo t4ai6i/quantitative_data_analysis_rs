@@ -21,7 +21,7 @@ pub struct OffsetDateTimeWrapper(pub(crate) OffsetDateTime);
 
 impl From<NaiveDate> for OffsetDateTimeWrapper {
     fn from(value: NaiveDate) -> Self {
-        let timestamp = value.and_hms_opt(0, 0, 0).unwrap().timestamp();
+        let timestamp = value.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp();
         let offset_date_time = OffsetDateTime::from_unix_timestamp(timestamp).unwrap();
         OffsetDateTimeWrapper(offset_date_time)
     }

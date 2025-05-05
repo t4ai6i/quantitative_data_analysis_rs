@@ -8,10 +8,11 @@ use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinan
 use crate::shared::tryhard::get_common_retry_future_config;
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{DateTime, NaiveDate};
+use num_traits::ToPrimitive;
 
 #[async_trait]
-impl<'a> repository::Stock for YahooFinanceAPI<'a> {
+impl repository::Stock for YahooFinanceAPI<'_> {
     async fn get_stocks(
         &self,
         code: &str,
@@ -52,8 +53,9 @@ impl<'a> repository::Stock for YahooFinanceAPI<'a> {
             .with_context(|| format!("Failed fetching quotes: {}", symbol.as_str()))?
             .par_iter()
             .map(|quote| {
-                let date =
-                    NaiveDateTime::from_timestamp_opt(quote.timestamp as u32 as i64, 0).unwrap();
+                let date = DateTime::from_timestamp(quote.timestamp.to_i64().unwrap_or(0), 0)
+                    .unwrap()
+                    .naive_utc();
                 Stock {
                     date: date.date(),
                     open: quote.open,
