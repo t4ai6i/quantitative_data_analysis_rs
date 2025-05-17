@@ -2,6 +2,7 @@ use crate::domain::models::buy_sell_signal::model;
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
 use crate::shared::custom_date_format;
 use chrono::NaiveDate;
+use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +13,7 @@ pub struct BuySellSignal {
     pub date: NaiveDate,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
 pub struct BuySellSignalAnalysis(Vec<BuySellSignal>);
 
 impl From<&[model::BuySellSignal]> for BuySellSignalAnalysis {
