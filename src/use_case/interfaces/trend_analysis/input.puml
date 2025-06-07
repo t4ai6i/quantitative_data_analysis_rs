@@ -1,0 +1,16 @@
+@startuml
+!include ../../../presenter/view_models/shared/crossover_pattern_filter.puml
+
+package use_case::interfaces::trend_analysis::input {
+    class TrendAnalysis {
+        - code: String
+        - market: String
+        - start_date: NaiveDate
+        - end_date: NaiveDate
+        - crossover_pattern_filter: CrossoverPatternFilter
+        + new(code: String, market: String, start_date: NaiveDate, end_date: NaiveDate, crossover_pattern_filter: CrossoverPatternFilter)
+    }
+}
+
+TrendAnalysis *-- presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter
+@enduml

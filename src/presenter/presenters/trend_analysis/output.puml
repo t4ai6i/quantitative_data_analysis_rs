@@ -1,0 +1,25 @@
+@startuml
+!include ../../view_models/shared/crossover_pattern_filter.puml
+
+package presenter::presenters::trend_analysis::output {
+    class TrendAnalysis<N, M> {
+        - company: Company
+        - stocks: Stocks
+        - smas_5: SMAs<5>
+        - smas_25: SMAs<25>
+        - smas_50: SMAs<50>
+        - macoses: MACOSes
+        - macos_analysis_closes: MACOSAnalysisCloses<N>
+        - rate_of_chance: RateOfChance
+        - latest_chance: LatestChance
+        - macos_analysis_volumes: MACOSAnalysisVolumes
+        - ecp1s: ECP1s
+        - candle_sticks: CandleSticks<M>
+        - trend_reversal_analysis: TrendReversalAnalysis
+        - indicator_analysis: IndicatorAnalysis
+        - crossover_pattern_filter: CrossoverPatternFilter
+    }
+}
+
+TrendAnalysis *-- presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter
+@enduml
