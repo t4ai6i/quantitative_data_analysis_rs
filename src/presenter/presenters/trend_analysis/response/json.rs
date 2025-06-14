@@ -17,7 +17,6 @@ impl presenter::TrendAnalysis for JSON {
             latest_chance: output.latest_chance,
             ecp1s: output.ecp1s,
             trend_reversal_analysis: output.trend_reversal_analysis,
-            indicator_analysis: output.indicator_analysis,
         })
     }
 }

@@ -1,4 +1,4 @@
-use crate::domain::models::stock::model::Stocks;
+use crate::domain::models::stock::model::{Stock, Stocks};
 use crate::domain::repositories::stock::repository;
 use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::file_system::FileSystem;
@@ -11,6 +11,10 @@ use std::backtrace::Backtrace;
 
 #[async_trait]
 impl repository::Stock for FileSystem {
+    async fn get_stock(&self, code: &str, market: &str, target_date: NaiveDate) -> Result<Stock> {
+        todo!()
+    }
+
     ///
     /// # Examples
     ///

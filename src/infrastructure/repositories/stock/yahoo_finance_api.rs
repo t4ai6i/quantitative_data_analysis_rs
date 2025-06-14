@@ -13,6 +13,10 @@ use num_traits::ToPrimitive;
 
 #[async_trait]
 impl repository::Stock for YahooFinanceAPI<'_> {
+    async fn get_stock(&self, code: &str, market: &str, target_date: NaiveDate) -> Result<Stock> {
+        todo!()
+    }
+
     async fn get_stocks(
         &self,
         code: &str,

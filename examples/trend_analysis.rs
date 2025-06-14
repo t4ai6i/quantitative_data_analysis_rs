@@ -92,23 +92,13 @@ async fn main() -> Result<()> {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
-                    indicator_analysis,
                     ..
                 } = e;
-                (
-                    macos_analysis,
-                    trend_reversal_analysis,
-                    ecp1_analysis,
-                    indicator_analysis,
-                )
+                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis, indicator_analysis): (
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-        ) = multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
+            multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.macos_analysis.json"),
@@ -122,11 +112,6 @@ async fn main() -> Result<()> {
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.ecp1_analysis.json"),
-            &json_str
-        );
-        let json_str = serde_json::to_string_pretty(&indicator_analysis)?;
-        assert_eq!(
-            include_str!("../assets/8473.T.indicator_analysis.json"),
             &json_str
         );
     };
@@ -168,23 +153,13 @@ async fn main() -> Result<()> {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
-                    indicator_analysis,
                     ..
                 } = e;
-                (
-                    macos_analysis,
-                    trend_reversal_analysis,
-                    ecp1_analysis,
-                    indicator_analysis,
-                )
+                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis, indicator_analysis): (
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-        ) = multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
+            multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.macos_analysis.json"),
@@ -198,11 +173,6 @@ async fn main() -> Result<()> {
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.ecp1_analysis.json"),
-            &json_str
-        );
-        let json_str = serde_json::to_string_pretty(&indicator_analysis)?;
-        assert_eq!(
-            include_str!("../assets/9223.T.indicator_analysis.json"),
             &json_str
         );
     };

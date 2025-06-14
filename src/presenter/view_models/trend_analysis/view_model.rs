@@ -56,7 +56,6 @@ impl TrendAnalyses for response::TrendAnalyses {
                     latest_chance,
                     ecp1s,
                     trend_reversal_analysis,
-                    indicator_analysis,
                 } => {
                     let Company { code, symbol, .. } = company;
                     let macos_analysis = MACOSAnalysis::from((
@@ -73,7 +72,6 @@ impl TrendAnalyses for response::TrendAnalyses {
                         macos_analysis,
                         ecp1_analysis,
                         trend_reversal_analysis,
-                        indicator_analysis,
                     })
                 }
                 _ => None,

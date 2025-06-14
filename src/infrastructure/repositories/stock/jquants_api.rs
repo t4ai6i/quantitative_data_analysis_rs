@@ -9,7 +9,7 @@ use reqwest::Client;
 use std::str::FromStr;
 
 use crate::domain::models::stock::model;
-use crate::domain::models::stock::model::Stocks;
+use crate::domain::models::stock::model::{Stock, Stocks};
 use crate::domain::repositories::stock::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
@@ -17,6 +17,15 @@ const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
 
 #[async_trait]
 impl repository::Stock for JQuantsAPI {
+    async fn get_stock(
+        &self,
+        code: &str,
+        market: &str,
+        target_date: NaiveDate,
+    ) -> anyhow::Result<Stock> {
+        todo!()
+    }
+
     async fn get_stocks(
         &self,
         code: &str,

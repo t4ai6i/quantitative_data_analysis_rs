@@ -1,8 +1,6 @@
 use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::ecp2::model::ECP2s;
-use crate::domain::models::indicator::model::Indicator;
-use crate::domain::models::indicator_analysis::model::{IndicatorAnalysis, IndicatorAnalysisSet};
 use crate::domain::models::macos::model::MACOSes;
 use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
 use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
@@ -42,7 +40,7 @@ impl<'a, SR, CR, SMR> TrendAnalysis<'a, SR, CR, SMR> {
 }
 
 #[async_trait]
-impl<'a, SR, CR, SMR> use_case::TrendAnalysis for TrendAnalysis<'a, SR, CR, SMR>
+impl<SR, CR, SMR> use_case::TrendAnalysis for TrendAnalysis<'_, SR, CR, SMR>
 where
     SR: repositories::stock::repository::Stock + Sync,
     CR: repositories::company::repository::Company + Sync,
@@ -69,11 +67,6 @@ where
                 input.start_date,
                 input.end_date,
             )
-            .await?;
-
-        let statement = self
-            .statement_repository
-            .get_statement(input.code.as_str())
             .await?;
 
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
@@ -121,10 +114,6 @@ where
         };
         let trend_reversal_analysis = TrendReversalAnalysis::from(trend_reversal_analysis_set);
 
-        let indicator = Indicator::from((stocks.as_slice(), &statement));
-        let indicator_analysis_set = IndicatorAnalysisSet { indicator };
-        let indicator_analysis = IndicatorAnalysis::from(indicator_analysis_set);
-
         let output = output::TrendAnalysis {
             company,
             stocks,
@@ -139,7 +128,6 @@ where
             ecp1s,
             candle_sticks,
             trend_reversal_analysis,
-            indicator_analysis,
             crossover_pattern_filter: input.crossover_pattern_filter,
         };
         Ok(output)
