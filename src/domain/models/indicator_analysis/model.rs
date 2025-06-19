@@ -9,7 +9,7 @@ pub struct IndicatorAnalysisSet {
 
 /// MIX係数などの指標を元にした解析結果
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct IndicatorAnalysis<const MIX_MIN: usize> {
+pub struct IndicatorAnalysis {
     /// 終値日時
     pub close_date: NaiveDate,
     /// 開示日時
@@ -22,7 +22,7 @@ pub struct IndicatorAnalysis<const MIX_MIN: usize> {
     pub mix: Option<f64>,
 }
 
-impl<const MIX_MIN: usize> From<IndicatorAnalysisSet> for IndicatorAnalysis<MIX_MIN> {
+impl From<IndicatorAnalysisSet> for IndicatorAnalysis {
     fn from(value: IndicatorAnalysisSet) -> Self {
         let IndicatorAnalysisSet { indicator } = value;
         let Indicator {
@@ -36,17 +36,10 @@ impl<const MIX_MIN: usize> From<IndicatorAnalysisSet> for IndicatorAnalysis<MIX_
         let pbr = Some(pbr).and_then(validate_value);
         // MIX = PBR * PER
         // https://zaimani.com/financial-indicators/mix-coefficient/
-        let mix = per.zip(pbr).and_then(|(pbr, per)| {
-            let mix = pbr * per;
-            // 純資産と当期純利益の両方で株価の割安性を測定する指標。
-            // 提唱者ベンジャミン・グレアム氏曰く、ミックス係数が22.5を下回る銘柄が割安である。
-            // さらに手堅く見るならば、ミックス係数が2を下回る銘柄が割安である。
-            if mix <= MIX_MIN as f64 {
-                Some(mix)
-            } else {
-                None
-            }
-        });
+        // 純資産と当期純利益の両方で株価の割安性を測定する指標。
+        // 提唱者ベンジャミン・グレアム氏曰く、ミックス係数が22.5を下回る銘柄が割安である。
+        // さらに手堅く見るならば、ミックス係数が2を下回る銘柄が割安である。
+        let mix = per.zip(pbr).map(|(pbr, per)| pbr * per);
 
         Self {
             close_date,
@@ -65,8 +58,6 @@ mod tests {
         IndicatorAnalysis, IndicatorAnalysisSet,
     };
 
-    const MIX_MIN: usize = 2;
-
     #[test]
     fn indicator_analysis_test() {
         let indicator = Indicator {
@@ -75,7 +66,7 @@ mod tests {
             ..Default::default()
         };
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };
-        let actual = IndicatorAnalysis::<MIX_MIN>::from(indicator_analysis_set);
+        let actual = IndicatorAnalysis::from(indicator_analysis_set);
         let expected = IndicatorAnalysis {
             pbr: Some(1.0),
             per: Some(2.0),
@@ -90,11 +81,11 @@ mod tests {
         };
 
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };
-        let actual = IndicatorAnalysis::<MIX_MIN>::from(indicator_analysis_set);
+        let actual = IndicatorAnalysis::from(indicator_analysis_set);
         let expected = IndicatorAnalysis {
             pbr: Some(10.0),
             per: Some(20.0),
-            mix: None,
+            mix: Some(200.0),
             ..Default::default()
         };
         assert_eq!(actual, expected);
@@ -105,7 +96,7 @@ mod tests {
             ..Default::default()
         };
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };
-        let actual = IndicatorAnalysis::<MIX_MIN>::from(indicator_analysis_set);
+        let actual = IndicatorAnalysis::from(indicator_analysis_set);
         let expected = IndicatorAnalysis {
             pbr: Some(0.0),
             per: None,

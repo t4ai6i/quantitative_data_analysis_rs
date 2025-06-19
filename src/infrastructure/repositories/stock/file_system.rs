@@ -11,7 +11,12 @@ use std::backtrace::Backtrace;
 
 #[async_trait]
 impl repository::Stock for FileSystem {
-    async fn get_stock(&self, code: &str, market: &str, target_date: NaiveDate) -> Result<Stock> {
+    async fn get_stock(
+        &self,
+        _code: &str,
+        _market: &str,
+        _target_date: NaiveDate,
+    ) -> Result<Stock> {
         todo!()
     }
 

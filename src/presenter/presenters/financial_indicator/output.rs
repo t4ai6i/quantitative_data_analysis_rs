@@ -1,5 +1,6 @@
 use crate::domain::models::indicator_analysis::model;
 
-pub struct FinancialIndicator<const MIX_MIN: usize> {
-    pub indicator_analysis: model::IndicatorAnalysis<MIX_MIN>,
+pub struct FinancialIndicator {
+    pub code: String,
+    pub indicator_analysis: model::IndicatorAnalysis,
 }

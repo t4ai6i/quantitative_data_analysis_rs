@@ -27,10 +27,7 @@ where
     SR: stock::repository::Stock + Sync,
     SMR: statement::repository::Statement + Sync,
 {
-    async fn handle<const MIX_MIN: usize>(
-        &self,
-        input: input::FinancialIndicator,
-    ) -> Result<output::FinancialIndicator<MIX_MIN>> {
+    async fn handle(&self, input: input::FinancialIndicator) -> Result<output::FinancialIndicator> {
         let stock = self
             .stock_repository
             .get_stock(
@@ -47,8 +44,11 @@ where
 
         let indicator = Indicator::from((&stock, &statement));
         let indicator_analysis_set = IndicatorAnalysisSet { indicator };
-        let indicator_analysis = IndicatorAnalysis::<MIX_MIN>::from(indicator_analysis_set);
+        let indicator_analysis = IndicatorAnalysis::from(indicator_analysis_set);
 
-        Ok(output::FinancialIndicator { indicator_analysis })
+        Ok(output::FinancialIndicator {
+            code: input.code,
+            indicator_analysis,
+        })
     }
 }

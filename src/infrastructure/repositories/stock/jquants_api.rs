@@ -19,9 +19,9 @@ const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
 impl repository::Stock for JQuantsAPI {
     async fn get_stock(
         &self,
-        code: &str,
-        market: &str,
-        target_date: NaiveDate,
+        _code: &str,
+        _market: &str,
+        _target_date: NaiveDate,
     ) -> anyhow::Result<Stock> {
         todo!()
     }

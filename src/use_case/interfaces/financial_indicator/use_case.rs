@@ -5,8 +5,5 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait FinancialIndicator {
-    async fn handle<const MIX_MIN: usize>(
-        &self,
-        input: input::FinancialIndicator,
-    ) -> Result<output::FinancialIndicator<MIX_MIN>>;
+    async fn handle(&self, input: input::FinancialIndicator) -> Result<output::FinancialIndicator>;
 }
