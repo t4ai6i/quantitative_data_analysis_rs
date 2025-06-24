@@ -57,7 +57,6 @@ impl repository::Statement for JQuantsAPI {
 #[cfg(test)]
 mod tests {
     use crate::domain::repositories::statement::repository::Statement;
-    use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::shared::jquants_api::setup::Setup;
     use anyhow::Result;
@@ -73,8 +72,7 @@ mod tests {
     async fn get_statement_test(#[future] setup: Result<Token>) -> Result<()> {
         let token = setup.await?;
         let code = "8473";
-        let data_format = DataFormat::JQuantsAPI;
-        let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
+        let repository = JQuantsAPI::new(token.id_token.value)?;
         let actual = repository.get_statement(code).await;
         assert!(actual.is_ok());
         Ok(())

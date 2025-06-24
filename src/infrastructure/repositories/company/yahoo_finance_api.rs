@@ -28,11 +28,7 @@ impl TryFrom<YQuoteItem> for model::Company {
 }
 
 #[async_trait]
-impl<'a> repository::Company for YahooFinanceAPI<'a> {
-    async fn get_companies(&self) -> Result<Vec<model::Company>> {
-        todo!()
-    }
-
+impl repository::Company for YahooFinanceAPI<'_> {
     async fn get_company(&self, code: &str, market: &str) -> Result<model::Company> {
         let symbol = Symbol::try_from((code, market))?;
         let retry_future_config = get_common_retry_future_config();
@@ -47,26 +43,28 @@ impl<'a> repository::Company for YahooFinanceAPI<'a> {
             .with_context(|| format!("Not found company: {}", symbol.as_str()))?;
         TryFrom::try_from(quote)
     }
+
+    async fn get_companies(&self) -> Result<Vec<model::Company>> {
+        todo!()
+    }
 }
 
 /*
-通信が安定しないためテストを行わないようにした
 #[cfg(test)]
 mod tests {
+    // 通信が安定しないためテストを行わないようにした
+    use crate::domain::models::company::model;
     use crate::domain::repositories::company::repository::Company;
-    use crate::infrastructure::data_format::DataFormat;
     use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
     use yahoo_finance_api::YahooConnector;
-    use crate::domain::models::company::model;
 
     #[tokio::test]
     async fn get_company_test() -> Result<()> {
         let code = "8473";
         let market = "T";
-        let data_format = DataFormat::YahooFinanceAPI;
-        let provider = YahooConnector::new();
-        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let provider = YahooConnector::new()?;
+        let repositories = YahooFinanceAPI::new(&provider);
         let company = repositories.get_company(code, market).await?;
         assert_eq!(
             company,
@@ -79,8 +77,7 @@ mod tests {
         );
         let code = "V";
         let market = "";
-        let data_format = DataFormat::YahooFinanceAPI;
-        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let repositories = YahooFinanceAPI::new(&provider);
         let company = repositories.get_company(code, market).await?;
         assert_eq!(
             company,
@@ -99,10 +96,9 @@ mod tests {
     async fn get_company_code_not_found_test() {
         let code = "";
         let market = "";
-        let provider = YahooConnector::new();
-        let data_format = DataFormat::YahooFinanceAPI;
-        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let provider = YahooConnector::new().unwrap();
+        let repositories = YahooFinanceAPI::new(&provider);
         let _ = repositories.get_company(code, market).await.unwrap();
     }
 }
- */
+*/

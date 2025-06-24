@@ -1,12 +1,10 @@
-use crate::domain::models::stock::model::Stock;
-use crate::infrastructure::from_slice;
-use crate::infrastructure::from_slice::FromSlice;
+use crate::domain::models::stock::model;
+use crate::infrastructure::from_slice::{DataFormat, FromSlice};
 use chrono::NaiveDate;
-use from_slice::DataFormat;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
-pub struct Csv {
+pub struct Structure {
     #[serde(rename = "Date")]
     pub date: NaiveDate,
     #[serde(rename = "Open")]
@@ -23,9 +21,9 @@ pub struct Csv {
     pub volume: u64,
 }
 
-impl From<Csv> for Stock {
-    fn from(value: Csv) -> Self {
-        let Csv {
+impl From<Structure> for model::Stock {
+    fn from(value: Structure) -> Self {
+        let Structure {
             date,
             open,
             high,
@@ -46,24 +44,25 @@ impl From<Csv> for Stock {
     }
 }
 
-impl FromSlice for Csv {
-    type Deserialize = Csv;
-    type Item = Stock;
+impl FromSlice for Structure {
+    type Deserialize = Structure;
+    type Item = model::Stock;
 
     fn data_format() -> DataFormat {
-        DataFormat::CSV
+        DataFormat::Csv
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::infrastructure::from_slice::FromSlice;
-    const CSV_8473: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
+    use crate::infrastructure::repositories::stock::structures::internal::csv::Structure;
+
+    const CSV_8473: &[u8] = include_bytes!("../../../../../../assets/8473.T.csv");
 
     #[test]
     fn vec_stock_test() {
-        let vec_stock = Csv::from_slice::<true>(CSV_8473);
+        let vec_stock = Structure::from_slice::<true>(CSV_8473);
         assert_eq!(vec_stock.len(), 246);
     }
 }

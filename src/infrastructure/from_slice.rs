@@ -6,8 +6,8 @@ use std::backtrace::Backtrace;
 use std::fmt::{Debug, Display};
 
 pub enum DataFormat {
-    CSV,
-    TSV,
+    Csv,
+    Tsv,
 }
 
 type DeserializationResult<T, E> = Vec<Result<T, E>>;
@@ -20,8 +20,8 @@ pub trait FromSlice {
 
     fn from_slice<const B: bool>(value: &[u8]) -> Vec<csv::Result<Self::Deserialize>> {
         let mut reader = match Self::data_format() {
-            DataFormat::CSV => ReaderBuilder::new().has_headers(B).from_reader(value),
-            DataFormat::TSV => ReaderBuilder::new()
+            DataFormat::Csv => ReaderBuilder::new().has_headers(B).from_reader(value),
+            DataFormat::Tsv => ReaderBuilder::new()
                 .delimiter(b'\t')
                 .has_headers(B)
                 .from_reader(value),

@@ -2,11 +2,10 @@ use rayon::prelude::*;
 
 use crate::domain::models::stock::model::{Stock, Stocks};
 use crate::domain::repositories::stock::repository;
-use crate::infrastructure::data_format::DataFormat;
 use crate::infrastructure::symbol::Symbol;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
 use crate::shared::tryhard::get_common_retry_future_config;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate};
 use num_traits::ToPrimitive;
@@ -29,14 +28,6 @@ impl repository::Stock for YahooFinanceAPI<'_> {
         start_date: NaiveDate,
         end_date: NaiveDate,
     ) -> Result<Stocks> {
-        if self.data_format.ne(&DataFormat::YahooFinanceAPI) {
-            bail!(
-                "Unsupported data format: {:?} at {}:{}",
-                self.data_format,
-                file!(),
-                line!()
-            );
-        }
         let symbol = Symbol::try_from((code, market))?;
         let start_date = OffsetDateTimeWrapper::from(start_date);
         let end_date = OffsetDateTimeWrapper::from(end_date);
@@ -84,15 +75,14 @@ impl repository::Stock for YahooFinanceAPI<'_> {
 }
 
 /*
-通信が安定しないためテストを行わないようにした
 #[cfg(test)]
 mod tests {
+    // 通信が安定しないためテストを行わないようにした
     use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::data_format::DataFormat;
+    use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
     use chrono::NaiveDate;
     use yahoo_finance_api::YahooConnector;
-    use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 
     #[tokio::test]
     async fn get_vec_stock_test() -> Result<()> {
@@ -100,17 +90,15 @@ mod tests {
         let market = "T";
         let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
-        let data_format = DataFormat::YahooFinanceAPI;
-        let provider = YahooConnector::new();
-        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let provider = YahooConnector::new()?;
+        let repositories = YahooFinanceAPI::new(&provider);
         let stocks = repositories
             .get_stocks(code, market, start_date, end_date)
             .await?;
         assert_eq!(stocks.len(), 244);
         let code = "V";
         let market = "";
-        let data_format = DataFormat::YahooFinanceAPI;
-        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let repositories = YahooFinanceAPI::new(&provider);
         let stocks = repositories
             .get_stocks(code, market, start_date, end_date)
             .await?;
@@ -121,17 +109,16 @@ mod tests {
     #[tokio::test]
     #[should_panic]
     async fn get_vec_stock_code_not_found_test() {
-        let provider = YahooConnector::new();
         let code = "";
         let market = "";
         let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
-        let data_format = DataFormat::YahooFinanceAPI;
-        let repositories = YahooFinanceAPI::new(&provider, data_format);
+        let provider = YahooConnector::new().unwrap();
+        let repositories = YahooFinanceAPI::new(&provider);
         let _ = repositories
             .get_stocks(code, market, start_date, end_date)
             .await
             .unwrap();
     }
 }
- */
+*/

@@ -1,7 +1,8 @@
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
+use serde::Deserialize;
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
+#[derive(Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct Stock {
     pub date: NaiveDate,
     pub open: f64,

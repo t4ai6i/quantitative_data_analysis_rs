@@ -9,7 +9,7 @@ use reqwest::Client;
 use std::str::FromStr;
 
 use crate::domain::models::stock::model;
-use crate::domain::models::stock::model::{Stock, Stocks};
+use crate::domain::models::stock::model::Stocks;
 use crate::domain::repositories::stock::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
 
@@ -22,7 +22,7 @@ impl repository::Stock for JQuantsAPI {
         _code: &str,
         _market: &str,
         _target_date: NaiveDate,
-    ) -> anyhow::Result<Stock> {
+    ) -> anyhow::Result<model::Stock> {
         todo!()
     }
 
@@ -92,7 +92,6 @@ impl repository::Stock for JQuantsAPI {
 #[cfg(test)]
 mod tests {
     use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::data_format::DataFormat;
     use chrono::NaiveDate;
     use rstest::*;
 
@@ -111,8 +110,7 @@ mod tests {
         let market = "";
         let start_date = NaiveDate::from_ymd_opt(2023, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2023, 12, 31).unwrap();
-        let data_format = DataFormat::JQuantsAPI;
-        let repository = JQuantsAPI::new(token.id_token.value, data_format)?;
+        let repository = JQuantsAPI::new(token.id_token.value)?;
         let stocks = repository
             .get_stocks(code, market, start_date, end_date)
             .await?;

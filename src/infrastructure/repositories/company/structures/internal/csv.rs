@@ -1,11 +1,11 @@
-use crate::domain::models::company::model::Company;
+use crate::domain::models::company::model;
 use crate::infrastructure::from_slice::{DataFormat, FromSlice};
 use crate::infrastructure::symbol::Symbol;
-use anyhow::{Error, Result};
+use anyhow::Error;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct Csv {
+pub struct Structure {
     #[serde(rename = "コード")]
     pub code: String,
     #[serde(rename = "銘柄名")]
@@ -18,11 +18,11 @@ pub struct Csv {
     pub day_before: String,
 }
 
-impl TryFrom<Csv> for Company {
+impl TryFrom<Structure> for model::Company {
     type Error = Error;
 
-    fn try_from(value: Csv) -> Result<Self, Self::Error> {
-        let Csv {
+    fn try_from(value: Structure) -> anyhow::Result<Self, Self::Error> {
+        let Structure {
             code, name, market, ..
         } = value;
         let mut symbol = Symbol::try_from((code.as_str(), market.as_str()))?;
@@ -35,24 +35,25 @@ impl TryFrom<Csv> for Company {
     }
 }
 
-impl FromSlice for Csv {
-    type Deserialize = Csv;
-    type Item = Company;
+impl FromSlice for Structure {
+    type Deserialize = Structure;
+    type Item = model::Company;
 
     fn data_format() -> DataFormat {
-        DataFormat::CSV
+        DataFormat::Csv
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::infrastructure::from_slice::FromSlice;
-    const COMPANIES: &[u8] = include_bytes!("../../../../../assets/companies.csv");
+    use crate::infrastructure::repositories::company::structures::internal::csv::Structure;
+
+    const COMPANIES: &[u8] = include_bytes!("../../../../../../assets/companies.csv");
 
     #[test]
     fn vec_company_test() {
-        let vec_company = Csv::from_slice::<true>(COMPANIES);
+        let vec_company = Structure::from_slice::<true>(COMPANIES);
         assert_eq!(vec_company.len(), 61);
     }
 }

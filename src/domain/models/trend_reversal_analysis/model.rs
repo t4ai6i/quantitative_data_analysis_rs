@@ -119,18 +119,18 @@ mod tests {
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
     use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv::Structure;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
 
     #[test]
     fn trend_reversal_analysis_test() {
-        let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
+        let successes: Vec<_> = Structure::from_slice::<true>(CSV_8473)
             .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
-        let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+        let vec_stock: Vec<_> = Structure::from_deserialize(successes)
             .into_par_iter()
             .map(|s| s.unwrap())
             .collect();

@@ -46,14 +46,14 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::msesp::model::MSESPes;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv::Structure;
     ///
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
+    /// let successes: Vec<_> = Structure::from_slice::<true>(CSV_9223)
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+    /// let vec_stock: Vec<_> = Structure::from_deserialize(successes)
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// let _ = MSESPes::from(candle_sticks.as_slice());
@@ -95,18 +95,18 @@ mod tests {
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::domain::models::msesp::model::MSESPes;
     use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv::Structure;
 
     const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
 
     #[test]
     fn from_test() {
-        let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
+        let successes: Vec<_> = Structure::from_slice::<true>(CSV_8473)
             .into_par_iter()
             .map(|s| s.unwrap())
             .collect();
-        let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+        let vec_stock: Vec<_> = Structure::from_deserialize(successes)
             .into_par_iter()
             .map(|s| s.unwrap())
             .collect();

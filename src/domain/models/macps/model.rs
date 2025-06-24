@@ -40,13 +40,13 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// use quantitative_data_analysis_rs::domain::models::macps::model::MACPS;
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListTrio, SMAs};
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv::Structure;
     ///
     /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
-    /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
+    /// let successes: Vec<_> = Structure::from_slice::<true>(CSV_8473)
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+    /// let vec_stock: Vec<_> = Structure::from_deserialize(successes)
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
     /// let smas_25 = SMAs::<25>::from(vec_stock.as_slice());

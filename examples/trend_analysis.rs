@@ -19,9 +19,7 @@ async fn main() -> Result<()> {
     let token = Setup::run().await?;
 
     // JQUANTS APIを用いたレポジトリの準備
-    let data_format = infrastructure::data_format::DataFormat::JQuantsAPI;
-    let repository =
-        infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value, data_format)?;
+    let repository = infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value)?;
 
     // Stock/Company/Statementのレポジトリは、JQuantsAPIを用いる
     let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(

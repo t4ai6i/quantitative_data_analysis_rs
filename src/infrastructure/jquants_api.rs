@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 use std::io;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use chrono::{Days, NaiveDateTime, Utc};
 use chrono_tz::Asia::Tokyo;
 use itertools::Either;
 use query_string_builder::QueryString;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-
-use crate::infrastructure::data_format::DataFormat;
 
 const AUTH_USER_URL: &str = "https://api.jquants.com/v1/token/auth_user";
 const AUTH_REFRESH_URL: &str = "https://api.jquants.com/v1/token/auth_refresh";
@@ -86,24 +84,12 @@ impl Token {
 }
 
 pub struct JQuantsAPI {
-    pub data_format: DataFormat,
     pub id_token: String,
 }
 
 impl JQuantsAPI {
-    pub fn new(id_token: String, data_format: DataFormat) -> Result<Self> {
-        if data_format.ne(&DataFormat::JQuantsAPI) {
-            bail!(
-                "Unsupported data format: {:?} at {}:{}",
-                data_format,
-                file!(),
-                line!()
-            );
-        }
-        Ok(Self {
-            id_token,
-            data_format,
-        })
+    pub fn new(id_token: String) -> Result<Self> {
+        Ok(Self { id_token })
     }
 
     pub async fn get_refresh_token(

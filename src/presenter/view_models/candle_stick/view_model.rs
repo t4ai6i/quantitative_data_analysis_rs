@@ -18,15 +18,15 @@ impl<const N: usize> CandleSticks for model::CandleSticks<N> {
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv::Structure;
     /// use quantitative_data_analysis_rs::presenter::view_models::candle_stick::view_model::CandleSticks;
     ///
     /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
+    /// let successes: Vec<_> = Structure::from_slice::<true>(CSV_9223)
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
+    /// let vec_stock: Vec<_> = Structure::from_deserialize(successes)
     ///     .into_par_iter().map(|s| s.unwrap()).collect();
     /// let candle_sticks = model::CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
     /// let _ = candle_sticks.table_chart_rows();
