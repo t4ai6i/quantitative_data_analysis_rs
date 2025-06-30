@@ -42,21 +42,27 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     ///
     /// # Examples
     /// ```
-    /// use rayon::prelude::*;
+    /// use std::path::PathBuf;
+    /// use chrono::NaiveDate;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::msesp::model::MSESPes;
-    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv::Structure;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
+    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
     ///
-    /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let successes: Vec<_> = Structure::from_slice::<true>(CSV_9223)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Structure::from_deserialize(successes)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
-    /// let _ = MSESPes::from(candle_sticks.as_slice());
+    /// tokio_test::block_on(async {
+    ///   let file_path = PathBuf::from("./assets/9223.T.csv");
+    ///   let file_system = FileSystem::new(file_path);
+    ///   let csv = Csv::new(true, file_system);
+    ///   let default_str = "";
+    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
+    ///   let msespes = MSESPes::from(candle_sticks.as_slice());
+    ///   assert_eq!(msespes.len(), 33);
+    /// });
     /// ```
     fn from(value: &[CandleStick<N>]) -> Self {
         let vec_buy_sell_signal = value
@@ -84,8 +90,10 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
     use chrono::NaiveDate;
     use rayon::prelude::*;
+    use std::path::PathBuf;
 
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::Sell;
     use crate::domain::models::buy_sell_signal::model::{
@@ -94,24 +102,27 @@ mod tests {
     };
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::domain::models::msesp::model::MSESPes;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::repositories::stock::structures::internal::csv::Structure;
+    use crate::domain::repositories::stock::repository::Stock;
+    use crate::infrastructure::file_system::FileSystem;
+    use crate::infrastructure::repositories::stock::file_system::internal::csv::Csv;
 
-    const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
 
-    #[test]
-    fn from_test() {
-        let successes: Vec<_> = Structure::from_slice::<true>(CSV_8473)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let vec_stock: Vec<_> = Structure::from_deserialize(successes)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let candle_sticks =
-            CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+    #[tokio::test]
+    async fn from_test() -> Result<()> {
+        let file_path = PathBuf::from("./assets/8473.T.csv");
+        let file_system = FileSystem::new(file_path);
+        let csv = Csv::new(true, file_system);
+        let default_str = "";
+        let stocks = csv
+            .get_stocks(
+                default_str,
+                default_str,
+                NaiveDate::default(),
+                NaiveDate::default(),
+            )
+            .await?;
+        let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
         let MSESPes(vec_msesp) = MSESPes::from(candle_sticks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_msesp
             .into_par_iter()
@@ -249,5 +260,6 @@ mod tests {
         );
         assert_eq!(actual_buy, expected_buy);
         assert_eq!(actual_sell, expected_sell);
+        Ok(())
     }
 }

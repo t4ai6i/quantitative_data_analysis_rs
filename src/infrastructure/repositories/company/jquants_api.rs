@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Error, Result};
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
@@ -8,31 +8,7 @@ use serde_json::Value;
 use crate::domain::models::company::model;
 use crate::domain::repositories::company::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
-
-struct Response<'a>(&'a Value);
-
-impl TryFrom<Response<'_>> for model::Company {
-    type Error = Error;
-
-    fn try_from(value: Response<'_>) -> std::result::Result<Self, Self::Error> {
-        let Response(value) = value;
-        let code = value["Code"]
-            .as_str()
-            .with_context(|| "[Code] not found".to_string())?;
-        let company_name_english = value["CompanyNameEnglish"]
-            .as_str()
-            .with_context(|| "[CompanyNameEnglish] not found".to_string())?;
-        let market_code = value["MarketCode"]
-            .as_str()
-            .with_context(|| "[MarketCode] not found".to_string())?;
-        Ok(Self {
-            code: code.to_string(),
-            name: company_name_english.to_string(),
-            market: market_code.to_string(),
-            symbol: "".to_string(),
-        })
-    }
-}
+use crate::infrastructure::repositories::company::structures::jquants_api::Response;
 
 const COMPANY_URL: &str = "https://api.jquants.com/v1/listed/info";
 

@@ -1,14 +1,14 @@
+use anyhow::{Context, Result};
+use async_trait::async_trait;
+use chrono::NaiveDate;
 use rayon::prelude::*;
 
 use crate::domain::models::stock::model::{Stock, Stocks};
 use crate::domain::repositories::stock::repository;
+use crate::infrastructure::repositories::stock::structures::yahoo_finance_api::Response;
 use crate::infrastructure::symbol::Symbol;
 use crate::infrastructure::yahoo_finance_api::{OffsetDateTimeWrapper, YahooFinanceAPI};
 use crate::shared::tryhard::get_common_retry_future_config;
-use anyhow::{Context, Result};
-use async_trait::async_trait;
-use chrono::{DateTime, NaiveDate};
-use num_traits::ToPrimitive;
 
 #[async_trait]
 impl repository::Stock for YahooFinanceAPI<'_> {
@@ -52,20 +52,7 @@ impl repository::Stock for YahooFinanceAPI<'_> {
             .quotes()
             .with_context(|| format!("Failed fetching quotes: {}", symbol.as_str()))?
             .par_iter()
-            .map(|quote| {
-                let date = DateTime::from_timestamp(quote.timestamp.to_i64().unwrap_or(0), 0)
-                    .unwrap()
-                    .naive_utc();
-                Stock {
-                    date: date.date(),
-                    open: quote.open,
-                    high: quote.high,
-                    low: quote.low,
-                    close: quote.close,
-                    adj_close: quote.adjclose,
-                    volume: quote.volume,
-                }
-            })
+            .filter_map(|quote| TryFrom::try_from(Response(quote)).ok())
             .collect();
 
         let mut stocks = Stocks::default();

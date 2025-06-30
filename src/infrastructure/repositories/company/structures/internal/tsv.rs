@@ -13,7 +13,7 @@ pub struct Structure {
 impl TryFrom<Structure> for model::Company {
     type Error = Error;
 
-    fn try_from(value: Structure) -> anyhow::Result<Self, Self::Error> {
+    fn try_from(value: Structure) -> Result<Self, Self::Error> {
         let Structure { code, name } = value;
         let market = "T".to_string();
         let mut symbol = Symbol::try_from((code.as_str(), market.as_str()))?;

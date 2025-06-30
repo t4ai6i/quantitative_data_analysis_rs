@@ -106,8 +106,9 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
     use chrono::NaiveDate;
-    use rayon::prelude::*;
+    use std::path::PathBuf;
 
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
     use crate::domain::models::candle_stick::model::CandleSticks;
@@ -118,29 +119,32 @@ mod tests {
     use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::repositories::stock::structures::internal::csv::Structure;
+    use crate::domain::repositories::stock::repository::Stock;
+    use crate::infrastructure::file_system::FileSystem;
+    use crate::infrastructure::repositories::stock::file_system::internal::csv::Csv;
 
-    const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     const MARUBOZU_MIN_RATE: usize = 90;
 
-    #[test]
-    fn trend_reversal_analysis_test() {
-        let successes: Vec<_> = Structure::from_slice::<true>(CSV_8473)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let vec_stock: Vec<_> = Structure::from_deserialize(successes)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let candle_sticks =
-            CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
+    #[tokio::test]
+    async fn trend_reversal_analysis_test() -> Result<()> {
+        let file_path = PathBuf::from("./assets/8473.T.csv");
+        let file_system = FileSystem::new(file_path);
+        let csv = Csv::new(true, file_system);
+        let default_str = "";
+        let stocks = csv
+            .get_stocks(
+                default_str,
+                default_str,
+                NaiveDate::default(),
+                NaiveDate::default(),
+            )
+            .await?;
+        let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
         let ecp2s = ECP2s::from(candle_sticks.as_slice());
         let msespes = MSESPes::from(candle_sticks.as_slice());
-        let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
-        let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
-        let smas_50 = SMAs::<50>::from(vec_stock.as_slice());
+        let smas_5 = SMAs::<5>::from(stocks.as_slice());
+        let smas_25 = SMAs::<25>::from(stocks.as_slice());
+        let smas_50 = SMAs::<50>::from(stocks.as_slice());
         let sma_list_pair = SMAListPair {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
@@ -151,7 +155,7 @@ mod tests {
             smas_o: smas_25.as_slice(),
             smas_p: smas_50.as_slice(),
         };
-        let macps = MACPS::from((vec_stock.as_slice(), sma_list_trio));
+        let macps = MACPS::from((stocks.as_slice(), sma_list_trio));
         let candle_stick_pattern_set = TrendReversalAnalysisSet {
             ecp2s: &ecp2s,
             msesps: &msespes,
@@ -167,5 +171,6 @@ mod tests {
             macps: NaiveDate::from_ymd_opt(2023, 9, 8).map(|date| (date, Sell)),
         };
         assert_eq!(actual, expected);
+        Ok(())
     }
 }

@@ -50,30 +50,35 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// # Examples
     /// ```
-    /// use rayon::prelude::*;
-    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
+    /// use std::path::PathBuf;
+    /// use chrono::NaiveDate;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv::Structure;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
+    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
     ///
-    /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     /// const DAYS_5: usize = 5;
     /// const DAYS_25: usize = 25;
     ///
-    /// let successes: Vec<_> = Structure::from_slice::<true>(CSV_8473)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Structure::from_deserialize(successes)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
+    /// tokio_test::block_on(async {
+    ///   let file_path = PathBuf::from("./assets/8473.T.csv");
+    ///   let file_system = FileSystem::new(file_path);
+    ///   let csv = Csv::new(true, file_system);
+    ///   let default_str = "";
+    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
+    ///   assert_eq!(smas_5.len(), 242);
     ///
-    /// let smas_5 = SMAs::<DAYS_5>::from(vec_stock.as_slice());
-    /// assert_eq!(smas_5.len(), 242);
+    ///   let smas_25 = SMAs::<DAYS_25>::from(stocks.as_slice());
+    ///   assert_eq!(smas_25.len(), 222);
     ///
-    /// let smas_25 = SMAs::<DAYS_25>::from(vec_stock.as_slice());
-    /// assert_eq!(smas_25.len(), 222);
+    ///   let stocks = Stocks::default();
+    ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
+    ///   assert_eq!(smas_5.len(), 0);
+    /// });
     ///
-    /// let stocks = Stocks::default();
-    /// let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
-    /// assert_eq!(smas_5.len(), 0);
     /// ```
     fn from(value: &[Stock]) -> Self {
         let vec_sma = value

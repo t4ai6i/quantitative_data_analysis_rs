@@ -1,17 +1,15 @@
-use rayon::prelude::*;
-
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::NaiveDate;
-use num_traits::ToPrimitive;
 use query_string_builder::QueryString;
+use rayon::prelude::*;
 use reqwest::Client;
-use std::str::FromStr;
 
 use crate::domain::models::stock::model;
 use crate::domain::models::stock::model::Stocks;
 use crate::domain::repositories::stock::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
+use crate::infrastructure::repositories::stock::structures::jquants_api::Response;
 
 const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
 
@@ -49,40 +47,7 @@ impl repository::Stock for JQuantsAPI {
             .as_array()
             .with_context(|| format!("daily_quotes is empty. code = {}", code))?
             .par_iter()
-            .filter_map(|value| {
-                let date = value["Date"].as_str();
-                let open = value["Open"].as_f64();
-                let high = value["High"].as_f64();
-                let low = value["Low"].as_f64();
-                let close = value["Close"].as_f64();
-                let adj_close = value["AdjustmentClose"].as_f64();
-                let volume = value["Volume"].as_f64();
-                match (date, open, high, low, close, adj_close, volume) {
-                    (
-                        Some(date),
-                        Some(open),
-                        Some(high),
-                        Some(low),
-                        Some(close),
-                        Some(adj_close),
-                        Some(volume),
-                    ) => {
-                        let date = NaiveDate::from_str(date).unwrap_or(NaiveDate::default());
-                        let volume = volume.to_u64().unwrap();
-                        let stock = model::Stock {
-                            date,
-                            open,
-                            high,
-                            low,
-                            close,
-                            adj_close,
-                            volume,
-                        };
-                        Some(stock)
-                    }
-                    _ => None,
-                }
-            })
+            .filter_map(|value| TryFrom::try_from(Response(value)).ok())
             .collect();
         let mut stocks = Stocks::default();
         stocks.extend(vec_stock);

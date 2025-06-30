@@ -14,22 +14,28 @@ impl<const N: usize> CandleSticks for model::CandleSticks<N> {
     ///
     /// # Examples
     /// ```
-    /// use rayon::prelude::*;
+    /// use std::path::PathBuf;
+    /// use chrono::NaiveDate;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
-    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv::Structure;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
+    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
     /// use quantitative_data_analysis_rs::presenter::view_models::candle_stick::view_model::CandleSticks;
     ///
-    /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     /// const MARUBOZU_MIN_RATE: usize = 90;
     ///
-    /// let successes: Vec<_> = Structure::from_slice::<true>(CSV_9223)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Structure::from_deserialize(successes)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let candle_sticks = model::CandleSticks::<MARUBOZU_MIN_RATE>::try_from(vec_stock.as_slice()).unwrap();
-    /// let _ = candle_sticks.table_chart_rows();
+    /// tokio_test::block_on(async {
+    ///   let file_path = PathBuf::from("./assets/9223.T.csv");
+    ///   let file_system = FileSystem::new(file_path);
+    ///   let csv = Csv::new(true, file_system);
+    ///   let default_str = "";
+    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let candle_sticks = model::CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
+    ///   let table_chart_rows = candle_sticks.table_chart_rows();
+    ///   assert_eq!(table_chart_rows.len(), 35);
+    /// });
     /// ```
     fn table_chart_rows(&self) -> Vec<Vec<String>> {
         self.par_iter()

@@ -21,7 +21,7 @@ pub struct Structure {
 impl TryFrom<Structure> for model::Company {
     type Error = Error;
 
-    fn try_from(value: Structure) -> anyhow::Result<Self, Self::Error> {
+    fn try_from(value: Structure) -> Result<Self, Self::Error> {
         let Structure {
             code, name, market, ..
         } = value;

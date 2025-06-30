@@ -1,13 +1,12 @@
 use crate::domain::models::statement::model;
 use crate::domain::repositories::statement::repository;
 use crate::infrastructure::jquants_api::JQuantsAPI;
+use crate::infrastructure::repositories::statement::structures::jquants_api::Structure;
 use anyhow::{bail, Context};
 use async_trait::async_trait;
-use chrono::NaiveDate;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
 use reqwest::Client;
-use std::str::FromStr;
 
 const STATEMENT_URL: &str = "https://api.jquants.com/v1/fins/statements";
 
@@ -22,32 +21,17 @@ impl repository::Statement for JQuantsAPI {
         let Some(response) = response["statements"].as_array() else {
             bail!("[statements] in response not found");
         };
-        // 次の項目が存在するものを選択。FY,BookValuePerShare,EarningsPerShare
+        // 次の項目が存在するものを選択。FiscalYear,BookValuePerShare,EarningsPerShare
         // 上記の条件を満たしているもので最新を選択。API Docに以下の記述があるため、日付でのソートは行っていない。
         // 「DisclosureNumber: APIから出力されるjsonは開示番号で昇順に並んでいます。」
         response
             .par_iter()
-            .filter_map(|statement| {
-                let disclosed_date = statement["DisclosedDate"].as_str();
-                let type_of_current_period = statement["TypeOfCurrentPeriod"].as_str();
-                let earnings_per_share = statement["EarningsPerShare"].as_str();
-                let book_value_per_share = statement["BookValuePerShare"].as_str();
-                let disclosed_date = disclosed_date?;
-                let disclosed_date = NaiveDate::from_str(disclosed_date).ok()?;
-                let type_of_current_period = type_of_current_period?;
-                if type_of_current_period.ne("FY") {
-                    return None;
-                };
-                let earnings_per_share = earnings_per_share?;
-                let eps = earnings_per_share.parse::<f64>().ok()?;
-                let book_value_per_share = book_value_per_share?;
-                let bps = book_value_per_share.parse::<f64>().ok()?;
-                Some(model::Statement {
+            .filter_map(|value| {
+                TryFrom::try_from(Structure {
                     code: code.to_string(),
-                    disclosed_date,
-                    eps,
-                    bps,
+                    value,
                 })
+                .ok()
             })
             .reduce_with(|_a, b| b)
             .with_context(|| format!("struct model::Statement couldn't construct. code: {}", code))

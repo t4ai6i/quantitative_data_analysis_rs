@@ -5,27 +5,8 @@ use crate::domain::repositories::company::repository;
 use crate::infrastructure::symbol::Symbol;
 use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 use crate::shared::tryhard::get_common_retry_future_config;
-use anyhow::{Context, Error, Result};
+use anyhow::{Context, Result};
 use async_trait::async_trait;
-use yahoo_finance_api::YQuoteItem;
-
-impl TryFrom<YQuoteItem> for model::Company {
-    type Error = Error;
-
-    fn try_from(value: YQuoteItem) -> std::result::Result<Self, Self::Error> {
-        let code = value
-            .symbol
-            .split('.')
-            .next()
-            .with_context(|| format!("Cannot split quote.symbol: {}", value.symbol))?;
-        Ok(model::Company {
-            code: code.to_owned(),
-            name: value.long_name,
-            market: value.exchange,
-            symbol: value.symbol,
-        })
-    }
-}
 
 #[async_trait]
 impl repository::Company for YahooFinanceAPI<'_> {
