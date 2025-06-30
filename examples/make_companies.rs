@@ -1,9 +1,10 @@
 use csv::WriterBuilder;
+use tokio::fs::write;
+
 use quantitative_data_analysis_rs::domain::repositories::company::repository::Company;
 use quantitative_data_analysis_rs::infrastructure::jquants_api::JQuantsAPI;
 use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
-use tokio::fs::write;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
