@@ -148,23 +148,21 @@ impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
     ///
     /// # Examples
     /// ```
-    /// use std::path::PathBuf;
     /// use chrono::NaiveDate;
     ///
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
-    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
     ///
     /// const MARUBOZU_MIN_RATE: usize = 90;
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let file_path = PathBuf::from("./assets/9223.T.csv");
-    ///   let file_system = FileSystem::new(file_path);
-    ///   let csv = Csv::new(true, file_system);
+    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
     ///   let default_str = "";
-    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
     ///   let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
     ///   assert_eq!(candle_sticks.len(), 35);
     /// });
@@ -186,6 +184,8 @@ impl<const N: usize> TryFrom<&[Stock]> for CandleSticks<N> {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
     use crate::domain::models::stock::model::Stock;
 

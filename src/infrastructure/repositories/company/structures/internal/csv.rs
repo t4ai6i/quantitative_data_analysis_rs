@@ -1,8 +1,9 @@
+use anyhow::Error;
+use serde::{Deserialize, Serialize};
+
 use crate::domain::models::company::model;
 use crate::infrastructure::from_slice::{DataFormat, FromSlice};
 use crate::infrastructure::symbol::Symbol;
-use anyhow::Error;
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Structure {

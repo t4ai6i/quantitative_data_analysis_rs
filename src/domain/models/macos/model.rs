@@ -178,21 +178,20 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     ///
     /// # Examples
     /// ```
-    /// use std::path::PathBuf;
     /// use chrono::NaiveDate;
     ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListPair, SMAs};
     /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
-    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
+    ///
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let file_path = PathBuf::from("./assets/8473.T.csv");
-    ///   let file_system = FileSystem::new(file_path);
-    ///   let csv = Csv::new(true, file_system);
+    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
     ///   let default_str = "";
-    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
     ///   let smas_5 = SMAs::<5>::from(stocks.as_slice());
     ///   let smas_25 = SMAs::<25>::from(stocks.as_slice());
     ///   let sma_list_pair = SMAListPair {

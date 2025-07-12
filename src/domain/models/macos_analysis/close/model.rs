@@ -203,23 +203,23 @@ impl<const N: usize> MACOSAnalysisCloses<N> {
 mod tests {
     use anyhow::Result;
     use chrono::NaiveDate;
-    use std::path::PathBuf;
+    use pretty_assertions::assert_eq;
 
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
     use crate::domain::models::sma::model::{SMAListPair, SMAs};
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
     use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::file_system::FileSystem;
-    use crate::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv;
+
+    const CSV: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
 
     #[tokio::test]
     async fn macos_analysis_close_test() -> Result<()> {
-        let file_path = PathBuf::from("./assets/8473.T.csv");
-        let file_system = FileSystem::new(file_path);
-        let csv = Csv::new(true, file_system);
+        let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
         let default_str = "";
-        let stocks = csv
+        let stocks = dsv
             .get_stocks(
                 default_str,
                 default_str,

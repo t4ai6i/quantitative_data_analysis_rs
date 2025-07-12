@@ -108,7 +108,7 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 mod tests {
     use anyhow::Result;
     use chrono::NaiveDate;
-    use std::path::PathBuf;
+    use pretty_assertions::assert_eq;
 
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
     use crate::domain::models::candle_stick::model::CandleSticks;
@@ -120,18 +120,17 @@ mod tests {
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
     use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::file_system::FileSystem;
-    use crate::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv;
 
     const MARUBOZU_MIN_RATE: usize = 90;
+    const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
 
     #[tokio::test]
     async fn trend_reversal_analysis_test() -> Result<()> {
-        let file_path = PathBuf::from("./assets/8473.T.csv");
-        let file_system = FileSystem::new(file_path);
-        let csv = Csv::new(true, file_system);
+        let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
         let default_str = "";
-        let stocks = csv
+        let stocks = dsv
             .get_stocks(
                 default_str,
                 default_str,

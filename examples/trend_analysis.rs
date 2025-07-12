@@ -3,6 +3,8 @@ use chrono::NaiveDate;
 use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
+use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
 use quantitative_data_analysis_rs::presenter::view_models::analysis::view_model::Analysis;
 use quantitative_data_analysis_rs::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
@@ -13,19 +15,23 @@ const FROM_END_DAYS_7: isize = 7;
 const MARUBOZU_MIN_RATE: usize = 90;
 const DATE_FORMAT: &str = "%Y/%m/%d";
 
+const COMPANIES_TSV: &[u8] = include_bytes!("../assets/companies.tsv");
+
 #[tokio::main]
 async fn main() -> Result<()> {
     // JQUANTS APIのためのトークン準備
     let token = Setup::run().await?;
 
-    // JQUANTS APIを用いたレポジトリの準備
-    let repository = infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value)?;
+    // DSVを用いたレポジトリの準備
+    let dsv = Dsv::<tsv::Structure>::new(false, COMPANIES_TSV.to_vec());
 
-    // Stock/Company/Statementのレポジトリは、JQuantsAPIを用いる
+    // JQUANTS APIを用いたレポジトリの準備
+    let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value)?;
+
     let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &repository,
-        &repository,
-        &repository,
+        &jquants_api,
+        &dsv,
+        &jquants_api,
     );
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter = presenter::presenters::trend_analysis::response::chart::Chart::new(
@@ -39,7 +45,7 @@ async fn main() -> Result<()> {
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis_response = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
-            "8473",
+            "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
@@ -55,9 +61,9 @@ async fn main() -> Result<()> {
     }
 
     let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &repository,
-        &repository,
-        &repository,
+        &jquants_api,
+        &dsv,
+        &jquants_api,
     );
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
@@ -65,7 +71,7 @@ async fn main() -> Result<()> {
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
-            "8473",
+            "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
@@ -116,9 +122,9 @@ async fn main() -> Result<()> {
 
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
     let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &repository,
-        &repository,
-        &repository,
+        &jquants_api,
+        &dsv,
+        &jquants_api,
     );
 
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
@@ -126,7 +132,7 @@ async fn main() -> Result<()> {
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
-            "9223",
+            "92230",
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
             NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),

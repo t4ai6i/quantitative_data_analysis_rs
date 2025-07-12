@@ -50,24 +50,22 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// # Examples
     /// ```
-    /// use std::path::PathBuf;
     /// use chrono::NaiveDate;
     ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
-    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
     ///
     /// const DAYS_5: usize = 5;
     /// const DAYS_25: usize = 25;
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let file_path = PathBuf::from("./assets/8473.T.csv");
-    ///   let file_system = FileSystem::new(file_path);
-    ///   let csv = Csv::new(true, file_system);
+    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
     ///   let default_str = "";
-    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
     ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
     ///   assert_eq!(smas_5.len(), 242);
     ///

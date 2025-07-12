@@ -19,6 +19,7 @@ async fn main() -> anyhow::Result<()> {
         let tsv = tsv::Structure {
             code: company.code.clone(),
             name: company.name.clone(),
+            market: company.market.clone(),
         };
         writer.serialize(tsv).unwrap();
     });

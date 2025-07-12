@@ -39,20 +39,19 @@ impl From<&[Stock]> for ECP1s {
     ///
     /// # Examples
     /// ```
-    /// use std::path::PathBuf;
     /// use chrono::NaiveDate;
     ///
     /// use quantitative_data_analysis_rs::domain::models::ecp1::model::ECP1s;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
-    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
+    ///
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let file_path = PathBuf::from("./assets/9223.T.csv");
-    ///   let file_system = FileSystem::new(file_path);
-    ///   let csv = Csv::new(true, file_system);
+    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
     ///   let default_str = "";
-    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
     ///   let ecp1s = ECP1s::from(stocks.as_slice());
     ///   assert_eq!(ecp1s.len(), 34);
     /// });
@@ -85,7 +84,7 @@ impl From<&[Stock]> for ECP1s {
 mod tests {
     use anyhow::Result;
     use chrono::NaiveDate;
-    use std::path::PathBuf;
+    use pretty_assertions::assert_eq;
 
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
@@ -94,16 +93,16 @@ mod tests {
     };
     use crate::domain::models::ecp1::model::ECP1s;
     use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::file_system::FileSystem;
-    use crate::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv;
+
+    const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
 
     #[tokio::test]
     async fn from_test() -> Result<()> {
-        let file_path = PathBuf::from("./assets/9223.T.csv");
-        let file_system = FileSystem::new(file_path);
-        let csv = Csv::new(true, file_system);
+        let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
         let default_str = "";
-        let stocks = csv
+        let stocks = dsv
             .get_stocks(
                 default_str,
                 default_str,

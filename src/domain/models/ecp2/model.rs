@@ -58,23 +58,21 @@ impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
     ///
     /// # Examples
     /// ```
-    /// use std::path::PathBuf;
     /// use chrono::NaiveDate;
     ///
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::ecp2::model::ECP2s;
-    /// use quantitative_data_analysis_rs::infrastructure::file_system::FileSystem;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::file_system::internal::csv::Csv;
     ///
     /// const MARUBOZU_MIN_RATE: usize = 90;
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let file_path = PathBuf::from("./assets/9223.T.csv");
-    ///   let file_system = FileSystem::new(file_path);
-    ///   let csv = Csv::new(true, file_system);
+    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
     ///   let default_str = "";
-    ///   let stocks = csv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
     ///   let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
     ///   let ecp2s = ECP2s::from(candle_sticks.as_slice());
     ///   assert_eq!(ecp2s.len(), 34);
@@ -108,7 +106,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
 mod tests {
     use anyhow::Result;
     use chrono::NaiveDate;
-    use std::path::PathBuf;
+    use pretty_assertions::assert_eq;
 
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
@@ -118,18 +116,17 @@ mod tests {
     use crate::domain::models::candle_stick::model::CandleSticks;
     use crate::domain::models::ecp2::model::ECP2s;
     use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::file_system::FileSystem;
-    use crate::infrastructure::repositories::stock::file_system::internal::csv::Csv;
+    use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv;
 
     const MARUBOZU_MIN_RATE: usize = 90;
+    const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
 
     #[tokio::test]
     async fn from_test() -> Result<()> {
-        let file_path = PathBuf::from("./assets/8473.T.csv");
-        let file_system = FileSystem::new(file_path);
-        let csv = Csv::new(true, file_system);
+        let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
         let default_str = "";
-        let stocks = csv
+        let stocks = dsv
             .get_stocks(
                 default_str,
                 default_str,
