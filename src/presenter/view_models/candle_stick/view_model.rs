@@ -14,10 +14,9 @@ impl<const N: usize> CandleSticks for model::CandleSticks<N> {
     ///
     /// # Examples
     /// ```
-    /// use chrono::NaiveDate;
-    ///
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
@@ -28,8 +27,10 @@ impl<const N: usize> CandleSticks for model::CandleSticks<N> {
     ///
     /// tokio_test::block_on(async {
     ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
-    ///   let default_str = "";
-    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(query).await.unwrap();
     ///   let candle_sticks = model::CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
     ///   let table_chart_rows = candle_sticks.table_chart_rows();
     ///   assert_eq!(table_chart_rows.len(), 35);

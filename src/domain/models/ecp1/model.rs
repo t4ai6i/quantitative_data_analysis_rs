@@ -39,9 +39,8 @@ impl From<&[Stock]> for ECP1s {
     ///
     /// # Examples
     /// ```
-    /// use chrono::NaiveDate;
-    ///
     /// use quantitative_data_analysis_rs::domain::models::ecp1::model::ECP1s;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
@@ -50,8 +49,10 @@ impl From<&[Stock]> for ECP1s {
     ///
     /// tokio_test::block_on(async {
     ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
-    ///   let default_str = "";
-    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(query).await.unwrap();
     ///   let ecp1s = ECP1s::from(stocks.as_slice());
     ///   assert_eq!(ecp1s.len(), 34);
     /// });
@@ -92,6 +93,7 @@ mod tests {
         BuySellSignalType::{Buy, Sell},
     };
     use crate::domain::models::ecp1::model::ECP1s;
+    use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::stock::structures::internal::csv;
@@ -101,15 +103,10 @@ mod tests {
     #[tokio::test]
     async fn from_test() -> Result<()> {
         let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
-        let default_str = "";
-        let stocks = dsv
-            .get_stocks(
-                default_str,
-                default_str,
-                NaiveDate::default(),
-                NaiveDate::default(),
-            )
-            .await?;
+        let query = queries::get_stocks::Query {
+            ..Default::default()
+        };
+        let stocks = dsv.get_stocks(query).await?;
         let ecp1s = ECP1s::from(stocks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
             TupleVecBuySellSignal::from(ecp1s.as_slice()).0;

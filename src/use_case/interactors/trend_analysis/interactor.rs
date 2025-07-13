@@ -11,6 +11,8 @@ use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
 use crate::domain::repositories;
+use crate::domain::repositories::company::queries::get_company;
+use crate::domain::repositories::stock::queries::get_stocks;
 use crate::presenter::presenters::trend_analysis::output;
 use crate::shared::iterator::{FromEnd, SliceWrapper};
 use crate::use_case::interfaces::trend_analysis::input;
@@ -54,20 +56,19 @@ where
         &self,
         input: input::TrendAnalysis,
     ) -> Result<output::TrendAnalysis<AFTER_DAYS, MARUBOZU_MIN_RATE>> {
-        let company = self
-            .company_repository
-            .get_company(input.code.as_str(), input.market.as_str())
-            .await?;
+        let query = get_company::Query {
+            code: input.code.as_str(),
+            market: Some(input.market.as_str()),
+        };
+        let company = self.company_repository.get_company(query).await?;
 
-        let stocks = self
-            .stock_repository
-            .get_stocks(
-                input.code.as_str(),
-                input.market.as_str(),
-                input.start_date,
-                input.end_date,
-            )
-            .await?;
+        let query = get_stocks::Query {
+            code: Some(input.code.as_str()),
+            market: Some(input.market.as_str()),
+            start_date: Some(input.start_date),
+            end_date: Some(input.end_date),
+        };
+        let stocks = self.stock_repository.get_stocks(query).await?;
 
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
         let smas_25 = SMAs::<25>::from(stocks.as_slice());

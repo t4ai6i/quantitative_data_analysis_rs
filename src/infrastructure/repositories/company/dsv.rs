@@ -1,5 +1,5 @@
 use crate::domain::models::company::model;
-use crate::domain::repositories::company::repository;
+use crate::domain::repositories::company::{queries, repository};
 use crate::infrastructure::dsv::Dsv;
 use crate::infrastructure::from_slice::FromSlice;
 use anyhow::{Context, Result};
@@ -15,15 +15,18 @@ where
     <T::Item as TryFrom<T::Deserialize>>::Error: Debug + Display + Send + Sync,
     model::Company: TryFrom<<T as FromSlice>::Deserialize>,
 {
-    async fn get_company(&self, code: &str, _: &str) -> Result<model::Company> {
+    async fn get_company<'a>(
+        &self,
+        query: queries::get_company::Query<'a>,
+    ) -> Result<model::Company> {
         let companies = self.get_companies().await?;
         companies
             .into_par_iter()
-            .find_first(|company| company.code.eq(code))
+            .find_first(|company| company.code.eq(query.code))
             .with_context(|| {
                 format!(
                     "Not found company: {}\n{}",
-                    code,
+                    query.code,
                     Backtrace::force_capture()
                 )
             })
@@ -44,6 +47,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::domain::models::company::model;
+    use crate::domain::repositories::company::queries;
     use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::company::structures::internal::tsv;
@@ -52,10 +56,12 @@ mod tests {
 
     #[tokio::test]
     async fn get_company_test() -> anyhow::Result<()> {
-        let code = "13080";
-        let default_str = "";
         let dsv = Dsv::<tsv::Structure>::new(false, TSV.to_vec());
-        let actual = dsv.get_company(code, default_str).await?;
+        let query = queries::get_company::Query {
+            code: "13080",
+            ..Default::default()
+        };
+        let actual = dsv.get_company(query).await?;
         let expected = model::Company {
             code: "13080".to_string(),
             name: "Listed Index Fund TOPIX".to_string(),

@@ -6,7 +6,7 @@ use reqwest::Client;
 use serde_json::Value;
 
 use crate::domain::models::company::model;
-use crate::domain::repositories::company::repository;
+use crate::domain::repositories::company::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::company::structures::jquants_api::Response;
 
@@ -14,15 +14,18 @@ const COMPANY_URL: &str = "https://api.jquants.com/v1/listed/info";
 
 #[async_trait]
 impl repository::Company for JQuantsAPI {
-    async fn get_company(&self, code: &str, _market: &str) -> Result<model::Company> {
-        let qs = QueryString::dynamic().with_value("code", code);
+    async fn get_company<'a>(
+        &self,
+        query: queries::get_company::Query<'a>,
+    ) -> Result<model::Company> {
+        let qs = QueryString::dynamic().with_value("code", query.code);
         let url = format!("{COMPANY_URL}{qs}");
         let id_token = self.id_token.as_str();
         let response = Client::new().get(url).bearer_auth(id_token).send().await?;
         let response = &response.json::<Value>().await?;
         let value = response["info"]
             .get(0)
-            .with_context(|| format!("Not found company. {}", code))?;
+            .with_context(|| format!("Not found company. {}", query.code))?;
         TryFrom::try_from(Response(value))
     }
 
@@ -51,6 +54,7 @@ mod tests {
     use rstest::*;
 
     use crate::domain::models::company::model;
+    use crate::domain::repositories::company::queries;
     use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::shared::jquants_api::setup::Setup;
@@ -64,10 +68,12 @@ mod tests {
     #[tokio::test]
     async fn get_company_test(#[future] setup: Result<Token>) -> Result<()> {
         let token = setup.await?;
-        let code = "8473";
-        let market = "T";
         let repository = JQuantsAPI::new(token.id_token.value)?;
-        let actual = repository.get_company(code, market).await?;
+        let query = queries::get_company::Query {
+            code: "8473",
+            ..Default::default()
+        };
+        let actual = repository.get_company(query).await?;
         let expected = model::Company {
             code: "84730".to_string(),
             name: "SBI Holdings,Inc.".to_string(),

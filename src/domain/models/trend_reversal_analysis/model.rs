@@ -119,6 +119,7 @@ mod tests {
     use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
+    use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::stock::structures::internal::csv;
@@ -129,15 +130,10 @@ mod tests {
     #[tokio::test]
     async fn trend_reversal_analysis_test() -> Result<()> {
         let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
-        let default_str = "";
-        let stocks = dsv
-            .get_stocks(
-                default_str,
-                default_str,
-                NaiveDate::default(),
-                NaiveDate::default(),
-            )
-            .await?;
+        let query = queries::get_stocks::Query {
+            ..Default::default()
+        };
+        let stocks = dsv.get_stocks(query).await?;
         let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
         let ecp2s = ECP2s::from(candle_sticks.as_slice());
         let msespes = MSESPes::from(candle_sticks.as_slice());

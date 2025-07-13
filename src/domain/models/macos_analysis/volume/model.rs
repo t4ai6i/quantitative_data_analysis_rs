@@ -47,13 +47,13 @@ impl<'a> From<&StocksMACOSESPair<'a>> for MACOSAnalysisVolumes {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
 
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
     use crate::domain::models::sma::model::{SMAListPair, SMAs};
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
+    use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::stock::structures::internal::csv;
@@ -63,15 +63,10 @@ mod tests {
     #[tokio::test]
     async fn macos_analysis_volume_test() -> Result<()> {
         let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
-        let default_str = "";
-        let stocks = dsv
-            .get_stocks(
-                default_str,
-                default_str,
-                NaiveDate::default(),
-                NaiveDate::default(),
-            )
-            .await?;
+        let query = queries::get_stocks::Query {
+            ..Default::default()
+        };
+        let stocks = dsv.get_stocks(query).await?;
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
         let smas_25 = SMAs::<25>::from(stocks.as_slice());
         let sma_list_pair = SMAListPair {

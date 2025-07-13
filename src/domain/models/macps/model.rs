@@ -38,6 +38,7 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     ///
     /// use quantitative_data_analysis_rs::domain::models::macps::model::MACPS;
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListTrio, SMAs};
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
@@ -46,8 +47,10 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     ///
     /// tokio_test::block_on(async {
     ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
-    ///   let default_str = "";
-    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(query).await.unwrap();
     ///   let smas_5 = SMAs::<5>::from(stocks.as_slice());
     ///   let smas_25 = SMAs::<25>::from(stocks.as_slice());
     ///   let smas_50 = SMAs::<50>::from(stocks.as_slice());

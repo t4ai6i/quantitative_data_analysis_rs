@@ -50,10 +50,9 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// # Examples
     /// ```
-    /// use chrono::NaiveDate;
-    ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
@@ -64,8 +63,10 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// tokio_test::block_on(async {
     ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
-    ///   let default_str = "";
-    ///   let stocks = dsv.get_stocks(default_str, default_str, NaiveDate::default (), NaiveDate::default ()).await.unwrap();
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(query).await.unwrap();
     ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
     ///   assert_eq!(smas_5.len(), 242);
     ///
