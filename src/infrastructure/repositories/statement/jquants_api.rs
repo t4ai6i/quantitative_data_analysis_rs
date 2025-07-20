@@ -31,6 +31,10 @@ impl repository::Statement for JQuantsAPI {
         response
             .par_iter()
             .filter_map(|value| {
+                // TypeOfCurrentPeriodはFY(Fiscal Year/事業年度)のみを対象とする
+                value["TypeOfCurrentPeriod"]
+                    .as_str()
+                    .filter(|&str| str.eq("FY"))?;
                 TryFrom::try_from(Structure {
                     code: query.code.to_string(),
                     value,
