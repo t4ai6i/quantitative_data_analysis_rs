@@ -1,11 +1,12 @@
-mod json;
+pub mod json;
 
-use crate::domain::models::indicator_analysis::model::IndicatorAnalysis;
+use crate::domain::models::financial_indicator::model;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum FinancialIndicator {
-    Json {
+    JSON {
         code: String,
-        indicator_analysis: IndicatorAnalysis, // Assuming this is a string representation of the analysis
+        market: String,
+        financial_indicator: model::FinancialIndicator,
     },
 }

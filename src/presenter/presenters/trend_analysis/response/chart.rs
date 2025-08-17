@@ -11,13 +11,13 @@ use crate::domain::models::macos::model::Pattern;
 use crate::presenter::presenters::trend_analysis::output;
 use crate::presenter::presenters::trend_analysis::presenter;
 use crate::presenter::presenters::trend_analysis::response;
-use crate::presenter::view_models::candle_stick::view_model::CandleSticks;
-use crate::presenter::view_models::macos_analysis::close::view_model::MACOSAnalysisCloses;
-use crate::presenter::view_models::macos_analysis::view_model::MACOSes;
-use crate::presenter::view_models::macos_analysis::volume::view_model::MACOSTrendAnalysisVolumes;
-use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
-use crate::presenter::view_models::sma::view_model::SMAs;
-use crate::presenter::view_models::stock::view_model::Stocks;
+use crate::presenter::views::candle_stick::view::CandleSticks;
+use crate::presenter::views::macos_analysis::close::view::MACOSAnalysisCloses;
+use crate::presenter::views::macos_analysis::view::MACOSes;
+use crate::presenter::views::macos_analysis::volume::view::MACOSTrendAnalysisVolumes;
+use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use crate::presenter::views::sma::view::SMAs;
+use crate::presenter::views::stock::view::Stocks;
 use crate::shared::float;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]

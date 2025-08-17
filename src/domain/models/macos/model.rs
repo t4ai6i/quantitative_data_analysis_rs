@@ -63,7 +63,7 @@ impl From<(Option<Ordering>, Option<Ordering>)> for Pattern {
     }
 }
 
-/// MACOS analysis pattern
+/// MACOS trend_analysis_summary pattern
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub enum AnalysisPattern {
     #[default]

@@ -1,1 +1,1 @@
-mod interactor;
+pub mod interactor;

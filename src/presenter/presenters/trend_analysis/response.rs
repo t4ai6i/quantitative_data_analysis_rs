@@ -4,7 +4,7 @@ use crate::domain::models::company::model::Company;
 use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
-use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
 
 pub mod chart;
 pub mod json;

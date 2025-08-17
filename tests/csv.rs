@@ -2,7 +2,7 @@ use anyhow::Context;
 use csv::{ReaderBuilder, Writer};
 use indoc::indoc;
 use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv::Structure;
-use quantitative_data_analysis_rs::presenter::view_models::macos_analysis::view_model::MACOSAnalysis;
+use quantitative_data_analysis_rs::presenter::views::macos_analysis::view::MACOSAnalysis;
 
 const CSV_8473: &[u8] = include_bytes!("../assets/8473.T.csv");
 

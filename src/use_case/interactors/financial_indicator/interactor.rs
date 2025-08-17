@@ -1,8 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 
-use crate::domain::models::indicator::model::Indicator;
-use crate::domain::models::indicator_analysis::model::{IndicatorAnalysis, IndicatorAnalysisSet};
+use crate::domain::models::financial_indicator::model;
 use crate::domain::repositories::statement::queries::get_statement;
 use crate::domain::repositories::stock::queries::get_stock;
 use crate::domain::repositories::{statement, stock};
@@ -43,13 +42,12 @@ where
         };
         let statement = self.statement_repository.get_statement(query).await?;
 
-        let indicator = Indicator::from((&stock, &statement));
-        let indicator_analysis_set = IndicatorAnalysisSet { indicator };
-        let indicator_analysis = IndicatorAnalysis::from(indicator_analysis_set);
+        let financial_indicator = model::FinancialIndicator::from((&stock, &statement));
 
         Ok(output::FinancialIndicator {
             code: input.code,
-            indicator_analysis,
+            market: input.market,
+            financial_indicator,
         })
     }
 }

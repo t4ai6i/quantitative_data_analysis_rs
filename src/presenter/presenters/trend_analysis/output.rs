@@ -9,7 +9,7 @@ use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
 use crate::domain::models::sma::model::SMAs;
 use crate::domain::models::stock::model::Stocks;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
-use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
 
 pub struct TrendAnalysis<const N: usize, const M: usize> {
     pub company: Company,

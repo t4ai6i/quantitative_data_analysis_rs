@@ -1,15 +1,17 @@
+use anyhow::Result;
+
 use crate::presenter::presenters::financial_indicator::output;
 use crate::presenter::presenters::financial_indicator::presenter;
 use crate::presenter::presenters::financial_indicator::response;
-use anyhow::Result;
 
-pub struct JSON;
+pub struct Json;
 
-impl presenter::FinancialIndicator for JSON {
+impl presenter::FinancialIndicator for Json {
     fn handle(&self, output: output::FinancialIndicator) -> Result<response::FinancialIndicator> {
-        Ok(response::FinancialIndicator::Json {
+        Ok(response::FinancialIndicator::JSON {
             code: output.code,
-            indicator_analysis: output.indicator_analysis,
+            market: output.market,
+            financial_indicator: output.financial_indicator,
         })
     }
 }

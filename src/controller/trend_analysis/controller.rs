@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 
 use crate::presenter::presenters::trend_analysis::presenter;
 use crate::presenter::presenters::trend_analysis::response;
-use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::use_case::interfaces::trend_analysis::input;
 use crate::use_case::interfaces::trend_analysis::use_case;
 

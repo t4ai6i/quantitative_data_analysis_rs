@@ -5,8 +5,8 @@ use tokio::fs::write;
 
 use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
 use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
-use quantitative_data_analysis_rs::presenter::view_models::analysis::view_model::Analysis;
-use quantitative_data_analysis_rs::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use quantitative_data_analysis_rs::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use quantitative_data_analysis_rs::presenter::views::trend_analysis_summary::json::view::JsonRow;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
 
@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
     // 指定された証券コードのトレンド解析を行う
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
-    let trend_analysis_response = controller
+    let response = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "84730",
             "T",
@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
         .await?;
     if let presenter::presenters::trend_analysis::response::TrendAnalysis::Chart {
         ref body, ..
-    } = trend_analysis_response
+    } = response
     {
         write("./examples/8473.T.from_jquants_api.svg", body).await?;
         assert_eq!(include_str!("../assets/8473.T.from_jquants_api.svg"), body);
@@ -69,7 +69,7 @@ async fn main() -> Result<()> {
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
-    let trend_analysis = controller
+    let response = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "84730",
             "T",
@@ -79,25 +79,30 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = use_case::interactors::trend_summary::interactor::TrendSummary;
-    let vec_trend_analysis = vec![trend_analysis];
+    let interactor =
+        use_case::interactors::trend_analysis_summary::interactor::TrendAnalysisSummary;
+    let vec_trend_analysis = vec![response];
     // PresenterはJSON型でJSON形式のデータを出力する
-    let presenter = presenter::presenters::trend_summary::response::json::JSON;
-    let controller =
-        controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
-    if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
+    let presenter = presenter::presenters::trend_analysis_summary::response::json::JSON;
+    let controller = controller::trend_analysis_summary::controller::TrendAnalysisSummary::new(
+        &interactor,
+        &presenter,
+    );
+    if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
+        rows,
+    } = controller
         .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
         .await?
     {
-        let vec = data
+        let vec = rows
             .into_iter()
-            .map(|e| {
-                let Analysis {
+            .map(|row| {
+                let JsonRow {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
                     ..
-                } = e;
+                } = row;
                 (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
@@ -140,25 +145,30 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = use_case::interactors::trend_summary::interactor::TrendSummary;
+    let interactor =
+        use_case::interactors::trend_analysis_summary::interactor::TrendAnalysisSummary;
     let vec_trend_analysis = vec![trend_analysis];
-    let presenter = presenter::presenters::trend_summary::response::json::JSON;
-    let controller =
-        controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
+    let presenter = presenter::presenters::trend_analysis_summary::response::json::JSON;
+    let controller = controller::trend_analysis_summary::controller::TrendAnalysisSummary::new(
+        &interactor,
+        &presenter,
+    );
 
-    if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
+    if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
+        rows,
+    } = controller
         .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
         .await?
     {
-        let vec = data
+        let vec = rows
             .into_iter()
-            .map(|e| {
-                let Analysis {
+            .map(|row| {
+                let JsonRow {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
                     ..
-                } = e;
+                } = row;
                 (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();

@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 
+/// 財務情報
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Statement {
     pub code: String,

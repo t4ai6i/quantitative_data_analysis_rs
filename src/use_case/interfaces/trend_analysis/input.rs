@@ -1,4 +1,4 @@
-use crate::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use chrono::NaiveDate;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
