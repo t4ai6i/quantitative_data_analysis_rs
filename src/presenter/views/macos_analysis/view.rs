@@ -17,13 +17,13 @@ pub struct MACOSAnalysis {
     pub rate_of_chance: f64,
 }
 
-impl From<(CrossoverPatternFilter, RateOfChance, LatestChance)> for MACOSAnalysis {
-    fn from(value: (CrossoverPatternFilter, RateOfChance, LatestChance)) -> Self {
+impl From<(&CrossoverPatternFilter, &RateOfChance, &LatestChance)> for MACOSAnalysis {
+    fn from(value: (&CrossoverPatternFilter, &RateOfChance, &LatestChance)) -> Self {
         let (crossover_pattern_filter, rate_of_chance, latest_chance) = value;
-        let latest_chance = crossover_pattern_filter.get_latest_chance(&latest_chance);
+        let latest_chance = crossover_pattern_filter.get_latest_chance(latest_chance);
         let pattern = model::Pattern::from(latest_chance);
         let latest_chance = NaiveDate::from(latest_chance);
-        let rate_of_chance = crossover_pattern_filter.get_rate_of_chance(&rate_of_chance);
+        let rate_of_chance = crossover_pattern_filter.get_rate_of_chance(rate_of_chance);
         Self {
             pattern,
             latest_chance,

@@ -14,9 +14,6 @@ impl use_case::TrendAnalysisSummary for TrendAnalysisSummary {
         &self,
         input: input::TrendAnalysisSummary,
     ) -> Result<output::TrendAnalysisSummary> {
-        Ok(output::TrendAnalysisSummary::new(
-            input.trend_analyses,
-            input.vec_trend_analysis,
-        ))
+        Ok(output::TrendAnalysisSummary::new(input.trend_analyses))
     }
 }

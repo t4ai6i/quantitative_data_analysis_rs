@@ -1,11 +1,9 @@
 use anyhow::Result;
 
 use crate::presenter::presenters::trend_analysis::response::TrendAnalyses;
-use crate::presenter::presenters::trend_analysis_summary::presenter;
-use crate::presenter::presenters::{trend_analysis, trend_analysis_summary};
+use crate::presenter::presenters::trend_analysis_summary::{presenter, response};
 use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
-use crate::use_case::interfaces::trend_analysis_summary::input;
-use crate::use_case::interfaces::trend_analysis_summary::use_case;
+use crate::use_case::interfaces::trend_analysis_summary::{input, use_case};
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysisSummary<'a, I, P> {
@@ -27,13 +25,10 @@ where
 
     pub async fn analyze(
         &self,
-        vec_trend_analysis: Vec<trend_analysis::response::TrendAnalysis>,
+        trend_analyses: TrendAnalyses,
         crossover_pattern_filter: CrossoverPatternFilter,
-    ) -> Result<trend_analysis_summary::response::TrendAnalysisSummary> {
-        let input = input::TrendAnalysisSummary::new(
-            TrendAnalyses(vec_trend_analysis.clone()),
-            vec_trend_analysis,
-        );
+    ) -> Result<response::TrendAnalysisSummary> {
+        let input = input::TrendAnalysisSummary::new(trend_analyses);
         let output = self.interactor.handle(input).await?;
         let response = self.presenter.handle(output, crossover_pattern_filter)?;
         Ok(response)

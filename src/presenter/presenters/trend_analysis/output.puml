@@ -16,7 +16,6 @@ package presenter::presenters::trend_analysis::output {
         - ecp1s: ECP1s
         - candle_sticks: CandleSticks<M>
         - trend_reversal_analysis: TrendReversalAnalysis
-        - indicator_analysis: IndicatorAnalysis
         - crossover_pattern_filter: CrossoverPatternFilter
     }
 }

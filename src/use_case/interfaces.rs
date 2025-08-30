@@ -1,3 +1,4 @@
 pub mod financial_indicator;
+pub mod financial_indicator_summary;
 pub mod trend_analysis;
 pub mod trend_analysis_summary;

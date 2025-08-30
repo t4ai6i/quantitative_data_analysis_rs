@@ -25,7 +25,7 @@ impl repository::Company for JQuantsAPI {
         let response = &response.json::<Value>().await?;
         let value = response["info"]
             .get(0)
-            .with_context(|| format!("Not found company. {}", query.code))?;
+            .with_context(|| format!("Not found company. code = {}", query.code))?;
         TryFrom::try_from(Response(value))
     }
 

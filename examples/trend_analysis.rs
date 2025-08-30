@@ -3,10 +3,12 @@ use chrono::NaiveDate;
 use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
-use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
 use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
+use quantitative_data_analysis_rs::presenter::views::buy_sell_signal_analysis::view::BuySellSignalAnalysis;
+use quantitative_data_analysis_rs::presenter::views::macos_analysis::view::MACOSAnalysis;
 use quantitative_data_analysis_rs::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use quantitative_data_analysis_rs::presenter::views::trend_analysis_summary::json::view::JsonRow;
+use quantitative_data_analysis_rs::presenter::views::trend_reversal_analysis::view::TrendReversalAnalysis;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
 
@@ -23,11 +25,9 @@ async fn main() -> Result<()> {
     let token = Setup::run().await?;
 
     // DSVを用いたレポジトリの準備
-    let dsv = Dsv::<tsv::Structure>::new(false, COMPANIES_TSV.to_vec());
-
+    let dsv = infrastructure::dsv::Dsv::<tsv::Structure>::new(false, COMPANIES_TSV.to_vec());
     // JQUANTS APIを用いたレポジトリの準備
     let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value)?;
-
     let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
         &jquants_api,
         &dsv,
@@ -69,7 +69,7 @@ async fn main() -> Result<()> {
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
-    let response = controller
+    let trend_analysis = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "84730",
             "T",
@@ -81,21 +81,23 @@ async fn main() -> Result<()> {
 
     let interactor =
         use_case::interactors::trend_analysis_summary::interactor::TrendAnalysisSummary;
-    let vec_trend_analysis = vec![response];
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::trend_analysis_summary::response::json::JSON;
     let controller = controller::trend_analysis_summary::controller::TrendAnalysisSummary::new(
         &interactor,
         &presenter,
     );
+    let vec_trend_analysis = vec![trend_analysis];
+    let trend_analyses =
+        presenter::presenters::trend_analysis::response::TrendAnalyses(vec_trend_analysis);
     if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
         rows,
     } = controller
-        .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
+        .analyze(trend_analyses, CrossoverPatternFilter::Both)
         .await?
     {
         let vec = rows
-            .into_iter()
+            .iter()
             .map(|row| {
                 let JsonRow {
                     macos_analysis,
@@ -106,8 +108,11 @@ async fn main() -> Result<()> {
                 (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
-            multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (
+            Vec<&MACOSAnalysis>,
+            Vec<&TrendReversalAnalysis>,
+            Vec<&BuySellSignalAnalysis>,
+        ) = multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.macos_analysis.json"),
@@ -147,21 +152,23 @@ async fn main() -> Result<()> {
 
     let interactor =
         use_case::interactors::trend_analysis_summary::interactor::TrendAnalysisSummary;
-    let vec_trend_analysis = vec![trend_analysis];
     let presenter = presenter::presenters::trend_analysis_summary::response::json::JSON;
     let controller = controller::trend_analysis_summary::controller::TrendAnalysisSummary::new(
         &interactor,
         &presenter,
     );
 
+    let vec_trend_analysis = vec![trend_analysis];
+    let trend_analyses =
+        presenter::presenters::trend_analysis::response::TrendAnalyses(vec_trend_analysis);
     if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
         rows,
     } = controller
-        .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
+        .analyze(trend_analyses, CrossoverPatternFilter::Both)
         .await?
     {
         let vec = rows
-            .into_iter()
+            .iter()
             .map(|row| {
                 let JsonRow {
                     macos_analysis,
@@ -172,8 +179,11 @@ async fn main() -> Result<()> {
                 (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (Vec<_>, Vec<_>, Vec<_>) =
-            multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (
+            Vec<&MACOSAnalysis>,
+            Vec<&TrendReversalAnalysis>,
+            Vec<&BuySellSignalAnalysis>,
+        ) = multiunzip(vec);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.macos_analysis.json"),

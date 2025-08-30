@@ -30,13 +30,10 @@ impl TryFrom<&response::TrendAnalysis> for JsonRow {
                 ecp1s,
                 trend_reversal_analysis,
             } => {
-                let macos_analysis = MACOSAnalysis::from((
-                    *crossover_pattern_filter,
-                    *rate_of_chance,
-                    *latest_chance,
-                ));
+                let macos_analysis =
+                    MACOSAnalysis::from((crossover_pattern_filter, rate_of_chance, latest_chance));
                 let ecp1_analysis = BuySellSignalAnalysis::from(ecp1s.as_slice());
-                let trend_reversal_analysis = TrendReversalAnalysis::from(*trend_reversal_analysis);
+                let trend_reversal_analysis = TrendReversalAnalysis::from(trend_reversal_analysis);
                 Ok(JsonRow {
                     code: company.code.to_string(),
                     symbol: company.symbol.to_string(),
@@ -54,7 +51,10 @@ impl TryFrom<&response::TrendAnalysis> for JsonRow {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Deref, DerefMut)]
-pub struct JSON(pub Vec<JsonRow>);
+pub struct JsonRows(pub Vec<JsonRow>);
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct JSON(pub JsonRows);
 
 impl From<response::TrendAnalyses> for JSON {
     fn from(value: response::TrendAnalyses) -> Self {
@@ -62,7 +62,7 @@ impl From<response::TrendAnalyses> for JSON {
             .par_iter()
             .filter_map(|trend_analysis| JsonRow::try_from(trend_analysis).ok())
             .collect();
-        Self(vec_json_row)
+        Self(JsonRows(vec_json_row))
     }
 }
 
@@ -123,16 +123,16 @@ mod tests {
             msesp_date: NaiveDate::from_ymd_opt(2023, 7, 26).unwrap(),
             macps_date: NaiveDate::from_ymd_opt(2023, 7, 4).unwrap(),
         };
-        let analysis = JsonRow {
+        let json_row = JsonRow {
             code: "8473".to_string(),
             symbol: "8473.T".to_string(),
             macos_analysis,
             ecp1_analysis,
             trend_reversal_analysis,
         };
-        let actual = serde_json::to_string_pretty(&analysis).unwrap();
+        let actual = serde_json::to_string_pretty(&json_row).unwrap();
         assert_eq!(actual, json_str);
         let actual: JsonRow = serde_json::from_str(json_str).unwrap();
-        assert_eq!(actual, analysis);
+        assert_eq!(actual, json_row);
     }
 }

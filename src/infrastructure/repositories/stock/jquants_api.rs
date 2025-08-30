@@ -16,9 +16,24 @@ const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
 impl repository::Stock for JQuantsAPI {
     async fn get_stock<'a>(
         &self,
-        _: queries::get_stock::Query<'a>,
+        query: queries::get_stock::Query<'a>,
     ) -> anyhow::Result<model::Stock> {
-        todo!()
+        let qs = QueryString::dynamic()
+            .with_value("code", query.code.unwrap_or(""))
+            .with_value("from", query.target_date.to_string())
+            .with_value("to", query.target_date.to_string());
+        let daily_quotes_url = format!("{DAILY_QUOTES_URL}{qs}");
+        let id_token = self.id_token.as_str();
+        let response = Client::new()
+            .get(daily_quotes_url)
+            .bearer_auth(id_token)
+            .send()
+            .await?;
+        let response = response.json::<serde_json::Value>().await?;
+        let value = response["daily_quotes"]
+            .get(0)
+            .with_context(|| format!("Not found stock. code = {}", query.code.unwrap_or("")))?;
+        TryFrom::try_from(Response(value))
     }
 
     async fn get_stocks<'a>(
@@ -50,17 +65,45 @@ impl repository::Stock for JQuantsAPI {
 }
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+    use pretty_assertions::assert_eq;
+    use rstest::*;
+
+    use crate::domain::models::stock::model;
     use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
     use crate::shared::jquants_api::setup::Setup;
-    use chrono::NaiveDate;
-    use rstest::*;
 
     #[fixture]
     async fn setup() -> anyhow::Result<Token> {
         Setup::run().await
     }
+
+    #[rstest]
+    #[tokio::test]
+    async fn get_stock_test(#[future] setup: anyhow::Result<Token>) -> anyhow::Result<()> {
+        let token = setup.await?;
+        let repository = JQuantsAPI::new(token.id_token.value)?;
+        let query = queries::get_stock::Query {
+            code: Some("84730"),
+            market: None,
+            target_date: NaiveDate::from_ymd_opt(2025, 8, 27).unwrap(),
+        };
+        let actual = repository.get_stock(query).await?;
+        let expected = model::Stock {
+            date: NaiveDate::from_ymd_opt(2025, 8, 27).unwrap(),
+            open: 6923.0,
+            high: 6925.0,
+            low: 6746.0,
+            close: 6752.0,
+            adj_close: 6752.0,
+            volume: 3731200,
+        };
+        assert_eq!(actual, expected);
+        Ok(())
+    }
+
     #[rstest]
     #[tokio::test]
     async fn get_stocks_test(#[future] setup: anyhow::Result<Token>) -> anyhow::Result<()> {

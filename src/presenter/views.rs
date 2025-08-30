@@ -1,5 +1,7 @@
 pub mod buy_sell_signal_analysis;
 pub mod candle_stick;
+pub mod financial_indicator;
+pub mod financial_indicator_summary;
 pub mod latest_chance;
 pub mod macos_analysis;
 pub mod macps_analysis;

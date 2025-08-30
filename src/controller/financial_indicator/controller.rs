@@ -1,8 +1,9 @@
+use anyhow::Result;
+
 use crate::presenter::presenters::financial_indicator::presenter;
 use crate::presenter::presenters::financial_indicator::response;
 use crate::use_case::interfaces::financial_indicator::input;
 use crate::use_case::interfaces::financial_indicator::use_case;
-use anyhow::Result;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct FinancialIndicator<'a, I, P> {

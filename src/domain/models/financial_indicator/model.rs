@@ -116,7 +116,6 @@ mod tests {
             oppr: Some(25.0),
             orpr: Some(12.5),
             pr: Some(6.25),
-            ..Default::default()
         };
         assert_eq!(actual, expected);
     }

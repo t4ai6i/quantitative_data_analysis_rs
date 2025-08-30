@@ -18,8 +18,8 @@ pub struct TrendReversalAnalysis {
     pub macps_date: NaiveDate,
 }
 
-impl From<model::TrendReversalAnalysis> for TrendReversalAnalysis {
-    fn from(value: model::TrendReversalAnalysis) -> Self {
+impl From<&model::TrendReversalAnalysis> for TrendReversalAnalysis {
+    fn from(value: &model::TrendReversalAnalysis) -> Self {
         let model::TrendReversalAnalysis {
             r#type,
             macos,
@@ -28,7 +28,7 @@ impl From<model::TrendReversalAnalysis> for TrendReversalAnalysis {
             macps,
         } = value;
         Self {
-            r#type,
+            r#type: *r#type,
             macos_date: macos.map(|(date, _)| date).unwrap_or(NaiveDate::default()),
             ecp2_date: ecp2.map(|(date, _)| date).unwrap_or(NaiveDate::default()),
             msesp_date: msesp.map(|(date, _)| date).unwrap_or(NaiveDate::default()),
