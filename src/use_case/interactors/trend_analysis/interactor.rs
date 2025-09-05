@@ -1,3 +1,6 @@
+use anyhow::Result;
+use async_trait::async_trait;
+
 use crate::domain::models::candle_stick::model::CandleSticks;
 use crate::domain::models::ecp1::model::ECP1s;
 use crate::domain::models::ecp2::model::ECP2s;
@@ -17,36 +20,27 @@ use crate::presenter::presenters::trend_analysis::output;
 use crate::shared::iterator::{FromEnd, SliceWrapper};
 use crate::use_case::interfaces::trend_analysis::input;
 use crate::use_case::interfaces::trend_analysis::use_case;
-use anyhow::Result;
-use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct TrendAnalysis<'a, SR, CR, SMR> {
+pub struct TrendAnalysis<'a, SR, CR> {
     stock_repository: &'a SR,
     company_repository: &'a CR,
-    statement_repository: &'a SMR,
 }
 
-impl<'a, SR, CR, SMR> TrendAnalysis<'a, SR, CR, SMR> {
-    pub fn new(
-        stock_repository: &'a SR,
-        company_repository: &'a CR,
-        statement_repository: &'a SMR,
-    ) -> Self {
+impl<'a, SR, CR> TrendAnalysis<'a, SR, CR> {
+    pub fn new(stock_repository: &'a SR, company_repository: &'a CR) -> Self {
         Self {
             stock_repository,
             company_repository,
-            statement_repository,
         }
     }
 }
 
 #[async_trait]
-impl<SR, CR, SMR> use_case::TrendAnalysis for TrendAnalysis<'_, SR, CR, SMR>
+impl<SR, CR> use_case::TrendAnalysis for TrendAnalysis<'_, SR, CR>
 where
     SR: repositories::stock::repository::Stock + Sync,
     CR: repositories::company::repository::Company + Sync,
-    SMR: repositories::statement::repository::Statement + Sync,
 {
     async fn handle<
         const AFTER_DAYS: usize,

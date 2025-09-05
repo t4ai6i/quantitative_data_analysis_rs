@@ -24,6 +24,10 @@ pub struct FinancialIndicator {
     pub pr: Option<f64>,
     /// Mix Ratio/ミックス係数
     pub mix: Option<f64>,
+    /// Return on Equity/自己資本利益率
+    pub roe: Option<f64>,
+    /// Return on Assets/総資産利益率
+    pub roa: Option<f64>,
 }
 
 impl From<&model::FinancialIndicator> for FinancialIndicator {
@@ -37,6 +41,8 @@ impl From<&model::FinancialIndicator> for FinancialIndicator {
             orpr,
             pr,
             mix,
+            roe,
+            roa,
         } = value;
         Self {
             close_date: *close_date,
@@ -47,6 +53,8 @@ impl From<&model::FinancialIndicator> for FinancialIndicator {
             orpr: *orpr,
             pr: *pr,
             mix: *mix,
+            roe: *roe,
+            roa: *roa,
         }
     }
 }

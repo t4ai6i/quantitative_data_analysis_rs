@@ -74,7 +74,9 @@ mod tests {
                 "oppr": null,
                 "orpr": null,
                 "pr": 12.0,
-                "mix": 2.0
+                "mix": 2.0,
+                "roe": 13.0,
+                "roa": 14.0
               }
             }"#};
         let financial_indicator = model::FinancialIndicator {
@@ -86,6 +88,8 @@ mod tests {
             orpr: None,
             pr: Some(12.0),
             mix: Some(2.0),
+            roe: Some(13.0),
+            roa: Some(14.0),
         };
         let financial_indicator = view::FinancialIndicator::from(&financial_indicator);
         let json_row = JsonRow {

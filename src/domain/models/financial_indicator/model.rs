@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use num_traits::Zero;
 use std::ops::Div;
 
 use crate::domain::models::statement::model::Statement;
@@ -24,6 +25,10 @@ pub struct FinancialIndicator {
     pub pr: Option<f64>,
     /// Mix Ratio/ミックス係数
     pub mix: Option<f64>,
+    /// Return on Equity/自己資本利益率
+    pub roe: Option<f64>,
+    /// Return on Assets/総資産利益率
+    pub roa: Option<f64>,
 }
 
 impl From<(&Stock, &Statement)> for FinancialIndicator {
@@ -49,7 +54,7 @@ impl From<(&Stock, &Statement)> for FinancialIndicator {
            【高水準だが、注意が必要】20%以上
            https://www.kaonavi.jp/dictionary/eigyoriekiritsu/
         */
-        let (oppr, orpr, pr) = (statement.net_sales != 0)
+        let (oppr, orpr, pr) = (!statement.net_sales.is_zero())
             .then(|| {
                 let net_sales_f64 = statement.net_sales as f64;
                 (
@@ -61,6 +66,19 @@ impl From<(&Stock, &Statement)> for FinancialIndicator {
             .map_or((None, None, None), |(oppr, orpr, pr)| {
                 (Some(oppr), Some(orpr), Some(pr))
             });
+        /*
+            ・ROE・・・高ければ高いほど効率的に利益を稼いでいる（目安は8%）
+            ・ROA・・・高ければ高いほど効率的に利益を稼いでいる（目安は5%、ただし業種による変動幅がある）
+            https://doda.jp/companyinfo/contents/finance/013.html
+        */
+        let roe = (!statement.equity.is_zero()).then(|| {
+            let equity_f64 = statement.equity as f64;
+            statement.profit as f64 / equity_f64 * 100.0
+        });
+        let roa = (!statement.total_assets.is_zero()).then(|| {
+            let total_assets_f64 = statement.total_assets as f64;
+            statement.profit as f64 / total_assets_f64 * 100.0
+        });
         Self {
             close_date: stock.date,
             disclosed_date: statement.disclosed_date,
@@ -70,6 +88,8 @@ impl From<(&Stock, &Statement)> for FinancialIndicator {
             orpr,
             pr,
             mix,
+            roe,
+            roa,
         }
     }
 }
@@ -96,6 +116,7 @@ mod tests {
             ..Default::default()
         };
         let statement = Statement {
+            code: "".to_string(),
             disclosed_date,
             eps: 100.0,
             bps: 400.0,
@@ -103,7 +124,8 @@ mod tests {
             opp: 128,
             orp: 64,
             profit: 32,
-            ..Default::default()
+            equity: 1000,
+            total_assets: 2000,
         };
 
         let actual = FinancialIndicator::from((&stock, &statement));
@@ -116,6 +138,8 @@ mod tests {
             oppr: Some(25.0),
             orpr: Some(12.5),
             pr: Some(6.25),
+            roe: Some(3.2),
+            roa: Some(1.6),
         };
         assert_eq!(actual, expected);
     }

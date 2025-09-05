@@ -20,9 +20,11 @@ impl TryFrom<Structure<'_>> for model::Statement {
         let eps = f64::from_json_key("EarningsPerShare", value).unwrap_or_default();
         let bps = f64::from_json_key("BookValuePerShare", value).unwrap_or_default();
         let net_sales = usize::from_json_key("NetSales", value).unwrap_or_default();
-        let operating_profit = usize::from_json_key("OperatingProfit", value).unwrap_or_default();
-        let ordinary_profit = usize::from_json_key("OrdinaryProfit", value).unwrap_or_default();
+        let opp = usize::from_json_key("OperatingProfit", value).unwrap_or_default();
+        let orp = usize::from_json_key("OrdinaryProfit", value).unwrap_or_default();
         let profit = usize::from_json_key("Profit", value).unwrap_or_default();
+        let equity = usize::from_json_key("Equity", value).unwrap_or_default();
+        let total_assets = usize::from_json_key("TotalAssets", value).unwrap_or_default();
 
         Ok(model::Statement {
             code,
@@ -30,9 +32,11 @@ impl TryFrom<Structure<'_>> for model::Statement {
             eps,
             bps,
             net_sales,
-            opp: operating_profit,
-            orp: ordinary_profit,
+            opp,
+            orp,
             profit,
+            equity,
+            total_assets,
         })
     }
 }

@@ -23,11 +23,17 @@ impl repository::Statement for JQuantsAPI {
         let response = Client::new().get(url).bearer_auth(id_token).send().await?;
         let response = &response.json::<serde_json::Value>().await?;
         let Some(response) = response["statements"].as_array() else {
-            bail!("[statements] in response not found");
+            bail!(
+                "response[statements] in response not found. code: {}",
+                query.code
+            );
         };
-        // 次の項目が存在するものを選択。FiscalYear,BookValuePerShare,EarningsPerShare
-        // 上記の条件を満たしているもので最新を選択。API Docに以下の記述があるため、日付でのソートは行っていない。
-        // 「DisclosureNumber: APIから出力されるjsonは開示番号で昇順に並んでいます。」
+        if response.is_empty() {
+            bail!(
+                "response[statements] in response is empty array. code: {}",
+                query.code
+            );
+        }
         response
             .par_iter()
             .filter_map(|value| {
@@ -41,11 +47,14 @@ impl repository::Statement for JQuantsAPI {
                 })
                 .ok()
             })
-            .reduce_with(|_a, b| b)
+            // API Docの以下の記述に従い、取得した配列データの最後尾を取得する。
+            // 「DisclosureNumber: APIから出力されるjsonは開示番号で昇順に並んでいます。」
+            .reduce_with(|_, b| b)
             .with_context(|| {
+                let response = serde_json::to_string_pretty(response).unwrap();
                 format!(
-                    "struct model::Statement couldn't construct. code: {}",
-                    query.code
+                    "struct model::Statement cannot be constructed. code: {}\n{}",
+                    query.code, response
                 )
             })
     }
@@ -54,8 +63,11 @@ impl repository::Statement for JQuantsAPI {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use chrono::NaiveDate;
+    use pretty_assertions::assert_eq;
     use rstest::*;
 
+    use crate::domain::models::statement::model;
     use crate::domain::repositories::statement::queries;
     use crate::domain::repositories::statement::repository::Statement;
     use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
@@ -72,8 +84,39 @@ mod tests {
         let token = setup.await?;
         let repository = JQuantsAPI::new(token.id_token.value)?;
         let query = queries::get_statement::Query { code: "8473" };
-        let actual = repository.get_statement(query).await;
-        assert!(actual.is_ok());
+        let actual = repository.get_statement(query).await?;
+        let expected = model::Statement {
+            code: "8473".to_string(),
+            disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9).unwrap(),
+            eps: 536.09,
+            bps: 4162.73,
+            net_sales: 1443733000000,
+            opp: 0,
+            orp: 0,
+            profit: 162120000000,
+            equity: 1763793000000,
+            total_assets: 32113430000000,
+        };
+        assert_eq!(actual, expected);
+
+        let query = queries::get_statement::Query { code: "????" };
+        let actual = repository
+            .get_statement(query)
+            .await
+            .unwrap_err()
+            .to_string();
+        let expected = "response[statements] in response not found. code: ????";
+        assert_eq!(actual, expected);
+
+        let query = queries::get_statement::Query { code: "2995" };
+        let actual = repository
+            .get_statement(query)
+            .await
+            .unwrap_err()
+            .to_string();
+        let expected = "response[statements] in response is empty array. code: 2995";
+        assert_eq!(actual, expected);
+
         Ok(())
     }
 }

@@ -28,11 +28,8 @@ async fn main() -> Result<()> {
     let dsv = infrastructure::dsv::Dsv::<tsv::Structure>::new(false, COMPANIES_TSV.to_vec());
     // JQUANTS APIを用いたレポジトリの準備
     let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value)?;
-    let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &jquants_api,
-        &dsv,
-        &jquants_api,
-    );
+    let interactor =
+        use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter = presenter::presenters::trend_analysis::response::chart::Chart::new(
         "chalk",
@@ -43,7 +40,7 @@ async fn main() -> Result<()> {
     // 指定された証券コードのトレンド解析を行う
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
-    let response = controller
+    let trend_analysis = controller
         .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
             "84730",
             "T",
@@ -54,17 +51,14 @@ async fn main() -> Result<()> {
         .await?;
     if let presenter::presenters::trend_analysis::response::TrendAnalysis::Chart {
         ref body, ..
-    } = response
+    } = trend_analysis
     {
         write("./examples/8473.T.from_jquants_api.svg", body).await?;
         assert_eq!(include_str!("../assets/8473.T.from_jquants_api.svg"), body);
     }
 
-    let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &jquants_api,
-        &dsv,
-        &jquants_api,
-    );
+    let interactor =
+        use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
     let controller =
@@ -131,11 +125,8 @@ async fn main() -> Result<()> {
     };
 
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
-    let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &jquants_api,
-        &dsv,
-        &jquants_api,
-    );
+    let interactor =
+        use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
 
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
     let controller =
