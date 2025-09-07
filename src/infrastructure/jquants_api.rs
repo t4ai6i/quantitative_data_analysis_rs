@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::io;
 
 use anyhow::Result;
 use chrono::{Days, NaiveDateTime, Utc};
@@ -32,7 +31,7 @@ pub struct Token {
 
 impl Token {
     pub async fn update_token(
-        token: io::Result<Vec<u8>>,
+        token: Result<Vec<u8>>,
         mailaddress: impl Into<String>,
         password: impl Into<String>,
         now: NaiveDateTime,
