@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-
 use anyhow::Result;
+use bytestring::ByteString;
 use chrono::{Days, NaiveDateTime, Utc};
 use chrono_tz::Asia::Tokyo;
 use itertools::Either;
 use query_string_builder::QueryString;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 const AUTH_USER_URL: &str = "https://api.jquants.com/v1/token/auth_user";
 const AUTH_REFRESH_URL: &str = "https://api.jquants.com/v1/token/auth_refresh";
@@ -83,11 +83,11 @@ impl Token {
 }
 
 pub struct JQuantsAPI {
-    pub id_token: String,
+    pub id_token: ByteString,
 }
 
 impl JQuantsAPI {
-    pub fn new(id_token: String) -> Result<Self> {
+    pub fn new(id_token: ByteString) -> Result<Self> {
         Ok(Self { id_token })
     }
 

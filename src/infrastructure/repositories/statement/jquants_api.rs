@@ -19,8 +19,11 @@ impl repository::Statement for JQuantsAPI {
     ) -> anyhow::Result<model::Statement> {
         let qs = QueryString::dynamic().with_value("code", query.code);
         let url = format!("{STATEMENT_URL}{qs}");
-        let id_token = self.id_token.as_str();
-        let response = Client::new().get(url).bearer_auth(id_token).send().await?;
+        let response = Client::new()
+            .get(url)
+            .bearer_auth(self.id_token.clone())
+            .send()
+            .await?;
         let response = &response.json::<serde_json::Value>().await?;
         let Some(response) = response["statements"].as_array() else {
             bail!(
@@ -63,6 +66,7 @@ impl repository::Statement for JQuantsAPI {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use bytestring::ByteString;
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
     use rstest::*;
@@ -70,19 +74,19 @@ mod tests {
     use crate::domain::models::statement::model;
     use crate::domain::repositories::statement::queries;
     use crate::domain::repositories::statement::repository::Statement;
-    use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
+    use crate::infrastructure::jquants_api::JQuantsAPI;
     use crate::shared::jquants_api::setup::Setup;
 
     #[fixture]
-    async fn setup() -> Result<Token> {
+    async fn setup() -> Result<ByteString> {
         Setup::run().await
     }
 
     #[rstest]
     #[tokio::test]
-    async fn get_statement_test(#[future] setup: Result<Token>) -> Result<()> {
+    async fn get_statement_test(#[future] setup: Result<ByteString>) -> Result<()> {
         let token = setup.await?;
-        let repository = JQuantsAPI::new(token.id_token.value)?;
+        let repository = JQuantsAPI::new(token)?;
         let query = queries::get_statement::Query { code: "8473" };
         let actual = repository.get_statement(query).await?;
         let expected = model::Statement {

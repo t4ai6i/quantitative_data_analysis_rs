@@ -6,5 +6,5 @@ pub mod json;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum TrendAnalysisSummary {
     Chart { body: String },
-    JSON { rows: JsonRows },
+    JSON { json_rows: JsonRows },
 }

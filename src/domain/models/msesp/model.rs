@@ -42,6 +42,8 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     ///
     /// # Examples
     /// ```
+    /// use bytes::Bytes;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
     /// use quantitative_data_analysis_rs::domain::models::msesp::model::MSESPes;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
@@ -53,7 +55,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     /// const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };
@@ -90,6 +92,7 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use bytes::Bytes;
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
     use rayon::prelude::*;
@@ -111,7 +114,7 @@ mod tests {
 
     #[tokio::test]
     async fn from_test() -> Result<()> {
-        let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
+        let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
         let query = queries::get_stocks::Query {
             ..Default::default()
         };

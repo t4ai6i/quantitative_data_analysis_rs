@@ -178,6 +178,8 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     ///
     /// # Examples
     /// ```
+    /// use bytes::Bytes;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListPair, SMAs};
     /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
@@ -188,7 +190,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     /// const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };

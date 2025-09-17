@@ -18,6 +18,7 @@ impl RateOfChance {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use bytes::Bytes;
     use pretty_assertions::assert_eq;
 
     use crate::domain::models::macos::model::MACOSes;
@@ -35,7 +36,7 @@ mod tests {
 
     #[tokio::test]
     async fn table_chart_summary_test() -> Result<()> {
-        let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
+        let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
         let query = queries::get_stocks::Query {
             ..Default::default()
         };

@@ -23,10 +23,9 @@ impl repository::Stock for JQuantsAPI {
             .with_value("from", query.target_date.to_string())
             .with_value("to", query.target_date.to_string());
         let daily_quotes_url = format!("{DAILY_QUOTES_URL}{qs}");
-        let id_token = self.id_token.as_str();
         let response = Client::new()
             .get(daily_quotes_url)
-            .bearer_auth(id_token)
+            .bearer_auth(self.id_token.clone())
             .send()
             .await?;
         let response = response.json::<serde_json::Value>().await?;
@@ -45,10 +44,9 @@ impl repository::Stock for JQuantsAPI {
             .with_value("from", query.start_date.unwrap_or_default().to_string())
             .with_value("to", query.end_date.unwrap_or_default().to_string());
         let daily_quotes_url = format!("{DAILY_QUOTES_URL}{qs}");
-        let id_token = self.id_token.as_str();
         let response = Client::new()
             .get(daily_quotes_url)
-            .bearer_auth(id_token)
+            .bearer_auth(self.id_token.clone())
             .send()
             .await?;
         let response = &mut response.json::<serde_json::Value>().await?;
@@ -65,6 +63,7 @@ impl repository::Stock for JQuantsAPI {
 }
 #[cfg(test)]
 mod tests {
+    use bytestring::ByteString;
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
     use rstest::*;
@@ -72,19 +71,19 @@ mod tests {
     use crate::domain::models::stock::model;
     use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
+    use crate::infrastructure::jquants_api::JQuantsAPI;
     use crate::shared::jquants_api::setup::Setup;
 
     #[fixture]
-    async fn setup() -> anyhow::Result<Token> {
+    async fn setup() -> anyhow::Result<ByteString> {
         Setup::run().await
     }
 
     #[rstest]
     #[tokio::test]
-    async fn get_stock_test(#[future] setup: anyhow::Result<Token>) -> anyhow::Result<()> {
+    async fn get_stock_test(#[future] setup: anyhow::Result<ByteString>) -> anyhow::Result<()> {
         let token = setup.await?;
-        let repository = JQuantsAPI::new(token.id_token.value)?;
+        let repository = JQuantsAPI::new(token)?;
         let query = queries::get_stock::Query {
             code: Some("84730"),
             market: None,
@@ -106,9 +105,9 @@ mod tests {
 
     #[rstest]
     #[tokio::test]
-    async fn get_stocks_test(#[future] setup: anyhow::Result<Token>) -> anyhow::Result<()> {
+    async fn get_stocks_test(#[future] setup: anyhow::Result<ByteString>) -> anyhow::Result<()> {
         let token = setup.await?;
-        let repository = JQuantsAPI::new(token.id_token.value)?;
+        let repository = JQuantsAPI::new(token)?;
         let query = queries::get_stocks::Query {
             code: Some("84730"),
             market: None,

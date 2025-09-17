@@ -4,5 +4,5 @@ pub mod json;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum FinancialIndicatorSummary {
-    JSON { rows: JsonRows },
+    JSON { json_rows: JsonRows },
 }

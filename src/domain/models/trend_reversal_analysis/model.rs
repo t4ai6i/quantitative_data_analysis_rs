@@ -107,6 +107,7 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use bytes::Bytes;
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
 
@@ -129,7 +130,7 @@ mod tests {
 
     #[tokio::test]
     async fn trend_reversal_analysis_test() -> Result<()> {
-        let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
+        let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
         let query = queries::get_stocks::Query {
             ..Default::default()
         };

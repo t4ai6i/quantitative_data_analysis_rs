@@ -20,8 +20,11 @@ impl repository::Company for JQuantsAPI {
     ) -> Result<model::Company> {
         let qs = QueryString::dynamic().with_value("code", query.code);
         let url = format!("{COMPANY_URL}{qs}");
-        let id_token = self.id_token.as_str();
-        let response = Client::new().get(url).bearer_auth(id_token).send().await?;
+        let response = Client::new()
+            .get(url)
+            .bearer_auth(self.id_token.clone())
+            .send()
+            .await?;
         let response = &response.json::<Value>().await?;
         let value = response["info"]
             .get(0)
@@ -30,10 +33,9 @@ impl repository::Company for JQuantsAPI {
     }
 
     async fn get_companies(&self) -> Result<Vec<model::Company>> {
-        let id_token = self.id_token.as_str();
         let response = Client::new()
             .get(COMPANY_URL)
-            .bearer_auth(id_token)
+            .bearer_auth(self.id_token.clone())
             .send()
             .await?;
         let response = &response.json::<Value>().await?;
@@ -51,24 +53,25 @@ impl repository::Company for JQuantsAPI {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use bytestring::ByteString;
     use rstest::*;
 
     use crate::domain::models::company::model;
     use crate::domain::repositories::company::queries;
     use crate::domain::repositories::company::repository::Company;
-    use crate::infrastructure::jquants_api::{JQuantsAPI, Token};
+    use crate::infrastructure::jquants_api::JQuantsAPI;
     use crate::shared::jquants_api::setup::Setup;
 
     #[fixture]
-    async fn setup() -> Result<Token> {
+    async fn setup() -> Result<ByteString> {
         Setup::run().await
     }
 
     #[rstest]
     #[tokio::test]
-    async fn get_company_test(#[future] setup: Result<Token>) -> Result<()> {
+    async fn get_company_test(#[future] setup: Result<ByteString>) -> Result<()> {
         let token = setup.await?;
-        let repository = JQuantsAPI::new(token.id_token.value)?;
+        let repository = JQuantsAPI::new(token)?;
         let query = queries::get_company::Query {
             code: "8473",
             ..Default::default()
@@ -86,9 +89,9 @@ mod tests {
 
     #[rstest]
     #[tokio::test]
-    async fn get_companies_test(#[future] setup: Result<Token>) -> Result<()> {
+    async fn get_companies_test(#[future] setup: Result<ByteString>) -> Result<()> {
         let token = setup.await?;
-        let repository = JQuantsAPI::new(token.id_token.value)?;
+        let repository = JQuantsAPI::new(token)?;
         let company = repository.get_companies().await;
         assert!(company.is_ok());
         Ok(())

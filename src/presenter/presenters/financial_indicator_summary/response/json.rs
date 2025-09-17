@@ -10,7 +10,7 @@ impl presenter::FinancialIndicatorSummary for JSON {
         &self,
         output: output::FinancialIndicatorSummary,
     ) -> Result<response::FinancialIndicatorSummary> {
-        let view::JSON(rows) = view::JSON::from(output.financial_indicators);
-        Ok(response::FinancialIndicatorSummary::JSON { rows })
+        let view::JSON(json_rows) = view::JSON::from(output.financial_indicators);
+        Ok(response::FinancialIndicatorSummary::JSON { json_rows })
     }
 }

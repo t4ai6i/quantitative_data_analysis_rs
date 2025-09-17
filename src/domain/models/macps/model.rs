@@ -34,6 +34,7 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     ///
     /// # Examples
     /// ```
+    /// use bytes::Bytes;
     /// use chrono::NaiveDate;
     ///
     /// use quantitative_data_analysis_rs::domain::models::macps::model::MACPS;
@@ -46,7 +47,7 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for MACPS {
     /// const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };

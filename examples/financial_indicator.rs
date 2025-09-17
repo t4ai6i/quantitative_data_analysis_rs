@@ -11,14 +11,17 @@ async fn main() -> Result<()> {
     let token = Setup::run().await?;
 
     // JQUANTS APIを用いたレポジトリの準備
-    let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value)?;
+    let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token)?;
 
+    // FinancialIndicatorのドメインロジックを実行するInteractorの準備
     let interactor =
         use_case::interactors::financial_indicator::interactor::FinancialIndicator::new(
             &jquants_api,
             &jquants_api,
         );
+    // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::financial_indicator::response::json::Json;
+    // 指定された証券コードの財務指標分析を行う
     let controller = controller::financial_indicator::controller::FinancialIndicator::new(
         &interactor,
         &presenter,
@@ -27,32 +30,35 @@ async fn main() -> Result<()> {
         .analyze("84730", "T", NaiveDate::from_ymd_opt(2025, 8, 27).unwrap())
         .await?;
 
+    // FinancialIndicatorSummaryのドメインロジックを実行するInteractorの準備
     let interactor =
         use_case::interactors::financial_indicator_summary::interactor::FinancialIndicatorSummary;
+    // PresenterはJSON型でJSON形式のデータを出力する
+    let presenter = presenter::presenters::financial_indicator_summary::response::json::JSON;
     let vec_financial_indicator = vec![financial_indicator];
     let financial_indicators =
         presenter::presenters::financial_indicator::response::FinancialIndicators(
             vec_financial_indicator,
         );
-    let presenter = presenter::presenters::financial_indicator_summary::response::json::JSON;
+    // FinancialIndicatorの集合からサマリーを出力する
     let controller =
         controller::financial_indicator_summary::controller::FinancialIndicatorSummary::new(
             &interactor,
             &presenter,
         );
     let presenter::presenters::financial_indicator_summary::response::FinancialIndicatorSummary::JSON {
-        rows
+        json_rows
     } = controller.analyze(
         financial_indicators,
     ).await?;
 
-    let vec_financial_indicator = rows
+    let vec_financial_indicator = json_rows
         .iter()
-        .map(|row| {
+        .map(|json_row| {
             let presenter::views::financial_indicator_summary::json::view::JsonRow {
                 financial_indicator,
                 ..
-            } = row;
+            } = json_row;
             financial_indicator
         })
         .collect::<Vec<_>>();

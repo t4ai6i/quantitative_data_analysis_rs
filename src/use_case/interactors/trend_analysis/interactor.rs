@@ -39,8 +39,8 @@ impl<'a, SR, CR> TrendAnalysis<'a, SR, CR> {
 #[async_trait]
 impl<SR, CR> use_case::TrendAnalysis for TrendAnalysis<'_, SR, CR>
 where
-    SR: repositories::stock::repository::Stock + Sync,
-    CR: repositories::company::repository::Company + Sync,
+    SR: repositories::stock::repository::Stock + Send + Sync,
+    CR: repositories::company::repository::Company + Send + Sync,
 {
     async fn handle<
         const AFTER_DAYS: usize,

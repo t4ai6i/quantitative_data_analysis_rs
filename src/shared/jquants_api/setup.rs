@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use bytestring::ByteString;
 use chrono::Utc;
 use chrono_tz::Asia::Tokyo;
 use itertools::Either;
@@ -11,7 +12,7 @@ const TOKEN_FILE_NAME: &str = "jquants_api_token.json";
 pub struct Setup {}
 
 impl Setup {
-    pub async fn run() -> Result<Token> {
+    pub async fn run() -> Result<ByteString> {
         let binary: Result<Vec<u8>> = read(TOKEN_FILE_NAME)
             .await
             .with_context(|| format!("Token file not found: {}", TOKEN_FILE_NAME));
@@ -32,6 +33,7 @@ impl Setup {
             Either::Left(token) => token,
         };
 
+        let token = ByteString::from(token.id_token.value);
         Ok(token)
     }
 }

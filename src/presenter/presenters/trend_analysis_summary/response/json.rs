@@ -12,7 +12,7 @@ impl presenter::TrendAnalysisSummary for JSON {
         output: output::TrendAnalysisSummary,
         _: CrossoverPatternFilter,
     ) -> Result<response::TrendAnalysisSummary> {
-        let view::JSON(rows) = view::JSON::from(output.trend_analyses);
-        Ok(response::TrendAnalysisSummary::JSON { rows })
+        let view::JSON(json_rows) = view::JSON::from(output.trend_analyses);
+        Ok(response::TrendAnalysisSummary::JSON { json_rows })
     }
 }

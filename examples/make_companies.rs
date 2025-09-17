@@ -8,8 +8,10 @@ use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // JQUANTS APIのためのトークン準備
     let token = Setup::run().await?;
-    let jquants_api = JQuantsAPI::new(token.id_token.value)?;
+
+    let jquants_api = JQuantsAPI::new(token)?;
     let companies = jquants_api.get_companies().await?;
     let mut writer = WriterBuilder::new()
         .delimiter(b'\t')

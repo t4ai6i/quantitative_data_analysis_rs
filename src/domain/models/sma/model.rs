@@ -50,6 +50,8 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// # Examples
     /// ```
+    /// use bytes::Bytes;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
     /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
@@ -62,7 +64,7 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     /// const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
     /// tokio_test::block_on(async {
-    ///   let dsv = Dsv::<csv::Structure>::new(true, CSV.to_vec());
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };

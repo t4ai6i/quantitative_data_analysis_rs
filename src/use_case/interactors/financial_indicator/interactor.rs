@@ -26,8 +26,8 @@ impl<'a, SR, SMR> FinancialIndicator<'a, SR, SMR> {
 #[async_trait]
 impl<SR, SMR> use_case::FinancialIndicator for FinancialIndicator<'_, SR, SMR>
 where
-    SR: stock::repository::Stock + Sync,
-    SMR: statement::repository::Statement + Sync,
+    SR: stock::repository::Stock + Send + Sync,
+    SMR: statement::repository::Statement + Send + Sync,
 {
     async fn handle(&self, input: input::FinancialIndicator) -> Result<output::FinancialIndicator> {
         let query = get_stock::Query {

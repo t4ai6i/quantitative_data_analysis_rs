@@ -1,4 +1,5 @@
 use anyhow::Result;
+use bytes::Bytes;
 use chrono::NaiveDate;
 use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
@@ -25,9 +26,10 @@ async fn main() -> Result<()> {
     let token = Setup::run().await?;
 
     // DSVを用いたレポジトリの準備
-    let dsv = infrastructure::dsv::Dsv::<tsv::Structure>::new(false, COMPANIES_TSV.to_vec());
+    let dsv = infrastructure::dsv::Dsv::<tsv::Structure>::new(false, Bytes::from(COMPANIES_TSV));
     // JQUANTS APIを用いたレポジトリの準備
-    let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value)?;
+    let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token)?;
+    // TrendAnalysisのドメインロジックを実行するInteractorの準備
     let interactor =
         use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
     // PresenterはChart型でSVG形式の画像データを出力する
@@ -57,10 +59,12 @@ async fn main() -> Result<()> {
         assert_eq!(include_str!("../assets/8473.T.from_jquants_api.svg"), body);
     }
 
+    // TrendAnalysisのドメインロジックを実行するInteractorの準備
     let interactor =
         use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
+    // 指定された証券コードのトレンド解析を行う
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
@@ -73,24 +77,26 @@ async fn main() -> Result<()> {
         )
         .await?;
 
+    // TrendAnalysisSummaryのドメインロジックを実行するInteractorの準備
     let interactor =
         use_case::interactors::trend_analysis_summary::interactor::TrendAnalysisSummary;
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::trend_analysis_summary::response::json::JSON;
+    let vec_trend_analysis = vec![trend_analysis];
+    let trend_analyses =
+        presenter::presenters::trend_analysis::response::TrendAnalyses(vec_trend_analysis);
+    // TrendAnalysisの集合からサマリーを出力する
     let controller = controller::trend_analysis_summary::controller::TrendAnalysisSummary::new(
         &interactor,
         &presenter,
     );
-    let vec_trend_analysis = vec![trend_analysis];
-    let trend_analyses =
-        presenter::presenters::trend_analysis::response::TrendAnalyses(vec_trend_analysis);
     if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
-        rows,
+        json_rows,
     } = controller
         .analyze(trend_analyses, CrossoverPatternFilter::Both)
         .await?
     {
-        let vec = rows
+        let tuples = json_rows
             .iter()
             .map(|row| {
                 let JsonRow {
@@ -106,7 +112,7 @@ async fn main() -> Result<()> {
             Vec<&MACOSAnalysis>,
             Vec<&TrendReversalAnalysis>,
             Vec<&BuySellSignalAnalysis>,
-        ) = multiunzip(vec);
+        ) = multiunzip(tuples);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.macos_analysis.json"),
@@ -153,12 +159,12 @@ async fn main() -> Result<()> {
     let trend_analyses =
         presenter::presenters::trend_analysis::response::TrendAnalyses(vec_trend_analysis);
     if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
-        rows,
+        json_rows,
     } = controller
         .analyze(trend_analyses, CrossoverPatternFilter::Both)
         .await?
     {
-        let vec = rows
+        let tuples = json_rows
             .iter()
             .map(|row| {
                 let JsonRow {
@@ -174,7 +180,7 @@ async fn main() -> Result<()> {
             Vec<&MACOSAnalysis>,
             Vec<&TrendReversalAnalysis>,
             Vec<&BuySellSignalAnalysis>,
-        ) = multiunzip(vec);
+        ) = multiunzip(tuples);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.macos_analysis.json"),

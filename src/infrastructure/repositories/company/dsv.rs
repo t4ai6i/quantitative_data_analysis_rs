@@ -37,8 +37,8 @@ where
         if let Some(companies) = cache.as_ref() {
             return Ok(companies.clone());
         }
-        let buffer = self.buffer.as_slice();
-        let processed = T::process_tabular_data(buffer, self.has_headers)?;
+
+        let processed = T::process_tabular_data(self.buffer.as_ref(), self.has_headers)?;
         *cache = Some(processed.clone());
         Ok(processed)
     }
@@ -46,6 +46,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use bytes::Bytes;
+
     use crate::domain::models::company::model;
     use crate::domain::repositories::company::queries;
     use crate::domain::repositories::company::repository::Company;
@@ -56,7 +58,7 @@ mod tests {
 
     #[tokio::test]
     async fn get_company_test() -> anyhow::Result<()> {
-        let dsv = Dsv::<tsv::Structure>::new(false, TSV.to_vec());
+        let dsv = Dsv::<tsv::Structure>::new(false, Bytes::from(TSV));
         let query = queries::get_company::Query {
             code: "13080",
             ..Default::default()
