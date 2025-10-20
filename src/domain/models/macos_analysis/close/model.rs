@@ -2,6 +2,7 @@ use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross, Neith
 use crate::domain::models::macos::model::{AnalysisPattern, Pattern, PatternRateOfChangePair};
 use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::shared::float::percentage;
+
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -223,7 +224,7 @@ mod tests {
         let query = queries::get_stocks::Query {
             ..Default::default()
         };
-        let stocks = dsv.get_stocks(query).await?;
+        let stocks = dsv.get_stocks(&query).await?;
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
         let smas_25 = SMAs::<25>::from(stocks.as_slice());
         let sma_list_pair = SMAListPair {

@@ -1,4 +1,3 @@
-use anyhow::Error;
 use serde::{Deserialize, Serialize};
 
 use crate::domain::models::company::model;
@@ -19,26 +18,26 @@ pub struct Structure {
     pub day_before: String,
 }
 
-impl TryFrom<Structure> for model::Company {
-    type Error = Error;
-
-    fn try_from(value: Structure) -> Result<Self, Self::Error> {
+impl From<Structure> for model::RowCompany {
+    fn from(value: Structure) -> Self {
         let Structure {
             code, name, market, ..
         } = value;
-        let mut symbol = Symbol::try_from((code.as_str(), market.as_str()))?;
-        Ok(Self {
-            code,
-            name,
-            market,
-            symbol: std::mem::take(&mut symbol),
-        })
+        let symbol = Symbol::try_from((code.as_str(), market.as_str()))
+            .ok()
+            .map(|symbol| symbol.to_string());
+        Self {
+            code: Some(code),
+            name: Some(name),
+            market: Some(market),
+            symbol,
+        }
     }
 }
 
 impl FromSlice for Structure {
     type Deserialize = Structure;
-    type Item = model::Company;
+    type Item = model::RowCompany;
 
     fn data_format() -> DataFormat {
         DataFormat::Csv

@@ -4,7 +4,6 @@ use std::backtrace::Backtrace;
 use std::fmt::{Debug, Display};
 
 use crate::domain::models::stock::model;
-use crate::domain::models::stock::model::Stocks;
 use crate::domain::repositories::stock::{queries, repository};
 use crate::infrastructure::dsv::Dsv;
 use crate::infrastructure::from_slice::FromSlice;
@@ -12,43 +11,44 @@ use crate::infrastructure::from_slice::FromSlice;
 #[async_trait::async_trait]
 impl<T> repository::Stock for Dsv<T>
 where
-    T: FromSlice<Item = model::Stock> + Send + Sync,
+    T: FromSlice<Item = model::RowStock> + Send + Sync,
     <T as FromSlice>::Deserialize: Send + Sync,
     <T::Item as TryFrom<T::Deserialize>>::Error: Debug + Display + Send + Sync,
-    model::Stock: TryFrom<<T as FromSlice>::Deserialize>,
+    model::RowStock: TryFrom<<T as FromSlice>::Deserialize>,
 {
-    async fn get_stock<'a>(&self, query: queries::get_stock::Query<'a>) -> Result<model::Stock> {
-        let stocks = self
-            .get_stocks(queries::get_stocks::Query {
+    async fn get_row_stock<'a>(
+        &self,
+        query: &queries::get_stock::Query<'a>,
+    ) -> Result<model::RowStock> {
+        let vec_row_stock = self
+            .get_vec_row_stock(&queries::get_stocks::Query {
                 ..Default::default()
             })
             .await?;
-        stocks
+        vec_row_stock
             .par_iter()
-            .find_first(|stock| stock.date.eq(&query.target_date))
+            .find_first(|row_stock| {
+                row_stock
+                    .date
+                    .iter()
+                    .any(|date| date.eq(&query.target_date))
+            })
             .cloned()
             .with_context(|| {
                 format!(
-                    "Not found stock: {}\n{}",
-                    &query.target_date,
+                    "Not found stock: {:?}\n{}",
+                    &query,
                     Backtrace::force_capture()
                 )
             })
     }
 
-    async fn get_stocks<'a>(&self, _: queries::get_stocks::Query<'a>) -> Result<Stocks> {
-        let mut cache = self.cache.lock().await;
-        if let Some(vec_stock) = cache.as_ref() {
-            let mut vec_stock = vec_stock.clone();
-            let mut stocks = Stocks::default();
-            std::mem::swap(&mut vec_stock, &mut stocks);
-            return Ok(stocks);
-        }
-        let mut processed = T::process_tabular_data(self.buffer.as_ref(), self.has_headers)?;
-        *cache = Some(processed.clone());
-        let mut stocks = Stocks::default();
-        std::mem::swap(&mut processed, &mut stocks);
-        Ok(stocks)
+    async fn get_vec_row_stock<'a>(
+        &self,
+        _: &queries::get_stocks::Query<'a>,
+    ) -> Result<Vec<model::RowStock>> {
+        let processed = T::process_tabular_data(self.buffer.as_ref(), self.has_headers)?;
+        Ok(processed)
     }
 }
 
@@ -66,25 +66,23 @@ mod tests {
     const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
 
     #[tokio::test]
-    async fn get_stock_test() -> anyhow::Result<()> {
-        let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+    async fn get_row_stock_test() -> anyhow::Result<()> {
+        let repository = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
         let query = queries::get_stock::Query {
             target_date: NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
             ..Default::default()
         };
-        let actual = dsv.get_stock(query).await?;
-        assert_eq!(
-            actual,
-            model::Stock {
-                date: NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
-                open: 3100.0,
-                high: 3129.0,
-                low: 3100.0,
-                close: 3119.0,
-                adj_close: 3119.0,
-                volume: 1571300,
-            }
-        );
+        let actual = repository.get_row_stock(&query).await?;
+        let expected = model::RowStock {
+            date: NaiveDate::from_ymd_opt(2023, 9, 8),
+            open: Some(3100.0),
+            high: Some(3129.0),
+            low: Some(3100.0),
+            close: Some(3119.0),
+            adj_close: Some(3119.0),
+            volume: Some(1571300),
+        };
+        assert_eq!(actual, expected,);
         Ok(())
     }
 }

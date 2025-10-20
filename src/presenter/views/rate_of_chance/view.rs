@@ -40,7 +40,7 @@ mod tests {
         let query = queries::get_stocks::Query {
             ..Default::default()
         };
-        let stocks = dsv.get_stocks(query).await?;
+        let stocks = dsv.get_stocks(&query).await?;
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
         let smas_25 = SMAs::<25>::from(stocks.as_slice());
         let sma_list_pair = SMAListPair {

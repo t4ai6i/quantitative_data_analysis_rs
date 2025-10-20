@@ -54,7 +54,7 @@ impl From<ECP2> for BuySellSignalType {
 #[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Deref, DerefMut)]
 pub struct ECP2s(Vec<BuySellSignal>);
 
-impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
+impl From<&[CandleStick]> for ECP2s {
     ///
     /// # Examples
     /// ```
@@ -67,7 +67,9 @@ impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     ///
-    /// const MARUBOZU_MIN_RATE: usize = 90;
+    /// const MARUBOZU_BODY_MIN_RATIO: usize = 90;
+    /// const MARUBOZU_WICK_MAX_RATIO: usize = 2;
+    /// const DOJI_MAX_BODY_RATIO: usize = 5;
     /// const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// tokio_test::block_on(async {
@@ -75,13 +77,13 @@ impl<const N: usize> From<&[CandleStick<N>]> for ECP2s {
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };
-    ///   let stocks = dsv.get_stocks(query).await.unwrap();
-    ///   let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
+    ///   let candle_sticks = CandleSticks::<MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>::try_from(stocks.as_slice()).unwrap();
     ///   let ecp2s = ECP2s::from(candle_sticks.as_slice());
     ///   assert_eq!(ecp2s.len(), 34);
     /// });
     /// ```
-    fn from(value: &[CandleStick<N>]) -> Self {
+    fn from(value: &[CandleStick]) -> Self {
         let vec = value
             .windows(2)
             .map(|candle_sticks| {
@@ -124,7 +126,9 @@ mod tests {
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::stock::structures::internal::csv;
 
-    const MARUBOZU_MIN_RATE: usize = 90;
+    const MARUBOZU_BODY_MIN_RATIO: usize = 90;
+    const MARUBOZU_WICK_MAX_RATIO: usize = 2;
+    const DOJI_MAX_BODY_RATIO: usize = 5;
     const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
 
     #[tokio::test]
@@ -133,8 +137,12 @@ mod tests {
         let query = queries::get_stocks::Query {
             ..Default::default()
         };
-        let stocks = dsv.get_stocks(query).await?;
-        let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
+        let stocks = dsv.get_stocks(&query).await?;
+        let candle_sticks = CandleSticks::<
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+        >::try_from(stocks.as_slice())?;
         let vec_ecp2 = ECP2s::from(candle_sticks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
             TupleVecBuySellSignal::from(vec_ecp2.0.as_slice()).0;

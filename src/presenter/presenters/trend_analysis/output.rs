@@ -11,7 +11,7 @@ use crate::domain::models::stock::model::Stocks;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
 
-pub struct TrendAnalysis<const N: usize, const M: usize> {
+pub struct TrendAnalysis<const N: usize, const M: usize, const O: usize, const P: usize> {
     pub company: Company,
     pub stocks: Stocks,
     pub smas_5: SMAs<5>,
@@ -23,7 +23,7 @@ pub struct TrendAnalysis<const N: usize, const M: usize> {
     pub latest_chance: LatestChance,
     pub macos_analysis_volumes: MACOSAnalysisVolumes,
     pub ecp1s: ECP1s,
-    pub candle_sticks: CandleSticks<M>,
+    pub candle_sticks: CandleSticks<M, O, P>,
     pub trend_reversal_analysis: TrendReversalAnalysis,
     pub crossover_pattern_filter: CrossoverPatternFilter,
 }

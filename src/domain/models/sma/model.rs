@@ -1,4 +1,5 @@
 use crate::domain::models::stock::model::Stock;
+
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -51,9 +52,10 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     /// # Examples
     /// ```
     /// use bytes::Bytes;
+    /// use rayon::prelude::*;
     ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
-    /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
@@ -68,14 +70,14 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };
-    ///   let stocks = dsv.get_stocks(query).await.unwrap();
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
     ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
     ///   assert_eq!(smas_5.len(), 242);
     ///
     ///   let smas_25 = SMAs::<DAYS_25>::from(stocks.as_slice());
     ///   assert_eq!(smas_25.len(), 222);
     ///
-    ///   let stocks = Stocks::default();
+    ///   let stocks: Vec<model::Stock> = vec![];
     ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
     ///   assert_eq!(smas_5.len(), 0);
     /// });

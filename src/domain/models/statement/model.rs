@@ -43,10 +43,59 @@ pub struct Statement {
     pub disclosed_date: NaiveDate,
     pub eps: f64,
     pub bps: f64,
-    pub net_sales: usize,
-    pub opp: usize,
-    pub orp: usize,
-    pub profit: usize,
-    pub equity: usize,
-    pub total_assets: usize,
+    pub net_sales: u64,
+    pub opp: u64,
+    pub orp: u64,
+    pub profit: u64,
+    pub equity: u64,
+    pub total_assets: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+pub struct RowStatement {
+    pub code: String,
+    pub disclosed_date: Option<NaiveDate>,
+    pub eps: Option<f64>,
+    pub bps: Option<f64>,
+    pub net_sales: Option<u64>,
+    pub opp: Option<u64>,
+    pub orp: Option<u64>,
+    pub profit: Option<u64>,
+    pub equity: Option<u64>,
+    pub total_assets: Option<u64>,
+}
+
+impl TryFrom<RowStatement> for Statement {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RowStatement) -> Result<Self, Self::Error> {
+        let RowStatement {
+            code,
+            disclosed_date,
+            eps,
+            bps,
+            net_sales,
+            opp,
+            orp,
+            profit,
+            equity,
+            total_assets,
+        } = value;
+
+        Ok(Self {
+            code,
+            disclosed_date: disclosed_date
+                .ok_or_else(|| anyhow::anyhow!("disclosed_date is None"))?,
+            eps: eps.ok_or_else(|| anyhow::anyhow!("eps is None"))?,
+            bps: bps.ok_or_else(|| anyhow::anyhow!("bps is None"))?,
+            net_sales: net_sales.ok_or_else(|| anyhow::anyhow!("net_sales is None"))?,
+            // 現状、分析に必須ではないためNoneのときは0とする。
+            opp: opp.unwrap_or(0),
+            // 現状、分析に必須ではないためNoneのときは0とする。
+            orp: orp.unwrap_or(0),
+            profit: profit.ok_or_else(|| anyhow::anyhow!("profit is None"))?,
+            equity: equity.ok_or_else(|| anyhow::anyhow!("equity is None"))?,
+            total_assets: total_assets.ok_or_else(|| anyhow::anyhow!("total_assets is None"))?,
+        })
+    }
 }

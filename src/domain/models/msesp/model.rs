@@ -1,7 +1,8 @@
-use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
-use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
+
+use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
+use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct MSESP {
@@ -38,20 +39,23 @@ impl From<MSESP> for BuySellSignalType {
 #[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Deref, DerefMut)]
 pub struct MSESPes(Vec<BuySellSignal>);
 
-impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
+impl From<&[CandleStick]> for MSESPes {
     ///
     /// # Examples
     /// ```
     /// use bytes::Bytes;
     ///
     /// use quantitative_data_analysis_rs::domain::models::candle_stick::model::CandleSticks;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
     /// use quantitative_data_analysis_rs::domain::models::msesp::model::MSESPes;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
     /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
     ///
-    /// const MARUBOZU_MIN_RATE: usize = 90;
+    /// const MARUBOZU_BODY_MIN_RATIO: usize = 90;
+    /// const MARUBOZU_WICK_MAX_RATIO: usize = 2;
+    /// const DOJI_MAX_BODY_RATIO: usize = 5;
     /// const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
     /// tokio_test::block_on(async {
@@ -59,13 +63,13 @@ impl<const N: usize> From<&[CandleStick<N>]> for MSESPes {
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };
-    ///   let stocks = dsv.get_stocks(query).await.unwrap();
-    ///   let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice()).unwrap();
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
+    ///   let candle_sticks = CandleSticks::<MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>::try_from(stocks.as_slice()).unwrap();
     ///   let msespes = MSESPes::from(candle_sticks.as_slice());
     ///   assert_eq!(msespes.len(), 33);
     /// });
     /// ```
-    fn from(value: &[CandleStick<N>]) -> Self {
+    fn from(value: &[CandleStick]) -> Self {
         let vec_buy_sell_signal = value
             .par_windows(3)
             .map(|candle_sticks| {
@@ -109,7 +113,9 @@ mod tests {
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::stock::structures::internal::csv;
 
-    const MARUBOZU_MIN_RATE: usize = 90;
+    const MARUBOZU_BODY_MIN_RATIO: usize = 90;
+    const MARUBOZU_WICK_MAX_RATIO: usize = 2;
+    const DOJI_MAX_BODY_RATIO: usize = 5;
     const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
 
     #[tokio::test]
@@ -118,8 +124,12 @@ mod tests {
         let query = queries::get_stocks::Query {
             ..Default::default()
         };
-        let stocks = dsv.get_stocks(query).await?;
-        let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
+        let stocks = dsv.get_stocks(&query).await?;
+        let candle_sticks = CandleSticks::<
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+        >::try_from(stocks.as_slice())?;
         let MSESPes(vec_msesp) = MSESPes::from(candle_sticks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) = vec_msesp
             .into_par_iter()
@@ -129,15 +139,7 @@ mod tests {
             vec![
                 BuySellSignal {
                     r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2022, 9, 28).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2022, 9, 29).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2022, 10, 13).unwrap(),
                 },
                 BuySellSignal {
                     r#type: Buy,
@@ -157,70 +159,14 @@ mod tests {
                 },
                 BuySellSignal {
                     r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2022, 12, 26).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 1, 5).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2023, 1, 24).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 2, 15).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 3, 1).unwrap(),
                 },
                 BuySellSignal {
                     r#type: Buy,
                     date: NaiveDate::from_ymd_opt(2023, 3, 7).unwrap(),
                 },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 3, 17).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 3, 29).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 6, 9).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 6, 14).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 8, 22).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Buy,
-                    date: NaiveDate::from_ymd_opt(2023, 8, 31).unwrap(),
-                },
             ],
             vec![
-                BuySellSignal {
-                    r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2022, 10, 11).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2022, 11, 8).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2022, 11, 9).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2022, 11, 24).unwrap(),
-                },
                 BuySellSignal {
                     r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2022, 12, 14).unwrap(),
@@ -231,27 +177,11 @@ mod tests {
                 },
                 BuySellSignal {
                     r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2023, 3, 20).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2023, 3, 31).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2023, 4, 21).unwrap(),
                 },
                 BuySellSignal {
                     r#type: Sell,
                     date: NaiveDate::from_ymd_opt(2023, 5, 24).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2023, 5, 31).unwrap(),
-                },
-                BuySellSignal {
-                    r#type: Sell,
-                    date: NaiveDate::from_ymd_opt(2023, 6, 30).unwrap(),
                 },
             ],
         );

@@ -15,7 +15,9 @@ use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_c
 
 const AFTER_DAYS_5: usize = 5;
 const FROM_END_DAYS_7: isize = 7;
-const MARUBOZU_MIN_RATE: usize = 90;
+const MARUBOZU_BODY_MIN_RATIO: usize = 90;
+const MARUBOZU_WICK_MAX_RATIO: usize = 2;
+const DOJI_MAX_BODY_RATIO: usize = 5;
 const DATE_FORMAT: &str = "%Y/%m/%d";
 
 const COMPANIES_TSV: &[u8] = include_bytes!("../assets/companies.tsv");
@@ -43,7 +45,7 @@ async fn main() -> Result<()> {
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
             "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
@@ -68,7 +70,7 @@ async fn main() -> Result<()> {
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
             "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
@@ -138,7 +140,7 @@ async fn main() -> Result<()> {
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
             "92230",
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),

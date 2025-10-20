@@ -7,16 +7,16 @@ use reqwest::Client;
 use crate::domain::models::statement::model;
 use crate::domain::repositories::statement::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
-use crate::infrastructure::repositories::statement::structures::jquants_api::Structure;
+use crate::infrastructure::repositories::statement::structures::jquants_api::Response;
 
 const STATEMENT_URL: &str = "https://api.jquants.com/v1/fins/statements";
 
 #[async_trait]
 impl repository::Statement for JQuantsAPI {
-    async fn get_statement<'a>(
+    async fn get_row_statement<'a>(
         &self,
-        query: queries::get_statement::Query<'a>,
-    ) -> anyhow::Result<model::Statement> {
+        query: &queries::get_statement::Query<'a>,
+    ) -> anyhow::Result<model::RowStatement> {
         let qs = QueryString::dynamic().with_value("code", query.code);
         let url = format!("{STATEMENT_URL}{qs}");
         let response = Client::new()
@@ -44,11 +44,10 @@ impl repository::Statement for JQuantsAPI {
                 value["TypeOfCurrentPeriod"]
                     .as_str()
                     .filter(|&str| str.eq("FY"))?;
-                TryFrom::try_from(Structure {
+                Some(From::from(Response {
                     code: query.code.to_string(),
                     value,
-                })
-                .ok()
+                }))
             })
             // API Docの以下の記述に従い、取得した配列データの最後尾を取得する。
             // 「DisclosureNumber: APIから出力されるjsonは開示番号で昇順に並んでいます。」
@@ -84,28 +83,28 @@ mod tests {
 
     #[rstest]
     #[tokio::test]
-    async fn get_statement_test(#[future] setup: Result<ByteString>) -> Result<()> {
+    async fn get_row_statement_test(#[future] setup: Result<ByteString>) -> Result<()> {
         let token = setup.await?;
         let repository = JQuantsAPI::new(token)?;
         let query = queries::get_statement::Query { code: "8473" };
-        let actual = repository.get_statement(query).await?;
-        let expected = model::Statement {
+        let actual = repository.get_row_statement(&query).await?;
+        let expected = model::RowStatement {
             code: "8473".to_string(),
-            disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9).unwrap(),
-            eps: 536.09,
-            bps: 4162.73,
-            net_sales: 1443733000000,
-            opp: 0,
-            orp: 0,
-            profit: 162120000000,
-            equity: 1763793000000,
-            total_assets: 32113430000000,
+            disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
+            eps: Some(536.09),
+            bps: Some(4162.73),
+            net_sales: Some(1443733000000),
+            opp: None,
+            orp: None,
+            profit: Some(162120000000),
+            equity: Some(1763793000000),
+            total_assets: Some(32113430000000),
         };
         assert_eq!(actual, expected);
 
         let query = queries::get_statement::Query { code: "????" };
         let actual = repository
-            .get_statement(query)
+            .get_row_statement(&query)
             .await
             .unwrap_err()
             .to_string();
@@ -114,7 +113,7 @@ mod tests {
 
         let query = queries::get_statement::Query { code: "2995" };
         let actual = repository
-            .get_statement(query)
+            .get_row_statement(&query)
             .await
             .unwrap_err()
             .to_string();

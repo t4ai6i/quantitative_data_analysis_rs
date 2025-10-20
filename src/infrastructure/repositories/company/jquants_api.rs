@@ -14,10 +14,10 @@ const COMPANY_URL: &str = "https://api.jquants.com/v1/listed/info";
 
 #[async_trait]
 impl repository::Company for JQuantsAPI {
-    async fn get_company<'a>(
+    async fn get_row_company<'a>(
         &self,
-        query: queries::get_company::Query<'a>,
-    ) -> Result<model::Company> {
+        query: &queries::get_company::Query<'a>,
+    ) -> Result<model::RowCompany> {
         let qs = QueryString::dynamic().with_value("code", query.code);
         let url = format!("{COMPANY_URL}{qs}");
         let response = Client::new()
@@ -29,10 +29,10 @@ impl repository::Company for JQuantsAPI {
         let value = response["info"]
             .get(0)
             .with_context(|| format!("Not found company. code = {}", query.code))?;
-        TryFrom::try_from(Response(value))
+        Ok(From::from(Response(value)))
     }
 
-    async fn get_companies(&self) -> Result<Vec<model::Company>> {
+    async fn get_vec_row_company(&self) -> Result<Vec<model::RowCompany>> {
         let response = Client::new()
             .get(COMPANY_URL)
             .bearer_auth(self.id_token.clone())
@@ -42,11 +42,11 @@ impl repository::Company for JQuantsAPI {
         let Some(companies) = response["info"].as_array() else {
             bail!("[info] in response not found")
         };
-        let company = companies
+        let vec_row_company = companies
             .par_iter()
-            .filter_map(|value| TryFrom::try_from(Response(value)).ok())
+            .map(|value| From::from(Response(value)))
             .collect();
-        Ok(company)
+        Ok(vec_row_company)
     }
 }
 
@@ -54,6 +54,7 @@ impl repository::Company for JQuantsAPI {
 mod tests {
     use anyhow::Result;
     use bytestring::ByteString;
+    use pretty_assertions::assert_eq;
     use rstest::*;
 
     use crate::domain::models::company::model;
@@ -69,19 +70,19 @@ mod tests {
 
     #[rstest]
     #[tokio::test]
-    async fn get_company_test(#[future] setup: Result<ByteString>) -> Result<()> {
+    async fn get_row_company_test(#[future] setup: Result<ByteString>) -> Result<()> {
         let token = setup.await?;
         let repository = JQuantsAPI::new(token)?;
         let query = queries::get_company::Query {
             code: "8473",
             ..Default::default()
         };
-        let actual = repository.get_company(query).await?;
-        let expected = model::Company {
-            code: "84730".to_string(),
-            name: "SBI Holdings,Inc.".to_string(),
-            market: "0111".to_string(),
-            symbol: "".to_string(),
+        let actual = repository.get_row_company(&query).await?;
+        let expected = model::RowCompany {
+            code: Some("84730".to_string()),
+            name: Some("SBI Holdings,Inc.".to_string()),
+            market: Some("0111".to_string()),
+            symbol: Some("".to_string()),
         };
         assert_eq!(actual, expected);
         Ok(())
@@ -89,11 +90,11 @@ mod tests {
 
     #[rstest]
     #[tokio::test]
-    async fn get_companies_test(#[future] setup: Result<ByteString>) -> Result<()> {
+    async fn get_vec_row_company_test(#[future] setup: Result<ByteString>) -> Result<()> {
         let token = setup.await?;
         let repository = JQuantsAPI::new(token)?;
-        let company = repository.get_companies().await;
-        assert!(company.is_ok());
+        let vec_row_company = repository.get_vec_row_company().await?;
+        assert!(vec_row_company.len() > 4400);
         Ok(())
     }
 }

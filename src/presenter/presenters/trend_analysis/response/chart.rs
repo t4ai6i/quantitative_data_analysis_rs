@@ -1,11 +1,10 @@
-use rayon::prelude::*;
-use std::backtrace::Backtrace;
-
 use anyhow::{Context, Result};
 use charts_rs::{
     Align, BarChart, Box, CandlestickChart, ChildChart, Color, LegendCategory, MultiChart, Series,
     SeriesCategory, TableChart,
 };
+use rayon::prelude::*;
+use std::backtrace::Backtrace;
 
 use crate::domain::models::macos::model::Pattern;
 use crate::presenter::presenters::trend_analysis::output;
@@ -45,9 +44,9 @@ impl Chart {
 }
 
 impl presenter::TrendAnalysis for Chart {
-    fn handle<const N: usize, const M: usize>(
+    fn handle<const N: usize, const M: usize, const O: usize, const P: usize>(
         &self,
-        output: output::TrendAnalysis<N, M>,
+        output: output::TrendAnalysis<N, M, O, P>,
     ) -> Result<response::TrendAnalysis> {
         let mut charts = MultiChart::new();
         charts.margin = 5.0.into();

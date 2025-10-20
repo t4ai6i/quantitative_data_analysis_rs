@@ -21,7 +21,7 @@ pub struct Structure {
     pub volume: u64,
 }
 
-impl From<Structure> for model::Stock {
+impl From<Structure> for model::RowStock {
     fn from(value: Structure) -> Self {
         let Structure {
             date,
@@ -33,20 +33,20 @@ impl From<Structure> for model::Stock {
             volume,
         } = value;
         Self {
-            date,
-            open,
-            high,
-            low,
-            close,
-            adj_close,
-            volume,
+            date: Some(date),
+            open: Some(open),
+            high: Some(high),
+            low: Some(low),
+            close: Some(close),
+            adj_close: Some(adj_close),
+            volume: Some(volume),
         }
     }
 }
 
 impl FromSlice for Structure {
     type Deserialize = Structure;
-    type Item = model::Stock;
+    type Item = model::RowStock;
 
     fn data_format() -> DataFormat {
         DataFormat::Csv

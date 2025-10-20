@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use rayon::prelude::*;
 
-use crate::domain::models::stock::model::{Stock, Stocks};
+use crate::domain::models::stock::model;
 use crate::domain::repositories::stock::{queries, repository};
 use crate::infrastructure::repositories::stock::structures::yahoo_finance_api::Response;
 use crate::infrastructure::symbol::Symbol;
@@ -11,11 +11,17 @@ use crate::shared::tryhard::get_common_retry_future_config;
 
 #[async_trait]
 impl repository::Stock for YahooFinanceAPI<'_> {
-    async fn get_stock<'a>(&self, _: queries::get_stock::Query<'a>) -> Result<Stock> {
+    async fn get_row_stock<'a>(
+        &self,
+        _: &queries::get_stock::Query<'a>,
+    ) -> Result<model::RowStock> {
         todo!()
     }
 
-    async fn get_stocks<'a>(&self, query: queries::get_stocks::Query<'a>) -> Result<Stocks> {
+    async fn get_vec_row_stock<'a>(
+        &self,
+        query: &queries::get_stocks::Query<'a>,
+    ) -> Result<Vec<model::RowStock>> {
         let symbol = Symbol::try_from((query.code.unwrap_or(""), query.market.unwrap_or("")))?;
         let start_date = OffsetDateTimeWrapper::from(query.start_date.unwrap_or_default());
         let end_date = OffsetDateTimeWrapper::from(query.end_date.unwrap_or_default());
@@ -36,16 +42,13 @@ impl repository::Stock for YahooFinanceAPI<'_> {
                 )
             })?;
 
-        let vec_stock: Vec<Stock> = y_response
+        let vec_row_stock: Vec<model::RowStock> = y_response
             .quotes()
             .with_context(|| format!("Failed fetching quotes: {}", symbol.as_str()))?
             .par_iter()
-            .filter_map(|quote| TryFrom::try_from(Response(quote)).ok())
+            .map(|quote| From::from(Response(quote)))
             .collect();
-
-        let mut stocks = Stocks::default();
-        stocks.extend(vec_stock);
-        Ok(stocks)
+        Ok(vec_row_stock)
     }
 }
 
@@ -53,28 +56,29 @@ impl repository::Stock for YahooFinanceAPI<'_> {
 #[cfg(test)]
 mod tests {
     // 通信が安定しないためテストを行わないようにした
-    use crate::domain::repositories::stock::queries;
-    use crate::domain::repositories::stock::repository::Stock;
-    use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
     use anyhow::Result;
     use chrono::NaiveDate;
     use yahoo_finance_api::YahooConnector;
 
+    use crate::domain::repositories::stock::queries;
+    use crate::domain::repositories::stock::repository::Stock;
+    use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
+
     #[tokio::test]
-    async fn get_vec_stock_test() -> Result<()> {
+    async fn get_vec_row_stock_test() -> Result<()> {
         let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
 
         let provider = YahooConnector::new()?;
-        let repositories = YahooFinanceAPI::new(&provider);
+        let repository = YahooFinanceAPI::new(&provider);
         let query = queries::get_stocks::Query {
             code: Some("8473"),
             market: Some("T"),
             start_date: Some(start_date),
             end_date: Some(end_date),
         };
-        let stocks = repositories.get_stocks(query).await?;
-        assert_eq!(stocks.len(), 244);
+        let row_stocks = repository.get_vec_row_stock(&query).await?;
+        assert_eq!(row_stocks.len(), 244);
 
         let query = queries::get_stocks::Query {
             code: Some("V"),
@@ -82,26 +86,26 @@ mod tests {
             start_date: Some(start_date),
             end_date: Some(end_date),
         };
-        let stocks = repositories.get_stocks(query).await?;
-        assert_eq!(stocks.len(), 251);
+        let row_stocks = repository.get_vec_row_stock(&query).await?;
+        assert_eq!(row_stocks.len(), 251);
         Ok(())
     }
 
     #[tokio::test]
     #[should_panic]
-    async fn get_vec_stock_code_not_found_test() {
+    async fn get_vec_row_stock_code_not_found_test() {
         let start_date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
         let end_date = NaiveDate::from_ymd_opt(2022, 12, 31).unwrap();
 
         let provider = YahooConnector::new().unwrap();
-        let repositories = YahooFinanceAPI::new(&provider);
+        let repository = YahooFinanceAPI::new(&provider);
         let query = queries::get_stocks::Query {
             code: Some(""),
             market: Some(""),
             start_date: Some(start_date),
             end_date: Some(end_date),
         };
-        let _ = repositories.get_stocks(query).await.unwrap();
+        let _ = repository.get_vec_row_stock(&query).await.unwrap();
     }
 }
 */

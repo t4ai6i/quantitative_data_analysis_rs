@@ -42,6 +42,7 @@ impl From<&[Stock]> for ECP1s {
     /// use bytes::Bytes;
     ///
     /// use quantitative_data_analysis_rs::domain::models::ecp1::model::ECP1s;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
@@ -54,7 +55,7 @@ impl From<&[Stock]> for ECP1s {
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };
-    ///   let stocks = dsv.get_stocks(query).await.unwrap();
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
     ///   let ecp1s = ECP1s::from(stocks.as_slice());
     ///   assert_eq!(ecp1s.len(), 34);
     /// });
@@ -109,7 +110,7 @@ mod tests {
         let query = queries::get_stocks::Query {
             ..Default::default()
         };
-        let stocks = dsv.get_stocks(query).await?;
+        let stocks = dsv.get_stocks(&query).await?;
         let ecp1s = ECP1s::from(stocks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
             TupleVecBuySellSignal::from(ecp1s.as_slice()).0;

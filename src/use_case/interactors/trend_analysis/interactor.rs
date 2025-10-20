@@ -45,16 +45,25 @@ where
     async fn handle<
         const AFTER_DAYS: usize,
         const FROM_END_DAYS: isize,
-        const MARUBOZU_MIN_RATE: usize,
+        const MARUBOZU_BODY_MIN_RATIO: usize,
+        const MARUBOZU_WICK_MAX_RATIO: usize,
+        const DOJI_MAX_BODY_RATIO: usize,
     >(
         &self,
         input: input::TrendAnalysis,
-    ) -> Result<output::TrendAnalysis<AFTER_DAYS, MARUBOZU_MIN_RATE>> {
+    ) -> Result<
+        output::TrendAnalysis<
+            AFTER_DAYS,
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+        >,
+    > {
         let query = get_company::Query {
             code: input.code.as_str(),
             market: Some(input.market.as_str()),
         };
-        let company = self.company_repository.get_company(query).await?;
+        let company = self.company_repository.get_company(&query).await?;
 
         let query = get_stocks::Query {
             code: Some(input.code.as_str()),
@@ -62,8 +71,7 @@ where
             start_date: Some(input.start_date),
             end_date: Some(input.end_date),
         };
-        let stocks = self.stock_repository.get_stocks(query).await?;
-
+        let stocks = self.stock_repository.get_stocks(&query).await?;
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
         let smas_25 = SMAs::<25>::from(stocks.as_slice());
 
@@ -95,7 +103,11 @@ where
 
         let macos_analysis_volumes = MACOSAnalysisVolumes::from(&stocks_macoses_pair);
 
-        let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
+        let candle_sticks = CandleSticks::<
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+        >::try_from(stocks.as_slice())?;
         let candle_sticks_from_end_days =
             SliceWrapper::from(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
         let ecp2s = ECP2s::from(candle_sticks_from_end_days.as_slice());

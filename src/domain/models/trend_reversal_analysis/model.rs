@@ -125,7 +125,9 @@ mod tests {
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::stock::structures::internal::csv;
 
-    const MARUBOZU_MIN_RATE: usize = 90;
+    const MARUBOZU_BODY_MIN_RATIO: usize = 90;
+    const MARUBOZU_WICK_MAX_RATIO: usize = 2;
+    const DOJI_MAX_BODY_RATIO: usize = 5;
     const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
 
     #[tokio::test]
@@ -134,8 +136,12 @@ mod tests {
         let query = queries::get_stocks::Query {
             ..Default::default()
         };
-        let stocks = dsv.get_stocks(query).await?;
-        let candle_sticks = CandleSticks::<MARUBOZU_MIN_RATE>::try_from(stocks.as_slice())?;
+        let stocks = dsv.get_stocks(&query).await?;
+        let candle_sticks = CandleSticks::<
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+        >::try_from(stocks.as_slice())?;
         let ecp2s = ECP2s::from(candle_sticks.as_slice());
         let msespes = MSESPes::from(candle_sticks.as_slice());
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
@@ -163,7 +169,7 @@ mod tests {
             r#type: Stay,
             macos: NaiveDate::from_ymd_opt(2023, 8, 30).map(|date| (date, Buy)),
             ecp2: NaiveDate::from_ymd_opt(2023, 8, 14).map(|date| (date, Sell)),
-            msesp: NaiveDate::from_ymd_opt(2023, 8, 31).map(|date| (date, Buy)),
+            msesp: NaiveDate::from_ymd_opt(2023, 5, 24).map(|date| (date, Sell)),
             macps: NaiveDate::from_ymd_opt(2023, 9, 8).map(|date| (date, Sell)),
         };
         assert_eq!(actual, expected);

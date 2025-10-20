@@ -179,9 +179,11 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     /// # Examples
     /// ```
     /// use bytes::Bytes;
+    /// use rayon::prelude::*;
     ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListPair, SMAs};
     /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
     /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
     /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
@@ -194,7 +196,7 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     ///   let query = queries::get_stocks::Query {
     ///     ..Default::default()
     ///   };
-    ///   let stocks = dsv.get_stocks(query).await.unwrap();
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
     ///   let smas_5 = SMAs::<5>::from(stocks.as_slice());
     ///   let smas_25 = SMAs::<25>::from(stocks.as_slice());
     ///   let sma_list_pair = SMAListPair {

@@ -8,13 +8,13 @@ use crate::shared::custom_date_format;
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct TrendReversalAnalysis {
     pub r#type: BuySellSignalType,
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub macos_date: NaiveDate,
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub ecp2_date: NaiveDate,
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub msesp_date: NaiveDate,
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub macps_date: NaiveDate,
 }
 

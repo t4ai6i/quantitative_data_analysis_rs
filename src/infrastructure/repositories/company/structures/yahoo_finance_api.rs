@@ -1,21 +1,15 @@
-use crate::domain::models::company::model;
-use anyhow::{Context, Error};
 use yahoo_finance_api::YQuoteItem;
 
-impl TryFrom<YQuoteItem> for model::Company {
-    type Error = Error;
+use crate::domain::models::company::model;
 
-    fn try_from(value: YQuoteItem) -> Result<Self, Self::Error> {
-        let code = value
-            .symbol
-            .split('.')
-            .next()
-            .with_context(|| format!("Cannot split quote.symbol: {}", value.symbol))?;
-        Ok(model::Company {
-            code: code.to_owned(),
-            name: value.long_name,
-            market: value.exchange,
-            symbol: value.symbol,
-        })
+impl From<YQuoteItem> for model::RowCompany {
+    fn from(value: YQuoteItem) -> Self {
+        let code = value.symbol.split('.').next().map(String::from);
+        Self {
+            code,
+            name: Some(value.long_name),
+            market: Some(value.exchange),
+            symbol: Some(value.symbol),
+        }
     }
 }

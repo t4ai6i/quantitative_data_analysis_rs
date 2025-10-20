@@ -12,7 +12,7 @@ use crate::shared::custom_date_format;
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct MACOSAnalysis {
     pub pattern: model::Pattern,
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub latest_chance: NaiveDate,
     pub rate_of_chance: f64,
 }

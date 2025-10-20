@@ -10,7 +10,7 @@ use crate::shared::custom_date_format;
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct BuySellSignal {
     pub r#type: BuySellSignalType,
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub date: NaiveDate,
 }
 

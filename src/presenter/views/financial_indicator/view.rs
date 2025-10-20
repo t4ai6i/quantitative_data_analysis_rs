@@ -7,27 +7,27 @@ use crate::shared::custom_date_format;
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct FinancialIndicator {
     /// 終値日時
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub close_date: NaiveDate,
     /// 開示日時
-    #[serde(with = "custom_date_format")]
+    #[serde(with = "custom_date_format::primitive")]
     pub disclosed_date: NaiveDate,
     /// Price Book-Value Ratio/株価純資産倍率
     pub pbr: f64,
     /// Price Earnings Ratio/株価収益率
     pub per: f64,
     /// Operating-Profit Ratio/営業利益率
-    pub oppr: Option<f64>,
+    pub oppr: f64,
     /// Ordinary-Profit Ratio/経常利益率
-    pub orpr: Option<f64>,
+    pub orpr: f64,
     /// Profit Ratio/当期純利益率
-    pub pr: Option<f64>,
+    pub pr: f64,
     /// Mix Ratio/ミックス係数
-    pub mix: Option<f64>,
+    pub mix: f64,
     /// Return on Equity/自己資本利益率
-    pub roe: Option<f64>,
+    pub roe: f64,
     /// Return on Assets/総資産利益率
-    pub roa: Option<f64>,
+    pub roa: f64,
 }
 
 impl From<&model::FinancialIndicator> for FinancialIndicator {

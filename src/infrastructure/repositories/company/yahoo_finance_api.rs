@@ -10,10 +10,10 @@ use async_trait::async_trait;
 
 #[async_trait]
 impl repository::Company for YahooFinanceAPI<'_> {
-    async fn get_company<'a>(
+    async fn get_row_company<'a>(
         &self,
-        query: queries::get_company::Query<'a>,
-    ) -> Result<model::Company> {
+        query: &queries::get_company::Query<'a>,
+    ) -> Result<model::RowCompany> {
         let symbol = Symbol::try_from((query.code, query.market.unwrap_or("")))?;
         let retry_future_config = get_common_retry_future_config();
         let quotes = tryhard::retry_fn(|| self.provider.search_ticker(&symbol))
@@ -25,10 +25,10 @@ impl repository::Company for YahooFinanceAPI<'_> {
             .into_par_iter()
             .find_first(|quote| quote.symbol.eq(symbol.as_str()))
             .with_context(|| format!("Not found company: {}", symbol.as_str()))?;
-        TryFrom::try_from(quote)
+        Ok(From::from(quote))
     }
 
-    async fn get_companies(&self) -> Result<Vec<model::Company>> {
+    async fn get_vec_row_company(&self) -> Result<Vec<model::RowCompany>> {
         todo!()
     }
 }
@@ -46,36 +46,36 @@ mod tests {
     use crate::infrastructure::yahoo_finance_api::YahooFinanceAPI;
 
     #[tokio::test]
-    async fn get_company_test() -> Result<()> {
+    async fn get_row_company_test() -> Result<()> {
         let provider = YahooConnector::new()?;
-        let repositories = YahooFinanceAPI::new(&provider);
+        let repository = YahooFinanceAPI::new(&provider);
         let query = queries::get_company::Query {
             code: "8473",
             market: Some("T"),
         };
-        let company = repositories.get_company(query).await?;
+        let row_company = repository.get_row_company(&query).await?;
         assert_eq!(
-            company,
-            model::Company {
-                code: "8473".to_string(),
-                name: "SBI Holdings, Inc.".to_string(),
-                market: "JPX".to_string(),
-                symbol: "8473.T".to_string(),
+            row_company,
+            model::RowCompany {
+                code: Some("8473".to_string()),
+                name: Some("SBI Holdings, Inc.".to_string()),
+                market: Some("JPX".to_string()),
+                symbol: Some("8473.T".to_string()),
             }
         );
-        let repositories = YahooFinanceAPI::new(&provider);
+        let repository = YahooFinanceAPI::new(&provider);
         let query = queries::get_company::Query {
             code: "V",
             ..Default::default()
         };
-        let company = repositories.get_company(query).await?;
+        let row_company = repository.get_row_company(&query).await?;
         assert_eq!(
-            company,
-            model::Company {
-                code: "V".to_string(),
-                name: "Visa Inc.".to_string(),
-                market: "NYQ".to_string(),
-                symbol: "V".to_string(),
+            row_company,
+            model::RowCompany {
+                code: Some("V".to_string()),
+                name: Some("Visa Inc.".to_string()),
+                market: Some("NYQ".to_string()),
+                symbol: Some("V".to_string()),
             }
         );
         Ok(())
@@ -83,14 +83,14 @@ mod tests {
 
     #[tokio::test]
     #[should_panic]
-    async fn get_company_code_not_found_test() {
+    async fn get_row_company_code_not_found_test() {
         let provider = YahooConnector::new().unwrap();
-        let repositories = YahooFinanceAPI::new(&provider);
+        let repository = YahooFinanceAPI::new(&provider);
         let query = queries::get_company::Query {
             code: "",
             ..Default::default()
         };
-        let _ = repositories.get_company(query).await.unwrap();
+        let _ = repository.get_row_company(&query).await.unwrap();
     }
 }
 */

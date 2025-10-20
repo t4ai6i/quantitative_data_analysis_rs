@@ -28,7 +28,9 @@ where
     pub async fn analyze<
         const AFTER_DAYS: usize,
         const FROM_END_DAYS: isize,
-        const MARUBOZU_MIN_RATE: usize,
+        const MARUBOZU_BODY_MIN_RATIO: usize,
+        const MARUBOZU_WICK_MAX_RATIO: usize,
+        const DOJI_MAX_BODY_RATIO: usize,
     >(
         &self,
         code: impl Into<String>,
@@ -41,7 +43,9 @@ where
             input::TrendAnalysis::new(code, market, start_date, end_date, crossover_pattern_filter);
         let output = self
             .interactor
-            .handle::<AFTER_DAYS, FROM_END_DAYS, MARUBOZU_MIN_RATE>(input)
+            .handle::<AFTER_DAYS, FROM_END_DAYS, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+                input,
+            )
             .await?;
         let response = self.presenter.handle(output)?;
         Ok(response)
