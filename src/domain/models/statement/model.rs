@@ -83,19 +83,23 @@ impl TryFrom<RowStatement> for Statement {
         } = value;
 
         Ok(Self {
-            code,
             disclosed_date: disclosed_date
-                .ok_or_else(|| anyhow::anyhow!("disclosed_date is None"))?,
-            eps: eps.ok_or_else(|| anyhow::anyhow!("eps is None"))?,
-            bps: bps.ok_or_else(|| anyhow::anyhow!("bps is None"))?,
-            net_sales: net_sales.ok_or_else(|| anyhow::anyhow!("net_sales is None"))?,
+                .ok_or_else(|| anyhow::anyhow!("code:{} disclosed_date is None", code.as_str()))?,
+            eps: eps.ok_or_else(|| anyhow::anyhow!("code:{} eps is None", code.as_str()))?,
+            bps: bps.ok_or_else(|| anyhow::anyhow!("code:{} bps is None", code.as_str()))?,
+            net_sales: net_sales
+                .ok_or_else(|| anyhow::anyhow!("code:{} net_sales is None", code.as_str()))?,
             // 現状、分析に必須ではないためNoneのときは0とする。
             opp: opp.unwrap_or(0),
             // 現状、分析に必須ではないためNoneのときは0とする。
             orp: orp.unwrap_or(0),
-            profit: profit.ok_or_else(|| anyhow::anyhow!("profit is None"))?,
-            equity: equity.ok_or_else(|| anyhow::anyhow!("equity is None"))?,
-            total_assets: total_assets.ok_or_else(|| anyhow::anyhow!("total_assets is None"))?,
+            profit: profit
+                .ok_or_else(|| anyhow::anyhow!("code:{} profit is None", code.as_str()))?,
+            equity: equity
+                .ok_or_else(|| anyhow::anyhow!("code:{} equity is None", code.as_str()))?,
+            total_assets: total_assets
+                .ok_or_else(|| anyhow::anyhow!("code:{} total_assets is None", code.as_str()))?,
+            code,
         })
     }
 }
