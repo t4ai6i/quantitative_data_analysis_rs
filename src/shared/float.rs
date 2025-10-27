@@ -45,6 +45,15 @@ where
     }
 }
 
+// NaN または無限大の値を検出する補助関数
+pub fn validate_value<T: Float>(value: T) -> Option<T> {
+    if value.is_nan() || value.is_infinite() {
+        None
+    } else {
+        Some(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -119,5 +128,24 @@ mod tests {
         let divisor = 0;
         let result: f64 = percentage(dividend, divisor);
         assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn validate_value_test() {
+        let value = 1.0;
+        let result = validate_value(value);
+        assert_eq!(result, Some(1.0));
+
+        let value = f64::NAN;
+        let result = validate_value(value);
+        assert_eq!(result, None);
+
+        let value = f64::INFINITY;
+        let result = validate_value(value);
+        assert_eq!(result, None);
+
+        let value = f64::NEG_INFINITY;
+        let result = validate_value(value);
+        assert_eq!(result, None);
     }
 }

@@ -1,4 +1,4 @@
-pub mod data_format;
-pub mod file_system;
+mod dsv;
 mod jquants_api;
+pub mod structures;
 mod yahoo_finance_api;

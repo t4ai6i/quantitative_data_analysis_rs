@@ -1,4 +1,5 @@
 use crate::domain::models::stock::model::Stock;
+
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -50,30 +51,37 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     ///
     /// # Examples
     /// ```
+    /// use bytes::Bytes;
     /// use rayon::prelude::*;
-    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
-    /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
-    /// use quantitative_data_analysis_rs::domain::models::stock::model::Stocks;
     ///
-    /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
+    /// use quantitative_data_analysis_rs::domain::models::sma::model::SMAs;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
+    ///
     /// const DAYS_5: usize = 5;
     /// const DAYS_25: usize = 25;
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
-    /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
+    /// tokio_test::block_on(async {
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
+    ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
+    ///   assert_eq!(smas_5.len(), 242);
     ///
-    /// let smas_5 = SMAs::<DAYS_5>::from(vec_stock.as_slice());
-    /// assert_eq!(smas_5.len(), 242);
+    ///   let smas_25 = SMAs::<DAYS_25>::from(stocks.as_slice());
+    ///   assert_eq!(smas_25.len(), 222);
     ///
-    /// let smas_25 = SMAs::<DAYS_25>::from(vec_stock.as_slice());
-    /// assert_eq!(smas_25.len(), 222);
+    ///   let stocks: Vec<model::Stock> = vec![];
+    ///   let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
+    ///   assert_eq!(smas_5.len(), 0);
+    /// });
     ///
-    /// let stocks = Stocks::default();
-    /// let smas_5 = SMAs::<DAYS_5>::from(stocks.as_slice());
-    /// assert_eq!(smas_5.len(), 0);
     /// ```
     fn from(value: &[Stock]) -> Self {
         let vec_sma = value

@@ -1,5 +1,5 @@
 @startuml
-!include ../../../presenter/view_models/shared/crossover_pattern_filter.puml
+!include ../../../presenter/views/shared/crossover_pattern_filter.puml
 
 package use_case::interfaces::trend_analysis::input {
     class TrendAnalysis {
@@ -12,5 +12,5 @@ package use_case::interfaces::trend_analysis::input {
     }
 }
 
-TrendAnalysis *-- presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter
+TrendAnalysis *-- presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter
 @enduml

@@ -39,18 +39,26 @@ impl From<&[Stock]> for ECP1s {
     ///
     /// # Examples
     /// ```
-    /// use rayon::prelude::*;
+    /// use bytes::Bytes;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::ecp1::model::ECP1s;
-    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
     ///
-    /// const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
     ///
-    /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let _ = ECP1s::from(vec_stock.as_slice());
+    /// tokio_test::block_on(async {
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
+    ///   let ecp1s = ECP1s::from(stocks.as_slice());
+    ///   assert_eq!(ecp1s.len(), 34);
+    /// });
     /// ```
     fn from(value: &[Stock]) -> Self {
         let vec_buy_sell_signal = value
@@ -78,8 +86,10 @@ impl From<&[Stock]> for ECP1s {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+    use bytes::Bytes;
     use chrono::NaiveDate;
-    use rayon::prelude::*;
+    use pretty_assertions::assert_eq;
 
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
@@ -87,22 +97,21 @@ mod tests {
         BuySellSignalType::{Buy, Sell},
     };
     use crate::domain::models::ecp1::model::ECP1s;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
+    use crate::domain::repositories::stock::queries;
+    use crate::domain::repositories::stock::repository::Stock;
+    use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv;
 
-    const CSV_9223: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
+    const CSV: &[u8] = include_bytes!("../../../../assets/9223.T.csv");
 
-    #[test]
-    fn from_test() {
-        let successes: Vec<_> = Csv::from_slice::<true>(CSV_9223)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let ecp1s = ECP1s::from(vec_stock.as_slice());
+    #[tokio::test]
+    async fn from_test() -> Result<()> {
+        let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+        let query = queries::get_stocks::Query {
+            ..Default::default()
+        };
+        let stocks = dsv.get_stocks(&query).await?;
+        let ecp1s = ECP1s::from(stocks.as_slice());
         let (actual_buy, actual_sell): (Vec<_>, Vec<_>) =
             TupleVecBuySellSignal::from(ecp1s.as_slice()).0;
         let (expected_buy, expected_sell): (Vec<BuySellSignal>, Vec<BuySellSignal>) = (
@@ -197,5 +206,6 @@ mod tests {
         );
         assert_eq!(actual_buy, expected_buy);
         assert_eq!(actual_sell, expected_sell);
+        Ok(())
     }
 }

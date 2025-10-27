@@ -1,5 +1,5 @@
 @startuml
-!include ../../view_models/shared/crossover_pattern_filter.puml
+!include ../../views/shared/crossover_pattern_filter.puml
 
 package presenter::presenters::trend_analysis::output {
     class TrendAnalysis<N, M> {
@@ -16,10 +16,9 @@ package presenter::presenters::trend_analysis::output {
         - ecp1s: ECP1s
         - candle_sticks: CandleSticks<M>
         - trend_reversal_analysis: TrendReversalAnalysis
-        - indicator_analysis: IndicatorAnalysis
         - crossover_pattern_filter: CrossoverPatternFilter
     }
 }
 
-TrendAnalysis *-- presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter
+TrendAnalysis *-- presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter
 @enduml

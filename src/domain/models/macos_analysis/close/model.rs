@@ -2,6 +2,7 @@ use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross, Neith
 use crate::domain::models::macos::model::{AnalysisPattern, Pattern, PatternRateOfChangePair};
 use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
 use crate::shared::float::percentage;
+
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -75,7 +76,7 @@ impl<'a, const N: usize> From<&StocksMACOSESPair<'a>> for MACOSAnalysisCloses<N>
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct RateOfChance {
     pub whole: f64,
     pub golden: f64,
@@ -201,37 +202,38 @@ impl<const N: usize> MACOSAnalysisCloses<N> {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+    use bytes::Bytes;
     use chrono::NaiveDate;
-    use rayon::prelude::*;
+    use pretty_assertions::assert_eq;
 
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
     use crate::domain::models::sma::model::{SMAListPair, SMAs};
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
+    use crate::domain::repositories::stock::queries;
+    use crate::domain::repositories::stock::repository::Stock;
+    use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv;
 
-    const CSV_8473: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
+    const CSV: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
 
-    #[test]
-    fn macos_analysis_close_test() {
-        let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
-        let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
+    #[tokio::test]
+    async fn macos_analysis_close_test() -> Result<()> {
+        let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+        let query = queries::get_stocks::Query {
+            ..Default::default()
+        };
+        let stocks = dsv.get_stocks(&query).await?;
+        let smas_5 = SMAs::<5>::from(stocks.as_slice());
+        let smas_25 = SMAs::<25>::from(stocks.as_slice());
         let sma_list_pair = SMAListPair {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
         let macoses = MACOSes::from(sma_list_pair);
         let stocks_macoses_pair = StocksMACOSESPair {
-            stocks: vec_stock.as_slice(),
+            stocks: stocks.as_slice(),
             macoses: macoses.as_slice(),
         };
         // 3日後トレンドを取得
@@ -252,5 +254,6 @@ mod tests {
         assert_eq!(actual, latest_chance.golden_cross);
         let actual = NaiveDate::from_ymd_opt(2023, 3, 14);
         assert_eq!(actual, latest_chance.dead_cross);
+        Ok(())
     }
 }

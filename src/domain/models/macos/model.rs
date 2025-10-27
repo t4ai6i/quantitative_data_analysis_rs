@@ -63,7 +63,7 @@ impl From<(Option<Ordering>, Option<Ordering>)> for Pattern {
     }
 }
 
-/// MACOS analysis pattern
+/// MACOS trend_analysis_summary pattern
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub enum AnalysisPattern {
     #[default]
@@ -137,8 +137,8 @@ impl MACOSes {
     ///
     /// # Parameters
     /// - `pattern: &Pattern`  
-    ///    A reference to the `Pattern` object used to match against the `close` value
-    ///    in the `pattern_close_volume` of each `MACOS` item.
+    ///   A reference to the `Pattern` object used to match against the `close` value
+    ///   in the `pattern_close_volume` of each `MACOS` item.
     ///
     /// # Returns
     /// - `Option<NaiveDate>`:  
@@ -178,26 +178,34 @@ impl<'a> From<SMAListPair<'a, 5, 25>> for MACOSes {
     ///
     /// # Examples
     /// ```
+    /// use bytes::Bytes;
     /// use rayon::prelude::*;
+    ///
     /// use quantitative_data_analysis_rs::domain::models::sma::model::{SMAListPair, SMAs};
     /// use quantitative_data_analysis_rs::domain::models::macos::model::MACOSes;
-    /// use quantitative_data_analysis_rs::infrastructure::from_slice::FromSlice;
-    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::data_format::csv::Csv;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
     ///
-    /// const CSV_8473: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
+    /// const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
     ///
-    /// let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-    ///     .into_par_iter().map(|s| s.unwrap()).collect();
-    /// let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
-    /// let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
-    /// let sma_list_pair = SMAListPair {
-    ///     smas_n: smas_5.as_slice(),
-    ///     smas_o: smas_25.as_slice(),
-    /// };
-    /// let macoses = MACOSes::from(sma_list_pair);
-    /// assert_eq!(macoses.len(), 241);
+    /// tokio_test::block_on(async {
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
+    ///   let smas_5 = SMAs::<5>::from(stocks.as_slice());
+    ///   let smas_25 = SMAs::<25>::from(stocks.as_slice());
+    ///   let sma_list_pair = SMAListPair {
+    ///       smas_n: smas_5.as_slice(),
+    ///       smas_o: smas_25.as_slice(),
+    ///   };
+    ///   let macoses = MACOSes::from(sma_list_pair);
+    ///   assert_eq!(macoses.len(), 241);
+    /// });
     /// ```
     fn from(value: SMAListPair<'a, 5, 25>) -> Self {
         let SMAListPair {

@@ -1,15 +1,12 @@
-use std::collections::HashMap;
-use std::io;
-
-use anyhow::{bail, Result};
+use anyhow::Result;
+use bytestring::ByteString;
 use chrono::{Days, NaiveDateTime, Utc};
 use chrono_tz::Asia::Tokyo;
 use itertools::Either;
 use query_string_builder::QueryString;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-
-use crate::infrastructure::data_format::DataFormat;
+use std::collections::HashMap;
 
 const AUTH_USER_URL: &str = "https://api.jquants.com/v1/token/auth_user";
 const AUTH_REFRESH_URL: &str = "https://api.jquants.com/v1/token/auth_refresh";
@@ -34,7 +31,7 @@ pub struct Token {
 
 impl Token {
     pub async fn update_token(
-        token: io::Result<Vec<u8>>,
+        token: Result<Vec<u8>>,
         mailaddress: impl Into<String>,
         password: impl Into<String>,
         now: NaiveDateTime,
@@ -86,24 +83,12 @@ impl Token {
 }
 
 pub struct JQuantsAPI {
-    pub data_format: DataFormat,
-    pub id_token: String,
+    pub id_token: ByteString,
 }
 
 impl JQuantsAPI {
-    pub fn new(id_token: String, data_format: DataFormat) -> Result<Self> {
-        if data_format.ne(&DataFormat::JQuantsAPI) {
-            bail!(
-                "Unsupported data format: {:?} at {}:{}",
-                data_format,
-                file!(),
-                line!()
-            );
-        }
-        Ok(Self {
-            id_token,
-            data_format,
-        })
+    pub fn new(id_token: ByteString) -> Result<Self> {
+        Ok(Self { id_token })
     }
 
     pub async fn get_refresh_token(

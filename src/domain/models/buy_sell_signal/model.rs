@@ -22,9 +22,10 @@ pub struct BuySellSignal {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use rayon::prelude::*;
+
     use crate::domain::models::buy_sell_signal::model::BuySellSignal;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Stay};
-    use rayon::prelude::*;
 
     pub(crate) struct TupleVecBuySellSignal(pub(crate) (Vec<BuySellSignal>, Vec<BuySellSignal>));
 

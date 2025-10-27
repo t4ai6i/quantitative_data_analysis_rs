@@ -1,34 +1,39 @@
 use anyhow::Result;
+use bytes::Bytes;
 use chrono::NaiveDate;
 use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
-use quantitative_data_analysis_rs::presenter::view_models::analysis::view_model::Analysis;
-use quantitative_data_analysis_rs::presenter::view_models::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
+use quantitative_data_analysis_rs::presenter::views::buy_sell_signal_analysis::view::BuySellSignalAnalysis;
+use quantitative_data_analysis_rs::presenter::views::macos_analysis::view::MACOSAnalysis;
+use quantitative_data_analysis_rs::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use quantitative_data_analysis_rs::presenter::views::trend_analysis_summary::json::view::JsonRow;
+use quantitative_data_analysis_rs::presenter::views::trend_reversal_analysis::view::TrendReversalAnalysis;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
 
 const AFTER_DAYS_5: usize = 5;
 const FROM_END_DAYS_7: isize = 7;
-const MARUBOZU_MIN_RATE: usize = 90;
+const MARUBOZU_BODY_MIN_RATIO: usize = 90;
+const MARUBOZU_WICK_MAX_RATIO: usize = 2;
+const DOJI_MAX_BODY_RATIO: usize = 5;
 const DATE_FORMAT: &str = "%Y/%m/%d";
+
+const COMPANIES_TSV: &[u8] = include_bytes!("../assets/companies.tsv");
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // JQUANTS APIのためのトークン準備
     let token = Setup::run().await?;
 
+    // DSVを用いたレポジトリの準備
+    let dsv = infrastructure::dsv::Dsv::<tsv::Structure>::new(false, Bytes::from(COMPANIES_TSV));
     // JQUANTS APIを用いたレポジトリの準備
-    let data_format = infrastructure::data_format::DataFormat::JQuantsAPI;
-    let repository =
-        infrastructure::jquants_api::JQuantsAPI::new(token.id_token.value, data_format)?;
-
-    // Stock/Company/Statementのレポジトリは、JQuantsAPIを用いる
-    let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &repository,
-        &repository,
-        &repository,
-    );
+    let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token)?;
+    // TrendAnalysisのドメインロジックを実行するInteractorの準備
+    let interactor =
+        use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
     // PresenterはChart型でSVG形式の画像データを出力する
     let presenter = presenter::presenters::trend_analysis::response::chart::Chart::new(
         "chalk",
@@ -39,9 +44,9 @@ async fn main() -> Result<()> {
     // 指定された証券コードのトレンド解析を行う
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
-    let trend_analysis_response = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
-            "8473",
+    let trend_analysis = controller
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+            "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
@@ -50,24 +55,23 @@ async fn main() -> Result<()> {
         .await?;
     if let presenter::presenters::trend_analysis::response::TrendAnalysis::Chart {
         ref body, ..
-    } = trend_analysis_response
+    } = trend_analysis
     {
         write("./examples/8473.T.from_jquants_api.svg", body).await?;
         assert_eq!(include_str!("../assets/8473.T.from_jquants_api.svg"), body);
     }
 
-    let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &repository,
-        &repository,
-        &repository,
-    );
+    // TrendAnalysisのドメインロジックを実行するInteractorの準備
+    let interactor =
+        use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
     // PresenterはJSON型でJSON形式のデータを出力する
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
+    // 指定された証券コードのトレンド解析を行う
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
-            "8473",
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+            "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
             NaiveDate::from_ymd_opt(2023, 9, 8).unwrap(),
@@ -75,40 +79,42 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = use_case::interactors::trend_summary::interactor::TrendSummary;
-    let vec_trend_analysis = vec![trend_analysis];
+    // TrendAnalysisSummaryのドメインロジックを実行するInteractorの準備
+    let interactor =
+        use_case::interactors::trend_analysis_summary::interactor::TrendAnalysisSummary;
     // PresenterはJSON型でJSON形式のデータを出力する
-    let presenter = presenter::presenters::trend_summary::response::json::JSON;
-    let controller =
-        controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
-    if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
-        .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
+    let presenter = presenter::presenters::trend_analysis_summary::response::json::JSON;
+    let vec_trend_analysis = vec![trend_analysis];
+    let trend_analyses =
+        presenter::presenters::trend_analysis::response::TrendAnalyses(vec_trend_analysis);
+    // TrendAnalysisの集合からサマリーを出力する
+    let controller = controller::trend_analysis_summary::controller::TrendAnalysisSummary::new(
+        &interactor,
+        &presenter,
+    );
+    if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
+        json_rows,
+    } = controller
+        .analyze(trend_analyses, CrossoverPatternFilter::Both)
         .await?
     {
-        let vec = data
-            .into_iter()
-            .map(|e| {
-                let Analysis {
+        let tuples = json_rows
+            .iter()
+            .map(|row| {
+                let JsonRow {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
-                    indicator_analysis,
                     ..
-                } = e;
-                (
-                    macos_analysis,
-                    trend_reversal_analysis,
-                    ecp1_analysis,
-                    indicator_analysis,
-                )
+                } = row;
+                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis, indicator_analysis): (
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-        ) = multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (
+            Vec<&MACOSAnalysis>,
+            Vec<&TrendReversalAnalysis>,
+            Vec<&BuySellSignalAnalysis>,
+        ) = multiunzip(tuples);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/8473.T.macos_analysis.json"),
@@ -124,26 +130,18 @@ async fn main() -> Result<()> {
             include_str!("../assets/8473.T.ecp1_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&indicator_analysis)?;
-        assert_eq!(
-            include_str!("../assets/8473.T.indicator_analysis.json"),
-            &json_str
-        );
     };
 
     // エンガルフィンパターン以外（モーニングスター・イブニングスターパターン）の結果が正しく行われたか確認するため、株価データが少ない証券コードを用いる
-    let interactor = use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(
-        &repository,
-        &repository,
-        &repository,
-    );
+    let interactor =
+        use_case::interactors::trend_analysis::interactor::TrendAnalysis::new(&jquants_api, &dsv);
 
     let presenter = presenter::presenters::trend_analysis::response::json::JSON;
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_MIN_RATE>(
-            "9223",
+        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+            "92230",
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),
             NaiveDate::from_ymd_opt(2024, 2, 16).unwrap(),
@@ -151,40 +149,40 @@ async fn main() -> Result<()> {
         )
         .await?;
 
-    let interactor = use_case::interactors::trend_summary::interactor::TrendSummary;
-    let vec_trend_analysis = vec![trend_analysis];
-    let presenter = presenter::presenters::trend_summary::response::json::JSON;
-    let controller =
-        controller::trend_summary::controller::TrendSummary::new(&interactor, &presenter);
+    let interactor =
+        use_case::interactors::trend_analysis_summary::interactor::TrendAnalysisSummary;
+    let presenter = presenter::presenters::trend_analysis_summary::response::json::JSON;
+    let controller = controller::trend_analysis_summary::controller::TrendAnalysisSummary::new(
+        &interactor,
+        &presenter,
+    );
 
-    if let presenter::presenters::trend_summary::response::TrendSummary::JSON { data } = controller
-        .analyze(vec_trend_analysis, CrossoverPatternFilter::Both)
+    let vec_trend_analysis = vec![trend_analysis];
+    let trend_analyses =
+        presenter::presenters::trend_analysis::response::TrendAnalyses(vec_trend_analysis);
+    if let presenter::presenters::trend_analysis_summary::response::TrendAnalysisSummary::JSON {
+        json_rows,
+    } = controller
+        .analyze(trend_analyses, CrossoverPatternFilter::Both)
         .await?
     {
-        let vec = data
-            .into_iter()
-            .map(|e| {
-                let Analysis {
+        let tuples = json_rows
+            .iter()
+            .map(|row| {
+                let JsonRow {
                     macos_analysis,
                     trend_reversal_analysis,
                     ecp1_analysis,
-                    indicator_analysis,
                     ..
-                } = e;
-                (
-                    macos_analysis,
-                    trend_reversal_analysis,
-                    ecp1_analysis,
-                    indicator_analysis,
-                )
+                } = row;
+                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis, indicator_analysis): (
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-            Vec<_>,
-        ) = multiunzip(vec);
+        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (
+            Vec<&MACOSAnalysis>,
+            Vec<&TrendReversalAnalysis>,
+            Vec<&BuySellSignalAnalysis>,
+        ) = multiunzip(tuples);
         let json_str = serde_json::to_string_pretty(&macos_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.macos_analysis.json"),
@@ -198,11 +196,6 @@ async fn main() -> Result<()> {
         let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
         assert_eq!(
             include_str!("../assets/9223.T.ecp1_analysis.json"),
-            &json_str
-        );
-        let json_str = serde_json::to_string_pretty(&indicator_analysis)?;
-        assert_eq!(
-            include_str!("../assets/9223.T.indicator_analysis.json"),
             &json_str
         );
     };

@@ -1,0 +1,14 @@
+@startuml
+!include ../../interfaces/trend_analysis/use_case.puml
+
+package use_case::interactors::trend_analysis::interactor {
+    class TrendAnalysis<'a, SR, CR, SMR> {
+        - stock_repository: &SR
+        - company_repository: &CR
+        - statement_repository: &SMR
+        + new(stock_repository: &SR, company_repository: &CR, statement_repository: &SMR)
+    }
+}
+
+use_case::interactors::trend_analysis::interactor::TrendAnalysis ..|> use_case::interfaces::trend_analysis::use_case::TrendAnalysis
+@enduml

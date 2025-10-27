@@ -1,15 +1,36 @@
-use crate::domain::models::stock::model::Stocks;
 use anyhow::Result;
 use async_trait::async_trait;
-use chrono::NaiveDate;
+use rayon::prelude::*;
+
+use crate::domain::models::stock::model;
+use crate::domain::repositories::stock::queries;
 
 #[async_trait]
 pub trait Stock {
-    async fn get_stocks(
+    async fn get_stock<'a>(&self, query: &queries::get_stock::Query<'a>) -> Result<model::Stock> {
+        let row_stock = self.get_row_stock(query).await?;
+        TryFrom::try_from(row_stock)
+    }
+
+    async fn get_stocks<'a>(
         &self,
-        code: &str,
-        market: &str,
-        start_date: NaiveDate,
-        end_date: NaiveDate,
-    ) -> Result<Stocks>;
+        query: &queries::get_stocks::Query<'a>,
+    ) -> Result<model::Stocks> {
+        let vec_row_stock = self.get_vec_row_stock(query).await?;
+        let vec_stock = vec_row_stock
+            .into_par_iter()
+            .filter_map(|row_stock| TryFrom::try_from(row_stock).ok())
+            .collect::<Vec<model::Stock>>();
+        Ok(model::Stocks(vec_stock))
+    }
+
+    async fn get_row_stock<'a>(
+        &self,
+        query: &queries::get_stock::Query<'a>,
+    ) -> Result<model::RowStock>;
+
+    async fn get_vec_row_stock<'a>(
+        &self,
+        query: &queries::get_stocks::Query<'a>,
+    ) -> Result<Vec<model::RowStock>>;
 }

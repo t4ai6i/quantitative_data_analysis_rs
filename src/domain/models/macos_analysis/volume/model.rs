@@ -46,39 +46,42 @@ impl<'a> From<&StocksMACOSESPair<'a>> for MACOSAnalysisVolumes {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+    use bytes::Bytes;
+    use pretty_assertions::assert_eq;
+
     use crate::domain::models::macos::model::MACOSes;
     use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
     use crate::domain::models::sma::model::{SMAListPair, SMAs};
     use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
-    use crate::infrastructure::from_slice::FromSlice;
-    use crate::infrastructure::repositories::stock::data_format::csv::Csv;
-    use rayon::prelude::*;
+    use crate::domain::repositories::stock::queries;
+    use crate::domain::repositories::stock::repository::Stock;
+    use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::repositories::stock::structures::internal::csv;
 
-    const CSV_8473: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
+    const CSV: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
 
-    #[test]
-    fn macos_analysis_volume_test() {
-        let successes: Vec<_> = Csv::from_slice::<true>(CSV_8473)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let vec_stock: Vec<_> = Csv::from_deserialize(successes)
-            .into_par_iter()
-            .map(|s| s.unwrap())
-            .collect();
-        let smas_5 = SMAs::<5>::from(vec_stock.as_slice());
-        let smas_25 = SMAs::<25>::from(vec_stock.as_slice());
+    #[tokio::test]
+    async fn macos_analysis_volume_test() -> Result<()> {
+        let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+        let query = queries::get_stocks::Query {
+            ..Default::default()
+        };
+        let stocks = dsv.get_stocks(&query).await?;
+        let smas_5 = SMAs::<5>::from(stocks.as_slice());
+        let smas_25 = SMAs::<25>::from(stocks.as_slice());
         let sma_list_pair = SMAListPair {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
         let macoses = MACOSes::from(sma_list_pair);
         let stocks_macoses_pair = StocksMACOSESPair {
-            stocks: vec_stock.as_slice(),
+            stocks: stocks.as_slice(),
             macoses: macoses.as_slice(),
         };
         let macos_analysis_volumes = MACOSAnalysisVolumes::from(&stocks_macoses_pair);
         let actual = 33;
         assert_eq!(actual, macos_analysis_volumes.len());
+        Ok(())
     }
 }
