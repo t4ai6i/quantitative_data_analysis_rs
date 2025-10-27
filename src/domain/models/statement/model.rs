@@ -11,21 +11,21 @@ use chrono::NaiveDate;
 /// * `code` (`String`) - A unique identifier for the statement, such as a stock or company code.
 /// * `disclosed_date` (`NaiveDate`) - The date when this financial statement was disclosed.
 ///   Represented with the type `NaiveDate` to handle dates without timezone information.
-/// * `eps` (`f64`) - Earnings Per Share (EPS, 一株あたり当期純利益).
-///   Represents the company's profitability on a per-share basis.
 /// * `bps` (`f64`) - Book Value Per Share (BPS, 一株あたり純資産).
 ///   Represents the value of equity on a per-share basis.
-/// * `net_sales` (`usize`) - Net sales (売上高).
+/// * `eps` (`f64`) - Earnings Per Share (EPS, 一株あたり当期純利益).
+///   Represents the company's profitability on a per-share basis.
+/// * `net_sales` (`f64`) - Net sales (売上高).
 ///   Indicates the total revenue generated from sales, excluding returns, allowances, and discounts.
-/// * `opp` (`usize`) - Operating profit (営業利益).
+/// * `opp` (`f64`) - Operating profit (営業利益).
 ///   Indicates the profit a company makes from its core business operations.
-/// * `orp` (`usize`) - Ordinary profit (経常利益).
+/// * `orp` (`f64`) - Ordinary profit (経常利益).
 ///   Reflects the company's profit from usual business activities, including operating and non-operating incomes.
-/// * `profit` (`usize`) - Net income (当期純利益).
+/// * `profit` (`f64`) - Net income (当期純利益).
 ///   The company's total profit after tax and other deductions.
-/// * `equity` (`usize`) - Equity (純資産).
+/// * `equity` (`f64`) - Equity (純資産).
 ///   Represents the total value of the shareholders' stake in the company.
-/// * `total_assets` (`usize`) - Total assets (総資産).
+/// * `total_assets` (`f64`) - Total assets (総資産).
 ///   Represents the total value of everything the company owns.
 ///
 /// # Derive Attributes
@@ -41,28 +41,28 @@ use chrono::NaiveDate;
 pub struct Statement {
     pub code: String,
     pub disclosed_date: NaiveDate,
-    pub eps: f64,
     pub bps: f64,
-    pub net_sales: u64,
-    pub opp: u64,
-    pub orp: u64,
-    pub profit: u64,
-    pub equity: u64,
-    pub total_assets: u64,
+    pub eps: f64,
+    pub net_sales: f64,
+    pub opp: f64,
+    pub orp: f64,
+    pub profit: f64,
+    pub equity: f64,
+    pub total_assets: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct RowStatement {
     pub code: String,
     pub disclosed_date: Option<NaiveDate>,
-    pub eps: Option<f64>,
     pub bps: Option<f64>,
-    pub net_sales: Option<u64>,
-    pub opp: Option<u64>,
-    pub orp: Option<u64>,
-    pub profit: Option<u64>,
-    pub equity: Option<u64>,
-    pub total_assets: Option<u64>,
+    pub eps: Option<f64>,
+    pub net_sales: Option<f64>,
+    pub opp: Option<f64>,
+    pub orp: Option<f64>,
+    pub profit: Option<f64>,
+    pub equity: Option<f64>,
+    pub total_assets: Option<f64>,
 }
 
 impl TryFrom<RowStatement> for Statement {
@@ -72,8 +72,8 @@ impl TryFrom<RowStatement> for Statement {
         let RowStatement {
             code,
             disclosed_date,
-            eps,
             bps,
+            eps,
             net_sales,
             opp,
             orp,
@@ -85,20 +85,14 @@ impl TryFrom<RowStatement> for Statement {
         Ok(Self {
             disclosed_date: disclosed_date
                 .ok_or_else(|| anyhow::anyhow!("code:{} disclosed_date is None", code.as_str()))?,
-            eps: eps.ok_or_else(|| anyhow::anyhow!("code:{} eps is None", code.as_str()))?,
-            bps: bps.ok_or_else(|| anyhow::anyhow!("code:{} bps is None", code.as_str()))?,
-            net_sales: net_sales
-                .ok_or_else(|| anyhow::anyhow!("code:{} net_sales is None", code.as_str()))?,
-            // 現状、分析に必須ではないためNoneのときは0とする。
-            opp: opp.unwrap_or(0),
-            // 現状、分析に必須ではないためNoneのときは0とする。
-            orp: orp.unwrap_or(0),
-            profit: profit
-                .ok_or_else(|| anyhow::anyhow!("code:{} profit is None", code.as_str()))?,
-            equity: equity
-                .ok_or_else(|| anyhow::anyhow!("code:{} equity is None", code.as_str()))?,
-            total_assets: total_assets
-                .ok_or_else(|| anyhow::anyhow!("code:{} total_assets is None", code.as_str()))?,
+            bps: bps.unwrap_or(f64::NAN),
+            eps: eps.unwrap_or(f64::NAN),
+            net_sales: net_sales.unwrap_or(f64::NAN),
+            opp: opp.unwrap_or(f64::NAN),
+            orp: orp.unwrap_or(f64::NAN),
+            profit: profit.unwrap_or(f64::NAN),
+            equity: equity.unwrap_or(f64::NAN),
+            total_assets: total_assets.unwrap_or(f64::NAN),
             code,
         })
     }

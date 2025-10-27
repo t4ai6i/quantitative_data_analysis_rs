@@ -3,18 +3,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
 use crate::domain::models::trend_reversal_analysis::model;
-use crate::shared::custom_date_format;
+use crate::shared::custom_serde::naive_date;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct TrendReversalAnalysis {
     pub r#type: BuySellSignalType,
-    #[serde(with = "custom_date_format::primitive")]
+    #[serde(with = "naive_date::primitive")]
     pub macos_date: NaiveDate,
-    #[serde(with = "custom_date_format::primitive")]
+    #[serde(with = "naive_date::primitive")]
     pub ecp2_date: NaiveDate,
-    #[serde(with = "custom_date_format::primitive")]
+    #[serde(with = "naive_date::primitive")]
     pub msesp_date: NaiveDate,
-    #[serde(with = "custom_date_format::primitive")]
+    #[serde(with = "naive_date::primitive")]
     pub macps_date: NaiveDate,
 }
 

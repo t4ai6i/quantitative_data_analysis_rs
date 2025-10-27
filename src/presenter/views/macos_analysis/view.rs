@@ -7,12 +7,12 @@ use crate::domain::models::macos::model;
 use crate::domain::models::macos::model::MACOS;
 use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
 use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
-use crate::shared::custom_date_format;
+use crate::shared::custom_serde::naive_date;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct MACOSAnalysis {
     pub pattern: model::Pattern,
-    #[serde(with = "custom_date_format::primitive")]
+    #[serde(with = "naive_date::primitive")]
     pub latest_chance: NaiveDate,
     pub rate_of_chance: f64,
 }

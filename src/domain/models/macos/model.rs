@@ -137,8 +137,8 @@ impl MACOSes {
     ///
     /// # Parameters
     /// - `pattern: &Pattern`  
-    ///    A reference to the `Pattern` object used to match against the `close` value
-    ///    in the `pattern_close_volume` of each `MACOS` item.
+    ///   A reference to the `Pattern` object used to match against the `close` value
+    ///   in the `pattern_close_volume` of each `MACOS` item.
     ///
     /// # Returns
     /// - `Option<NaiveDate>`:  

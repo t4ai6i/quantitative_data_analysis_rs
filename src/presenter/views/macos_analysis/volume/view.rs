@@ -2,7 +2,7 @@ use rayon::prelude::*;
 
 use crate::domain::models::macos_analysis::volume::model;
 use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
-use crate::shared::custom_date_format::primitive::SLASH_DELIMITED_DATE_FORMAT;
+use crate::shared::custom_serde::naive_date::SLASH_DELIMITED_DATE_FORMAT;
 
 pub trait MACOSTrendAnalysisVolumes {
     fn table_chart_header(&self) -> Vec<Vec<String>>;

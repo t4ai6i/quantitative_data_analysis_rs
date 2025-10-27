@@ -1,8 +1,7 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Deserializer, Serializer};
 
-pub const SLASH_DELIMITED_DATE_FORMAT: &str = "%Y/%m/%d";
-pub const ISO8601_DATE_FORMAT: &str = "%Y-%m-%d";
+use crate::shared::custom_serde::naive_date::ISO8601_DATE_FORMAT;
 
 pub fn serialize<S>(date: &Option<NaiveDate>, serializer: S) -> Result<S::Ok, S::Error>
 where

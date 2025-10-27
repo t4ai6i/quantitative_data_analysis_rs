@@ -93,12 +93,12 @@ mod tests {
             disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
             eps: Some(536.09),
             bps: Some(4162.73),
-            net_sales: Some(1443733000000),
+            net_sales: Some(1443733000000.0),
             opp: None,
             orp: None,
-            profit: Some(162120000000),
-            equity: Some(1763793000000),
-            total_assets: Some(32113430000000),
+            profit: Some(162120000000.0),
+            equity: Some(1763793000000.0),
+            total_assets: Some(32113430000000.0),
         };
         assert_eq!(actual, expected);
 

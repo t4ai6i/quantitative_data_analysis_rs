@@ -1,5 +1,4 @@
 use chrono::NaiveDate;
-use num_traits::Zero;
 
 use crate::domain::models::statement::model::Statement;
 use crate::domain::models::stock::model::Stock;
@@ -40,12 +39,16 @@ impl From<(&Stock, &Statement)> for FinancialIndicator {
            提唱者ベンジャミン・グレアム氏曰く、ミックス係数が22.5を下回る銘柄が割安である。
            さらに手堅く見るならば、ミックス係数が2を下回る銘柄が割安である。
         */
-        let pbr = (!statement.bps.is_zero())
-            .then(|| stock.close / statement.bps)
-            .unwrap_or(f64::INFINITY);
-        let per = (!statement.eps.is_zero())
-            .then(|| stock.close / statement.eps)
-            .unwrap_or(f64::INFINITY);
+        let pbr = if statement.bps.is_normal() {
+            stock.close / statement.bps
+        } else {
+            f64::NAN
+        };
+        let per = if statement.eps.is_normal() {
+            stock.close / statement.eps
+        } else {
+            f64::NAN
+        };
         let mix = pbr * per;
 
         /*
@@ -55,27 +58,31 @@ impl From<(&Stock, &Statement)> for FinancialIndicator {
            【高水準だが、注意が必要】20%以上
            https://www.kaonavi.jp/dictionary/eigyoriekiritsu/
         */
-        let (oppr, orpr, pr) = (!statement.net_sales.is_zero())
-            .then(|| {
-                (
-                    statement.opp as f64 / statement.net_sales as f64 * 100.0,
-                    statement.orp as f64 / statement.net_sales as f64 * 100.0,
-                    statement.profit as f64 / statement.net_sales as f64 * 100.0,
-                )
-            })
-            .unwrap_or((f64::INFINITY, f64::INFINITY, f64::INFINITY));
+        let (oppr, orpr, pr) = if statement.net_sales.is_normal() {
+            (
+                statement.opp / statement.net_sales * 100.0,
+                statement.orp / statement.net_sales * 100.0,
+                statement.profit / statement.net_sales * 100.0,
+            )
+        } else {
+            (f64::NAN, f64::NAN, f64::NAN)
+        };
 
         /*
             ROE : 高ければ高いほど効率的に利益を稼いでいる（目安は8%）
             ROA : 高ければ高いほど効率的に利益を稼いでいる（目安は5%、ただし業種による変動幅がある）
             https://doda.jp/companyinfo/contents/finance/013.html
         */
-        let roe = (!statement.equity.is_zero())
-            .then(|| statement.profit as f64 / statement.equity as f64 * 100.0)
-            .unwrap_or(f64::INFINITY);
-        let roa = (!statement.total_assets.is_zero())
-            .then(|| statement.profit as f64 / statement.total_assets as f64 * 100.0)
-            .unwrap_or(f64::INFINITY);
+        let roe = if statement.equity.is_normal() {
+            statement.profit / statement.equity * 100.0
+        } else {
+            f64::NAN
+        };
+        let roa = if statement.total_assets.is_normal() {
+            statement.profit / statement.total_assets * 100.0
+        } else {
+            f64::NAN
+        };
         Self {
             close_date: stock.date,
             disclosed_date: statement.disclosed_date,
@@ -117,12 +124,12 @@ mod tests {
             disclosed_date,
             eps: 100.0,
             bps: 400.0,
-            net_sales: 512,
-            opp: 128,
-            orp: 64,
-            profit: 32,
-            equity: 1000,
-            total_assets: 2000,
+            net_sales: 512.0,
+            opp: 128.0,
+            orp: 64.0,
+            profit: 32.0,
+            equity: 1000.0,
+            total_assets: 2000.0,
         };
 
         let actual = FinancialIndicator::from((&stock, &statement));
@@ -144,7 +151,7 @@ mod tests {
     #[test]
     fn zero_net_sales_sets_profit_ratios_to_none_and_mix_still_computed_if_possible() {
         // 売上ゼロ -> 利益率は None
-        // bps=0 -> pbr = ∞, per=10 -> mix = ∞
+        // bps=0 -> pbr = NaN, per=10 -> mix = NaN
         let stock = Stock {
             close: 1000.0,
             ..Default::default()
@@ -152,17 +159,17 @@ mod tests {
         let statement = Statement {
             eps: 100.0, // per は有限
             bps: 0.0,   // pbr は ∞
-            net_sales: 0,
+            net_sales: 0.0,
             ..Default::default()
         };
 
         let actual = FinancialIndicator::from((&stock, &statement));
         assert_eq!(actual.per, 10.0);
-        assert!(actual.pbr.is_infinite());
-        assert!(actual.mix.is_infinite());
-        assert!(actual.oppr.is_infinite());
-        assert!(actual.orpr.is_infinite());
-        assert!(actual.pr.is_infinite());
+        assert!(actual.pbr.is_nan());
+        assert!(actual.mix.is_nan());
+        assert!(actual.oppr.is_nan());
+        assert!(actual.orpr.is_nan());
+        assert!(actual.pr.is_nan());
     }
 
     #[test]
@@ -175,37 +182,37 @@ mod tests {
         let statement = Statement {
             eps: f64::NAN, // per = NaN
             bps: 250.0,    // pbr = 4.0
-            net_sales: 0,
+            net_sales: 0.0,
             ..Default::default()
         };
         let actual = FinancialIndicator::from((&stock, &statement));
         assert!(actual.per.is_nan());
         assert_eq!(actual.pbr, 4.0);
         assert!(actual.mix.is_nan());
-        assert!(actual.oppr.is_infinite());
-        assert!(actual.orpr.is_infinite());
-        assert!(actual.pr.is_infinite());
+        assert!(actual.oppr.is_nan());
+        assert!(actual.orpr.is_nan());
+        assert!(actual.pr.is_nan());
 
-        // pbr = ∞, per 有限 -> mix = ∞
+        // pbr = NaN, per 有限 -> mix = NaN
         let stock = Stock {
             close: 1200.0,
             ..Default::default()
         };
         let statement = Statement {
             eps: 100.0, // per = 12
-            bps: 0.0,   // pbr = ∞
-            net_sales: 0,
+            bps: 0.0,   // pbr = NaN
+            net_sales: 0.0,
             ..Default::default()
         };
         let actual = FinancialIndicator::from((&stock, &statement));
         assert_eq!(actual.per, 12.0);
-        assert!(actual.pbr.is_infinite());
-        assert!(actual.mix.is_infinite());
+        assert!(actual.pbr.is_nan());
+        assert!(actual.mix.is_nan());
     }
 
     #[test]
     fn mix_is_infinite_when_both_per_and_pbr_are_infinite() {
-        // eps=0 -> per = ∞, bps=0 -> pbr = ∞ -> mix = ∞
+        // eps=0 -> per = NaN, bps=0 -> pbr = NaN -> mix = NaN
         let stock = Stock {
             close: 500.0,
             ..Default::default()
@@ -213,34 +220,34 @@ mod tests {
         let statement = Statement {
             eps: 0.0,
             bps: 0.0,
-            net_sales: 0,
+            net_sales: 0.0,
             ..Default::default()
         };
 
         let actual = FinancialIndicator::from((&stock, &statement));
-        assert!(actual.per.is_infinite());
-        assert!(actual.pbr.is_infinite());
-        assert!(actual.mix.is_infinite());
-        assert!(actual.oppr.is_infinite());
-        assert!(actual.orpr.is_infinite());
-        assert!(actual.pr.is_infinite());
+        assert!(actual.per.is_nan());
+        assert!(actual.pbr.is_nan());
+        assert!(actual.mix.is_nan());
+        assert!(actual.oppr.is_nan());
+        assert!(actual.orpr.is_nan());
+        assert!(actual.pr.is_nan());
     }
 
     #[test]
     fn roe_and_roa_none_when_denominators_zero() {
-        // equity = 0 -> roe None, total_assets = 0 -> roa None
+        // equity = 0 -> roe NaN, total_assets = 0 -> roa NaN
         let stock = Stock {
             close: 100.0,
             ..Default::default()
         };
         let statement = Statement {
-            profit: 50,
-            equity: 0,
-            total_assets: 0,
+            profit: 50.0,
+            equity: 0.0,
+            total_assets: 0.0,
             ..Default::default()
         };
         let actual = FinancialIndicator::from((&stock, &statement));
-        assert!(actual.roe.is_infinite());
-        assert!(actual.roa.is_infinite());
+        assert!(actual.roe.is_nan());
+        assert!(actual.roa.is_nan());
     }
 }

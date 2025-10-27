@@ -2,7 +2,7 @@ use rayon::prelude::*;
 
 use crate::domain::models::candle_stick::model;
 use crate::domain::models::candle_stick::model::BullishBearishType;
-use crate::shared::custom_date_format::primitive::SLASH_DELIMITED_DATE_FORMAT;
+use crate::shared::custom_serde::naive_date::SLASH_DELIMITED_DATE_FORMAT;
 
 pub trait CandleSticks {
     fn table_chart_rows(&self) -> Vec<Vec<String>>;
