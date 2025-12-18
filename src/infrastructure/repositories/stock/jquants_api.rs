@@ -93,7 +93,7 @@ mod tests {
             high: Some(6925.0),
             low: Some(6746.0),
             close: Some(6752.0),
-            adj_close: Some(6752.0),
+            adj_close: Some(3376.0),
             volume: Some(3731200),
         };
         assert_eq!(actual, expected);
