@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
-use yahoo_finance_api::time::OffsetDateTime;
 use yahoo_finance_api::YahooConnector;
+use yahoo_finance_api::time::OffsetDateTime;
 
 pub struct YahooFinanceAPI<'a> {
     pub provider: &'a YahooConnector,
