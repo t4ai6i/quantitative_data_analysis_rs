@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{ensure, Context, Result};
 use bytestring::ByteString;
 use chrono::{Days, NaiveDateTime, Utc};
 use chrono_tz::Asia::Tokyo;
@@ -82,6 +82,38 @@ impl Token {
     }
 }
 
+#[derive(Deserialize)]
+struct AuthUserResponse {
+    #[serde(rename = "refreshToken")]
+    refresh_token: String,
+}
+
+#[derive(Deserialize)]
+struct AuthRefreshResponse {
+    #[serde(rename = "idToken")]
+    id_token: String,
+}
+
+/// Parses a `/token/auth_user` response body and returns the contained refresh token string.
+/// The function validates the JSON structure and ensures the token is not empty.
+pub fn parse_refresh_token_payload(body: &[u8]) -> Result<String> {
+    let parsed: AuthUserResponse =
+        serde_json::from_slice(body).context("Failed to deserialize refresh token response")?;
+    let trim = parsed.refresh_token.trim();
+    ensure!(!trim.is_empty(), "refreshToken field is empty");
+    Ok(trim.to_string())
+}
+
+/// Parses a `/token/auth_refresh` response body and returns the contained ID token string.
+/// The function validates the JSON structure and ensures the token is not empty.
+pub fn parse_id_token_payload(body: &[u8]) -> Result<String> {
+    let parsed: AuthRefreshResponse =
+        serde_json::from_slice(body).context("Failed to deserialize id token response")?;
+    let trim = parsed.id_token.trim();
+    ensure!(!trim.is_empty(), "idToken field is empty");
+    Ok(trim.to_string())
+}
+
 pub struct JQuantsAPI {
     pub id_token: ByteString,
 }
@@ -104,11 +136,10 @@ impl JQuantsAPI {
             .send()
             .await?;
         let body = response.bytes().await?;
-        let refresh_token: serde_json::Value = serde_json::from_slice(&body)?;
-        let refresh_token = refresh_token["refreshToken"].as_str().unwrap();
+        let refresh_token = parse_refresh_token_payload(&body)?;
         let now = Utc::now().with_timezone(&Tokyo).naive_local();
         Ok(RefreshToken {
-            value: refresh_token.to_string(),
+            value: refresh_token,
             expires_in: now.checked_add_days(Days::new(7)).unwrap(),
         })
     }
@@ -118,11 +149,10 @@ impl JQuantsAPI {
         let auth_refresh_url = format!("{AUTH_REFRESH_URL}{qs}");
         let response = Client::new().post(auth_refresh_url).send().await?;
         let body = response.bytes().await?;
-        let id_token: serde_json::Value = serde_json::from_slice(&body)?;
-        let id_token = id_token["idToken"].as_str().unwrap();
+        let id_token = parse_id_token_payload(&body)?;
         let now = Utc::now().with_timezone(&Tokyo).naive_local();
         Ok(IdToken {
-            value: id_token.to_string(),
+            value: id_token,
             expires_in: now.checked_add_days(Days::new(1)).unwrap(),
         })
     }
@@ -130,6 +160,7 @@ impl JQuantsAPI {
 
 #[cfg(test)]
 mod tests {
+    use super::{parse_id_token_payload, parse_refresh_token_payload};
     use anyhow::Context;
     use chrono::Utc;
     use chrono_tz::Asia::Tokyo;
@@ -156,5 +187,55 @@ mod tests {
         assert!(!token.is_refresh_token_expired(now));
         assert!(!token.is_id_token_expired(now));
         Ok(())
+    }
+
+    #[test]
+    fn parse_refresh_token_payload_empty_fails() {
+        let body = br#"{"refreshToken": ""}"#;
+        assert!(parse_refresh_token_payload(body).is_err());
+    }
+
+    #[test]
+    fn parse_refresh_token_payload_missing_field_fails() {
+        let body = br#"{"unexpected": "value"}"#;
+        assert!(parse_refresh_token_payload(body).is_err());
+    }
+
+    #[test]
+    fn parse_id_token_payload_empty_fails() {
+        let body = br#"{"idToken": "  "}"#;
+        assert!(parse_id_token_payload(body).is_err());
+    }
+
+    #[test]
+    fn parse_id_token_payload_missing_field_fails() {
+        let body = br#"{"error": "invalid"}"#;
+        assert!(parse_id_token_payload(body).is_err());
+    }
+
+    #[test]
+    fn parse_refresh_token_payload_handles_valid_body() {
+        let body = br#"{"refreshToken": "token123"}"#;
+        let parsed = parse_refresh_token_payload(body).expect("valid payload should parse");
+        assert_eq!(parsed, "token123");
+    }
+
+    #[test]
+    fn parse_refresh_token_payload_rejects_malformed_json() {
+        let body = br#"{"refresh": "token123"}"#;
+        assert!(parse_refresh_token_payload(body).is_err());
+    }
+
+    #[test]
+    fn parse_id_token_payload_handles_valid_body() {
+        let body = br#"{"idToken": "id-abc"}"#;
+        let parsed = parse_id_token_payload(body).expect("valid payload should parse");
+        assert_eq!(parsed, "id-abc");
+    }
+
+    #[test]
+    fn parse_id_token_payload_rejects_empty_token() {
+        let body = br#"{"idToken": ""}"#;
+        assert!(parse_id_token_payload(body).is_err());
     }
 }
