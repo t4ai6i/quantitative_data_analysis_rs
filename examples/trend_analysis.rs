@@ -1,7 +1,7 @@
 use anyhow::Result;
 use bytes::Bytes;
 use chrono::NaiveDate;
-use itertools::{multiunzip, Itertools};
+use itertools::{Itertools, multiunzip};
 use tokio::fs::write;
 
 use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;

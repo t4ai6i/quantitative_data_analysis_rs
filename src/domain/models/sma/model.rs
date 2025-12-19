@@ -3,7 +3,7 @@ use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
-use simple_moving_average::{SumTreeSMA, SMA as OtherSMA};
+use simple_moving_average::{SMA as OtherSMA, SumTreeSMA};
 
 /// 終値、取引高の単純移動平均のセット
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]

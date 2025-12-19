@@ -1,5 +1,5 @@
 use anyhow::Result;
-use simple_moving_average::{SumTreeSMA, SMA};
+use simple_moving_average::{SMA, SumTreeSMA};
 
 #[test]
 fn simple_moving_average_sandbox() -> Result<()> {

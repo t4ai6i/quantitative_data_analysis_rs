@@ -231,14 +231,18 @@ mod tests {
         let result: Result<u64> = u64::from_json_string_value("overflow_u64", &json_value);
         assert!(result.is_err());
         let error_message = result.unwrap_err().to_string();
-        assert!(error_message
-            .contains("value['overflow_u64'] failed to call from_str('18446744073709551616')"));
+        assert!(
+            error_message
+                .contains("value['overflow_u64'] failed to call from_str('18446744073709551616')")
+        );
 
         // 符号なし整数に負の値（エラー）
         let result: Result<u32> = u32::from_json_string_value("negative_unsigned", &json_value);
         assert!(result.is_err());
         let error_message = result.unwrap_err().to_string();
-        assert!(error_message.contains("value['negative_unsigned'] failed to call from_str('-42')"));
+        assert!(
+            error_message.contains("value['negative_unsigned'] failed to call from_str('-42')")
+        );
     }
 
     #[test]
@@ -358,8 +362,10 @@ mod tests {
             NaiveDate::from_json_string_value("extra_info", &json_value);
         assert!(result.is_err());
         let error_message = result.unwrap_err().to_string();
-        assert!(error_message
-            .contains("value['extra_info'] failed to call from_str('2023-12-25 10:30:00')"));
+        assert!(
+            error_message
+                .contains("value['extra_info'] failed to call from_str('2023-12-25 10:30:00')")
+        );
     }
 
     #[test]
@@ -604,7 +610,9 @@ mod tests {
         let result: Result<f64> = f64::from_json_string_value("invalid_scientific", &json_value);
         assert!(result.is_err());
         let error_message = result.unwrap_err().to_string();
-        assert!(error_message.contains("value['invalid_scientific'] failed to call from_str('1e')"));
+        assert!(
+            error_message.contains("value['invalid_scientific'] failed to call from_str('1e')")
+        );
 
         // 不正な16進数
         let result: Result<i32> = i32::from_json_string_value("invalid_hex", &json_value);
