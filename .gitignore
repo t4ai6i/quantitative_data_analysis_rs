@@ -2,7 +2,6 @@
 
 examples/**/*.svg
 examples/**/*.tsv
-jquants_api_token.json
 
 /target
 /Cargo.lock
