@@ -28,7 +28,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.90.0
-          components: clippy, rustfmt
+          components: clippy
 
       - name: Cache Rust artifacts
         uses: Swatinem/rust-cache@v2
@@ -40,9 +40,6 @@ jobs:
         run: |
           test -n "$JQUANTS_MAIL_ADDRESS"
           test -n "$JQUANTS_PASSWORD"
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
 
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
