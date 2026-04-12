@@ -1,5 +1,6 @@
-use crate::domain::models::macos::model;
-use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
+use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
+use crate::domain::models::crossover_strategy::latest_chance::model::LatestChance;
+use crate::domain::models::crossover_strategy::rate_of_chance::model::RateOfChance;
 use strum::Display;
 
 /// クロスオーバーのどのパターン（ゴールデンクロス、デッドクロス、または両方）を
@@ -23,11 +24,13 @@ impl CrossoverPatternFilter {
     ///
     /// # 戻り値
     /// フィルター条件に一致する場合は `true`、そうでない場合は `false`。
-    pub fn matches_filter(&self, pattern: &model::Pattern) -> bool {
+    pub fn matches_filter(&self, crossover_pattern: &CrossoverPattern) -> bool {
         match self {
             CrossoverPatternFilter::Both => true,
-            CrossoverPatternFilter::GoldenOnly => pattern.eq(&model::Pattern::GoldenCross),
-            CrossoverPatternFilter::DeadOnly => pattern.eq(&model::Pattern::DeadCross),
+            CrossoverPatternFilter::GoldenOnly => {
+                crossover_pattern.eq(&CrossoverPattern::GoldenCross)
+            }
+            CrossoverPatternFilter::DeadOnly => crossover_pattern.eq(&CrossoverPattern::DeadCross),
         }
     }
 
@@ -85,11 +88,11 @@ impl CrossoverPatternFilter {
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
-
-    use crate::domain::models::macos::model;
-    use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
+    use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
+    use crate::domain::models::crossover_strategy::latest_chance::model::LatestChance;
+    use crate::domain::models::crossover_strategy::rate_of_chance::model::RateOfChance;
     use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
+    use chrono::NaiveDate;
 
     fn ymd(year: i32, month: u32, day: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(year, month, day).unwrap()
@@ -97,17 +100,17 @@ mod tests {
 
     #[test]
     fn matches_filter_test() {
-        assert!(CrossoverPatternFilter::Both.matches_filter(&model::Pattern::GoldenCross));
-        assert!(CrossoverPatternFilter::Both.matches_filter(&model::Pattern::DeadCross));
-        assert!(CrossoverPatternFilter::Both.matches_filter(&model::Pattern::Neither)); // NeutralもBothではtrue
+        assert!(CrossoverPatternFilter::Both.matches_filter(&CrossoverPattern::GoldenCross));
+        assert!(CrossoverPatternFilter::Both.matches_filter(&CrossoverPattern::DeadCross));
+        assert!(CrossoverPatternFilter::Both.matches_filter(&CrossoverPattern::Neither)); // NeutralもBothではtrue
 
-        assert!(CrossoverPatternFilter::GoldenOnly.matches_filter(&model::Pattern::GoldenCross));
-        assert!(!CrossoverPatternFilter::GoldenOnly.matches_filter(&model::Pattern::DeadCross));
-        assert!(!CrossoverPatternFilter::GoldenOnly.matches_filter(&model::Pattern::Neither));
+        assert!(CrossoverPatternFilter::GoldenOnly.matches_filter(&CrossoverPattern::GoldenCross));
+        assert!(!CrossoverPatternFilter::GoldenOnly.matches_filter(&CrossoverPattern::DeadCross));
+        assert!(!CrossoverPatternFilter::GoldenOnly.matches_filter(&CrossoverPattern::Neither));
 
-        assert!(!CrossoverPatternFilter::DeadOnly.matches_filter(&model::Pattern::GoldenCross));
-        assert!(CrossoverPatternFilter::DeadOnly.matches_filter(&model::Pattern::DeadCross));
-        assert!(!CrossoverPatternFilter::DeadOnly.matches_filter(&model::Pattern::Neither));
+        assert!(!CrossoverPatternFilter::DeadOnly.matches_filter(&CrossoverPattern::GoldenCross));
+        assert!(CrossoverPatternFilter::DeadOnly.matches_filter(&CrossoverPattern::DeadCross));
+        assert!(!CrossoverPatternFilter::DeadOnly.matches_filter(&CrossoverPattern::Neither));
     }
 
     #[test]

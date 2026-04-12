@@ -3,7 +3,7 @@ use deref_derive::Deref;
 use rayon::prelude::*;
 
 use crate::domain::models::company::model::Company;
-use crate::domain::models::macos::model::Pattern;
+use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
 use crate::presenter::presenters::trend_analysis::response;
 
 pub struct ChartRow(pub Vec<String>);
@@ -22,14 +22,14 @@ impl TryFrom<&response::TrendAnalysis> for ChartRow {
             } => {
                 let Company { code, symbol, .. } = company;
                 let latest_chance = crossover_pattern_filter.get_latest_chance(latest_chance);
-                let macos = Pattern::from(latest_chance).to_string();
+                let crossover_pattern = CrossoverPattern::from(latest_chance).to_string();
                 let latest_chance = latest_chance.to_string();
                 let rate_of_chance_percent =
                     crossover_pattern_filter.format_rate_of_chance_percent(rate_of_chance);
                 Ok(ChartRow(vec![
                     code.to_string(),
                     symbol.to_string(),
-                    macos,
+                    crossover_pattern,
                     latest_chance,
                     rate_of_chance_percent,
                 ]))

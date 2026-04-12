@@ -1,13 +1,13 @@
 use anyhow::Result;
 use bytes::Bytes;
 use chrono::NaiveDate;
-use itertools::{Itertools, multiunzip};
+use itertools::{multiunzip, Itertools};
 use tokio::fs::write;
 
 use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
-use quantitative_data_analysis_rs::presenter::views::buy_sell_signal_analysis::view::BuySellSignalAnalysis;
-use quantitative_data_analysis_rs::presenter::views::macos_analysis::view::MACOSAnalysis;
+use quantitative_data_analysis_rs::presenter::views::high_low_direction_signal_analysis::view::HighLowDirectionSignalAnalysis;
 use quantitative_data_analysis_rs::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use quantitative_data_analysis_rs::presenter::views::sma_cos_analysis::view::SmaCosAnalysis;
 use quantitative_data_analysis_rs::presenter::views::trend_analysis_summary::json::view::JsonRow;
 use quantitative_data_analysis_rs::presenter::views::trend_reversal_analysis::view::TrendReversalAnalysis;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
@@ -102,22 +102,26 @@ async fn main() -> Result<()> {
             .iter()
             .map(|row| {
                 let JsonRow {
-                    macos_analysis,
+                    sma_cos_analysis,
                     trend_reversal_analysis,
-                    ecp1_analysis,
+                    high_low_direction_signal_analysis,
                     ..
                 } = row;
-                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
+                (
+                    sma_cos_analysis,
+                    trend_reversal_analysis,
+                    high_low_direction_signal_analysis,
+                )
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (
-            Vec<&MACOSAnalysis>,
+        let (sma_cos_analysis, trend_reversal_analysis, high_low_direction_signal_analysis): (
+            Vec<&SmaCosAnalysis>,
             Vec<&TrendReversalAnalysis>,
-            Vec<&BuySellSignalAnalysis>,
+            Vec<&HighLowDirectionSignalAnalysis>,
         ) = multiunzip(tuples);
-        let json_str = serde_json::to_string_pretty(&macos_analysis)?;
+        let json_str = serde_json::to_string_pretty(&sma_cos_analysis)?;
         assert_eq!(
-            include_str!("../assets/8473.T.macos_analysis.json"),
+            include_str!("../assets/8473.T.sma_cos_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&trend_reversal_analysis)?;
@@ -125,9 +129,9 @@ async fn main() -> Result<()> {
             include_str!("../assets/8473.T.trend_reversal_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
+        let json_str = serde_json::to_string_pretty(&high_low_direction_signal_analysis)?;
         assert_eq!(
-            include_str!("../assets/8473.T.ecp1_analysis.json"),
+            include_str!("../assets/8473.T.high_low_direction_signal_analysis.json"),
             &json_str
         );
     };
@@ -170,22 +174,26 @@ async fn main() -> Result<()> {
             .iter()
             .map(|row| {
                 let JsonRow {
-                    macos_analysis,
+                    sma_cos_analysis,
                     trend_reversal_analysis,
-                    ecp1_analysis,
+                    high_low_direction_signal_analysis,
                     ..
                 } = row;
-                (macos_analysis, trend_reversal_analysis, ecp1_analysis)
+                (
+                    sma_cos_analysis,
+                    trend_reversal_analysis,
+                    high_low_direction_signal_analysis,
+                )
             })
             .collect_vec();
-        let (macos_analysis, trend_reversal_analysis, ecp1_analysis): (
-            Vec<&MACOSAnalysis>,
+        let (sma_cos_analysis, trend_reversal_analysis, high_low_direction_signal_analysis): (
+            Vec<&SmaCosAnalysis>,
             Vec<&TrendReversalAnalysis>,
-            Vec<&BuySellSignalAnalysis>,
+            Vec<&HighLowDirectionSignalAnalysis>,
         ) = multiunzip(tuples);
-        let json_str = serde_json::to_string_pretty(&macos_analysis)?;
+        let json_str = serde_json::to_string_pretty(&sma_cos_analysis)?;
         assert_eq!(
-            include_str!("../assets/9223.T.macos_analysis.json"),
+            include_str!("../assets/9223.T.sma_cos_analysis.json"),
             &json_str
         );
         let json_str = serde_json::to_string_pretty(&trend_reversal_analysis)?;
@@ -193,9 +201,9 @@ async fn main() -> Result<()> {
             include_str!("../assets/9223.T.trend_reversal_analysis.json"),
             &json_str
         );
-        let json_str = serde_json::to_string_pretty(&ecp1_analysis)?;
+        let json_str = serde_json::to_string_pretty(&high_low_direction_signal_analysis)?;
         assert_eq!(
-            include_str!("../assets/9223.T.ecp1_analysis.json"),
+            include_str!("../assets/9223.T.high_low_direction_signal_analysis.json"),
             &json_str
         );
     };

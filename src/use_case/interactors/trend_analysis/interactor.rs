@@ -1,16 +1,12 @@
-use anyhow::Result;
-use async_trait::async_trait;
-
+use crate::domain::models::body_engulfing::model::BodyEngulfings;
 use crate::domain::models::candle_stick::model::CandleSticks;
-use crate::domain::models::ecp1::model::ECP1s;
-use crate::domain::models::ecp2::model::ECP2s;
-use crate::domain::models::macos::model::MACOSes;
-use crate::domain::models::macos_analysis::close::model::MACOSAnalysisCloses;
-use crate::domain::models::macos_analysis::volume::model::MACOSAnalysisVolumes;
-use crate::domain::models::macps::model::MACPS;
-use crate::domain::models::msesp::model::MSESPes;
+use crate::domain::models::crossover_strategy::sma_cos::analysis_result;
+use crate::domain::models::crossover_strategy::sma_cos::model::SmaCoses;
+use crate::domain::models::crossover_strategy::sma_cps::model::SmaCps;
+use crate::domain::models::high_low_direction_signal::model::HighLowDirectionSignals;
+use crate::domain::models::ms_es::model::MsEses;
 use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
-use crate::domain::models::stocks_macoses_pair::model::StocksMACOSESPair;
+use crate::domain::models::stocks_sma_coses_pair::model::StocksSmaCosesPair;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
 use crate::domain::repositories;
@@ -20,6 +16,8 @@ use crate::presenter::presenters::trend_analysis::output;
 use crate::shared::iterator::{FromEnd, SliceWrapper};
 use crate::use_case::interfaces::trend_analysis::input;
 use crate::use_case::interfaces::trend_analysis::use_case;
+use anyhow::Result;
+use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TrendAnalysis<'a, SR, CR> {
@@ -79,7 +77,7 @@ where
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
-        let macoses = MACOSes::from(sma_list_pair);
+        let sma_coses = SmaCoses::from(sma_list_pair);
 
         let smas_50 = SMAs::<50>::from(stocks.as_slice());
         let sma_list_trio = SMAListTrio {
@@ -87,21 +85,25 @@ where
             smas_o: smas_25.as_slice(),
             smas_p: smas_50.as_slice(),
         };
-        let macps = MACPS::from((stocks.as_slice(), sma_list_trio));
+        let sma_cps = SmaCps::from((stocks.as_slice(), sma_list_trio));
 
         let stocks_from_end_days =
             SliceWrapper::from(stocks.as_slice()).get_from_end(FROM_END_DAYS);
-        let ecp1s = ECP1s::from(stocks_from_end_days.as_slice());
+        let high_low_direction_signals =
+            HighLowDirectionSignals::from(stocks_from_end_days.as_slice());
 
-        let stocks_macoses_pair = StocksMACOSESPair {
+        let stocks_sma_coses_pair = StocksSmaCosesPair {
             stocks: stocks.as_slice(),
-            macoses: macoses.as_slice(),
+            sma_coses: sma_coses.as_slice(),
         };
-        let macos_analysis_closes = MACOSAnalysisCloses::<AFTER_DAYS>::from(&stocks_macoses_pair);
-        let rate_of_chance = macos_analysis_closes.rate_of_chance();
-        let latest_chance = macos_analysis_closes.latest_chance();
+        let sma_cos_analysis_result_closes = analysis_result::close::model::AnalysisResults::<
+            AFTER_DAYS,
+        >::from(&stocks_sma_coses_pair);
+        let rate_of_chance = sma_cos_analysis_result_closes.rate_of_chance();
+        let latest_chance = sma_cos_analysis_result_closes.latest_chance();
 
-        let macos_analysis_volumes = MACOSAnalysisVolumes::from(&stocks_macoses_pair);
+        let sma_cos_analysis_result_volumes =
+            analysis_result::volume::model::AnalysisResults::from(&stocks_sma_coses_pair);
 
         let candle_sticks = CandleSticks::<
             MARUBOZU_BODY_MIN_RATIO,
@@ -110,14 +112,14 @@ where
         >::try_from(stocks.as_slice())?;
         let candle_sticks_from_end_days =
             SliceWrapper::from(candle_sticks.as_slice()).get_from_end(FROM_END_DAYS);
-        let ecp2s = ECP2s::from(candle_sticks_from_end_days.as_slice());
-        let msespes = MSESPes::from(candle_sticks_from_end_days.as_slice());
+        let body_engulfings = BodyEngulfings::from(candle_sticks_from_end_days.as_slice());
+        let ms_eses = MsEses::from(candle_sticks_from_end_days.as_slice());
         // 相場転換を分析
         let trend_reversal_analysis_set = TrendReversalAnalysisSet {
-            ecp2s: &ecp2s,
-            msesps: &msespes,
-            macps: &macps,
-            macoses: &macoses,
+            body_engulfings: &body_engulfings,
+            ms_eses: &ms_eses,
+            sma_cps: &sma_cps,
+            sma_coses: &sma_coses,
         };
         let trend_reversal_analysis = TrendReversalAnalysis::from(trend_reversal_analysis_set);
 
@@ -127,12 +129,12 @@ where
             smas_5,
             smas_25,
             smas_50,
-            macoses,
-            macos_analysis_closes,
+            sma_coses,
+            sma_cos_analysis_result_closes,
             rate_of_chance,
             latest_chance,
-            macos_analysis_volumes,
-            ecp1s,
+            sma_cos_analysis_result_volumes,
+            high_low_direction_signals,
             candle_sticks,
             trend_reversal_analysis,
             crossover_pattern_filter: input.crossover_pattern_filter,

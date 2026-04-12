@@ -26,6 +26,8 @@ and Yahoo Finance to produce chart-ready signals, summaries, and SVG/JSON artifa
 cargo fetch
 ```
 
+> This repository intentionally tracks `Cargo.lock` to keep CI and J-Quants connectivity checks reproducible.
+
 ## Usage
 
 - **Financial indicators:**

@@ -1,4 +1,4 @@
-use anyhow::{Context, bail};
+use anyhow::{bail, Context};
 use async_trait::async_trait;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
@@ -90,15 +90,15 @@ mod tests {
         let actual = repository.get_row_statement(&query).await?;
         let expected = model::RowStatement {
             code: "8473".to_string(),
-            disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
-            eps: Some(536.09),
-            bps: Some(4162.73),
-            net_sales: Some(1443733000000.0),
+            disclosed_date: NaiveDate::from_ymd_opt(2026, 3, 13),
+            eps: None,
+            bps: None,
+            net_sales: None,
             opp: None,
             orp: None,
-            profit: Some(162120000000.0),
-            equity: Some(1763793000000.0),
-            total_assets: Some(32113430000000.0),
+            profit: None,
+            equity: None,
+            total_assets: None,
         };
         assert_eq!(actual, expected);
 

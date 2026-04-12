@@ -35,7 +35,7 @@ impl presenter::TrendAnalysisSummary for Chart {
         let mut rows = vec![vec![
             "code".to_string(),
             "symbol".to_string(),
-            "macos type".to_string(),
+            "sma cos".to_string(),
             "latest".to_string(),
             chance_rate,
         ]];

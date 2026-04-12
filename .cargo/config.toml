@@ -1,0 +1,8 @@
+# https://medium.com/@anshusinghal703/rust-dev-speedup-secret-cutting-compile-time-from-22-minutes-to-under-a-minute-with-a-single-be8a0da4fc83
+[build]
+rustflags = ["-C", "codegen-units=16"]
+rustc-wrapper = "sccache"
+incremental = true
+
+[profile.dev.build-override]
+opt-level = 3

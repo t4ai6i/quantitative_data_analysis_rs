@@ -16,7 +16,7 @@ impl presenter::TrendAnalysis for JSON {
             crossover_pattern_filter: output.crossover_pattern_filter,
             rate_of_chance: output.rate_of_chance,
             latest_chance: output.latest_chance,
-            ecp1s: output.ecp1s,
+            high_low_direction_signals: output.high_low_direction_signals,
             trend_reversal_analysis: output.trend_reversal_analysis,
         })
     }

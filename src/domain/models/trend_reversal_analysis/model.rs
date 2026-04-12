@@ -2,20 +2,22 @@ use rayon::prelude::*;
 
 use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
-use crate::domain::models::macos::model::MACOSes;
-use crate::domain::models::macos::model::Pattern::{DeadCross, GoldenCross};
-use crate::domain::models::macps::model::MACPS;
+use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern::{
+    DeadCross, GoldenCross,
+};
+use crate::domain::models::crossover_strategy::sma_cos::model::SmaCoses;
+use crate::domain::models::crossover_strategy::sma_cps::model::SmaCps;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-/// MACOS/MACPS/ECP2/MSESPの売買シグナルから相場転換を分析する
+/// SmaCos/SmaCps/BodyEngulfing/MsEsの売買シグナルから相場転換を分析する
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 pub struct TrendReversalAnalysis {
     pub r#type: BuySellSignalType,
-    pub macos: Option<(NaiveDate, BuySellSignalType)>,
-    pub ecp2: Option<(NaiveDate, BuySellSignalType)>,
-    pub msesp: Option<(NaiveDate, BuySellSignalType)>,
-    pub macps: Option<(NaiveDate, BuySellSignalType)>,
+    pub sma_cos: Option<(NaiveDate, BuySellSignalType)>,
+    pub sma_cps: Option<(NaiveDate, BuySellSignalType)>,
+    pub body_engulfing: Option<(NaiveDate, BuySellSignalType)>,
+    pub ms_es: Option<(NaiveDate, BuySellSignalType)>,
 }
 
 impl TrendReversalAnalysis {
@@ -50,45 +52,48 @@ impl TrendReversalAnalysis {
 }
 
 pub struct TrendReversalAnalysisSet<'a> {
-    pub ecp2s: &'a [BuySellSignal],
-    pub msesps: &'a [BuySellSignal],
-    pub macps: &'a MACPS,
-    pub macoses: &'a MACOSes,
+    pub body_engulfings: &'a [BuySellSignal],
+    pub ms_eses: &'a [BuySellSignal],
+    pub sma_cps: &'a SmaCps,
+    pub sma_coses: &'a SmaCoses,
 }
 
 impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
     fn from(value: TrendReversalAnalysisSet<'a>) -> Self {
         let TrendReversalAnalysisSet {
-            macps,
-            macoses,
-            ecp2s,
-            msesps,
+            sma_cps,
+            sma_coses,
+            body_engulfings,
+            ms_eses,
         } = value;
 
-        let macps = Self::resolve_latest_signal(macps.buy, macps.sell);
-        let macos_close_golden = macoses.latest_based_on_close(&GoldenCross);
-        let macos_close_dead = macoses.latest_based_on_close(&DeadCross);
-        let macos = Self::resolve_latest_signal(macos_close_golden, macos_close_dead);
-        let ecp2_buy = Self::latest_buy_sell_signal_date(ecp2s, &Buy);
-        let ecp2_sell = Self::latest_buy_sell_signal_date(ecp2s, &Sell);
-        let ecp2 = Self::resolve_latest_signal(ecp2_buy, ecp2_sell);
-        let msesp_buy = Self::latest_buy_sell_signal_date(msesps, &Buy);
-        let msesp_sell = Self::latest_buy_sell_signal_date(msesps, &Sell);
-        let msesp = Self::resolve_latest_signal(msesp_buy, msesp_sell);
-        // 終値のGoldenCross/ECP2 Buy/MSESP Buy/MACPS Buy が揃っていれば Buy
-        // 終値のDeadCross/ECP2 Sell/MSESP Sell/MACPS Sell が揃っていれば Sell
+        let sma_cps = Self::resolve_latest_signal(sma_cps.buy, sma_cps.sell);
+        let sma_cos_close_golden = sma_coses.latest_based_on_close(&GoldenCross);
+        let sma_cos_close_dead = sma_coses.latest_based_on_close(&DeadCross);
+        let sma_cos = Self::resolve_latest_signal(sma_cos_close_golden, sma_cos_close_dead);
+        let body_engulfing_buy = Self::latest_buy_sell_signal_date(body_engulfings, &Buy);
+        let body_engulfing_sell = Self::latest_buy_sell_signal_date(body_engulfings, &Sell);
+        let body_engulfing = Self::resolve_latest_signal(body_engulfing_buy, body_engulfing_sell);
+        let ms_es_buy = Self::latest_buy_sell_signal_date(ms_eses, &Buy);
+        let ms_es_sell = Self::latest_buy_sell_signal_date(ms_eses, &Sell);
+        let ms_es = Self::resolve_latest_signal(ms_es_buy, ms_es_sell);
+        // 終値のSmaCos GoldenCross/BodyEngulfing Buy/MsEs Buy/SmaCps Buy が揃っていれば Buy
+        // 終値のSmaCos DeadCross/BodyEngulfing Sell/MsEs Sell/SmaCps Sell が揃っていれば Sell
         // それ以外はStay
-        let r#type = match (macos, macps, ecp2, msesp) {
-            (Some(macos), Some(macps), Some(ecp2), Some(msesp))
-                if macos.1.eq(&Buy) && macps.1.eq(&Buy) && ecp2.1.eq(&Buy) && msesp.1.eq(&Buy) =>
+        let r#type = match (sma_cos, sma_cps, body_engulfing, ms_es) {
+            (Some(sma_cos), Some(sma_cps), Some(body_engulfing), Some(ms_es))
+                if sma_cos.1.eq(&Buy)
+                    && sma_cps.1.eq(&Buy)
+                    && body_engulfing.1.eq(&Buy)
+                    && ms_es.1.eq(&Buy) =>
             {
                 Buy
             }
-            (Some(macos), Some(macps), Some(ecp2), Some(msesp))
-                if macos.1.eq(&Sell)
-                    && macps.1.eq(&Sell)
-                    && ecp2.1.eq(&Sell)
-                    && msesp.1.eq(&Sell) =>
+            (Some(sma_cos), Some(sma_cps), Some(body_engulfing), Some(ms_es))
+                if sma_cos.1.eq(&Sell)
+                    && sma_cps.1.eq(&Sell)
+                    && body_engulfing.1.eq(&Sell)
+                    && ms_es.1.eq(&Sell) =>
             {
                 Sell
             }
@@ -96,10 +101,10 @@ impl<'a> From<TrendReversalAnalysisSet<'a>> for TrendReversalAnalysis {
         };
         Self {
             r#type,
-            macps,
-            macos,
-            ecp2,
-            msesp,
+            sma_cps,
+            sma_cos,
+            body_engulfing,
+            ms_es,
         }
     }
 }
@@ -111,12 +116,12 @@ mod tests {
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
 
+    use crate::domain::models::body_engulfing::model::BodyEngulfings;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::{Buy, Sell, Stay};
     use crate::domain::models::candle_stick::model::CandleSticks;
-    use crate::domain::models::ecp2::model::ECP2s;
-    use crate::domain::models::macos::model::MACOSes;
-    use crate::domain::models::macps::model::MACPS;
-    use crate::domain::models::msesp::model::MSESPes;
+    use crate::domain::models::crossover_strategy::sma_cos::model::SmaCoses;
+    use crate::domain::models::crossover_strategy::sma_cps::model::SmaCps;
+    use crate::domain::models::ms_es::model::MsEses;
     use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
     use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysisSet;
@@ -142,8 +147,8 @@ mod tests {
             MARUBOZU_WICK_MAX_RATIO,
             DOJI_MAX_BODY_RATIO,
         >::try_from(stocks.as_slice())?;
-        let ecp2s = ECP2s::from(candle_sticks.as_slice());
-        let msespes = MSESPes::from(candle_sticks.as_slice());
+        let body_engulfings = BodyEngulfings::from(candle_sticks.as_slice());
+        let ms_eses = MsEses::from(candle_sticks.as_slice());
         let smas_5 = SMAs::<5>::from(stocks.as_slice());
         let smas_25 = SMAs::<25>::from(stocks.as_slice());
         let smas_50 = SMAs::<50>::from(stocks.as_slice());
@@ -151,26 +156,26 @@ mod tests {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
         };
-        let macoses = MACOSes::from(sma_list_pair);
+        let sma_coses = SmaCoses::from(sma_list_pair);
         let sma_list_trio = SMAListTrio {
             smas_n: smas_5.as_slice(),
             smas_o: smas_25.as_slice(),
             smas_p: smas_50.as_slice(),
         };
-        let macps = MACPS::from((stocks.as_slice(), sma_list_trio));
-        let candle_stick_pattern_set = TrendReversalAnalysisSet {
-            ecp2s: &ecp2s,
-            msesps: &msespes,
-            macps: &macps,
-            macoses: &macoses,
+        let sma_cps = SmaCps::from((stocks.as_slice(), sma_list_trio));
+        let trend_reversal_analysis_set = TrendReversalAnalysisSet {
+            body_engulfings: &body_engulfings,
+            ms_eses: &ms_eses,
+            sma_cps: &sma_cps,
+            sma_coses: &sma_coses,
         };
-        let actual = TrendReversalAnalysis::from(candle_stick_pattern_set);
+        let actual = TrendReversalAnalysis::from(trend_reversal_analysis_set);
         let expected = TrendReversalAnalysis {
             r#type: Stay,
-            macos: NaiveDate::from_ymd_opt(2023, 8, 30).map(|date| (date, Buy)),
-            ecp2: NaiveDate::from_ymd_opt(2023, 8, 14).map(|date| (date, Sell)),
-            msesp: NaiveDate::from_ymd_opt(2023, 5, 24).map(|date| (date, Sell)),
-            macps: NaiveDate::from_ymd_opt(2023, 9, 8).map(|date| (date, Sell)),
+            sma_cos: NaiveDate::from_ymd_opt(2023, 8, 30).map(|date| (date, Buy)),
+            body_engulfing: NaiveDate::from_ymd_opt(2023, 8, 14).map(|date| (date, Sell)),
+            ms_es: NaiveDate::from_ymd_opt(2023, 5, 24).map(|date| (date, Sell)),
+            sma_cps: NaiveDate::from_ymd_opt(2023, 9, 8).map(|date| (date, Sell)),
         };
         assert_eq!(actual, expected);
         Ok(())

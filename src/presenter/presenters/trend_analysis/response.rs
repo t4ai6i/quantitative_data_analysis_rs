@@ -1,10 +1,10 @@
-use deref_derive::{Deref, DerefMut};
-
 use crate::domain::models::company::model::Company;
-use crate::domain::models::ecp1::model::ECP1s;
-use crate::domain::models::macos_analysis::close::model::{LatestChance, RateOfChance};
+use crate::domain::models::crossover_strategy::latest_chance::model::LatestChance;
+use crate::domain::models::crossover_strategy::rate_of_chance::model::RateOfChance;
+use crate::domain::models::high_low_direction_signal::model::HighLowDirectionSignals;
 use crate::domain::models::trend_reversal_analysis::model::TrendReversalAnalysis;
 use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
+use deref_derive::{Deref, DerefMut};
 
 pub mod chart;
 pub mod json;
@@ -23,7 +23,7 @@ pub enum TrendAnalysis {
         crossover_pattern_filter: CrossoverPatternFilter,
         rate_of_chance: RateOfChance,
         latest_chance: LatestChance,
-        ecp1s: ECP1s,
+        high_low_direction_signals: HighLowDirectionSignals,
         trend_reversal_analysis: TrendReversalAnalysis,
     },
 }
