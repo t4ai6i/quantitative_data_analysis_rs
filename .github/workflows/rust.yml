@@ -35,16 +35,19 @@ jobs:
 
       - name: Validate J-Quants secrets
         env:
-          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+          JQUANTS_MAIL_ADDRESS: ${{ secrets.JQUANTS_MAIL_ADDRESS }}
+          JQUANTS_PASSWORD: ${{ secrets.JQUANTS_PASSWORD }}
         run: |
-          test -n "$JQUANTS_API_KEY"
+          test -n "$JQUANTS_MAIL_ADDRESS"
+          test -n "$JQUANTS_PASSWORD"
 
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run tests
         env:
-          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+          JQUANTS_MAIL_ADDRESS: ${{ secrets.JQUANTS_MAIL_ADDRESS }}
+          JQUANTS_PASSWORD: ${{ secrets.JQUANTS_PASSWORD }}
         run: cargo test --all --locked
 
       - name: Build library
