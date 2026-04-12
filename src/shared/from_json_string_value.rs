@@ -540,7 +540,7 @@ mod tests {
         // f32 min
         let result: Result<f32> = f32::from_json_string_value("f32_min", &json_value);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), 1.17549435e-38);
+        assert_eq!(result.unwrap(), 1.175_494_4e-38);
 
         // f64 min
         let result: Result<f64> = f64::from_json_string_value("f64_min", &json_value);
