@@ -11,12 +11,12 @@ impl From<Response<'_>> for model::RowStock {
     fn from(value: Response<'_>) -> Self {
         let Response(value) = value;
         let date = NaiveDate::from_json_string_value("Date", value).ok();
-        let open = value["Open"].as_f64();
-        let high = value["High"].as_f64();
-        let low = value["Low"].as_f64();
-        let close = value["Close"].as_f64();
-        let adj_close = value["AdjustmentClose"].as_f64();
-        let volume = value["Volume"].as_f64().and_then(|volume| volume.to_u64());
+        let open = value["O"].as_f64();
+        let high = value["H"].as_f64();
+        let low = value["L"].as_f64();
+        let close = value["C"].as_f64();
+        let adj_close = value["AdjC"].as_f64();
+        let volume = value["Vo"].as_f64().and_then(|volume| volume.to_u64());
         model::RowStock {
             date,
             open,
