@@ -9,7 +9,7 @@ use crate::domain::repositories::stock::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::stock::structures::jquants_api::Response;
 
-const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v1/prices/daily_quotes";
+const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v2/equities/bars/daily";
 
 #[async_trait]
 impl repository::Stock for JQuantsAPI {
@@ -24,11 +24,11 @@ impl repository::Stock for JQuantsAPI {
         let daily_quotes_url = format!("{DAILY_QUOTES_URL}{qs}");
         let response = Client::new()
             .get(daily_quotes_url)
-            .bearer_auth(self.id_token.clone())
+            .header("x-api-key", self.api_key.to_string())
             .send()
             .await?;
         let response = response.json::<serde_json::Value>().await?;
-        let value = response["daily_quotes"]
+        let value = response["data"]
             .get(0)
             .with_context(|| format!("Not found stock. code = {}", query.code.unwrap_or("")))?;
         Ok(From::from(Response(value)))
@@ -45,13 +45,13 @@ impl repository::Stock for JQuantsAPI {
         let daily_quotes_url = format!("{DAILY_QUOTES_URL}{qs}");
         let response = Client::new()
             .get(daily_quotes_url)
-            .bearer_auth(self.id_token.clone())
+            .header("x-api-key", self.api_key.to_string())
             .send()
             .await?;
         let response = &mut response.json::<serde_json::Value>().await?;
-        let vec_row_stock: Vec<model::RowStock> = response["daily_quotes"]
+        let vec_row_stock: Vec<model::RowStock> = response["data"]
             .as_array()
-            .with_context(|| format!("daily_quotes is empty. code = {}", query.code.unwrap_or("")))?
+            .with_context(|| format!("data is empty. code = {}", query.code.unwrap_or("")))?
             .par_iter()
             .map(|value| From::from(Response(value)))
             .collect();

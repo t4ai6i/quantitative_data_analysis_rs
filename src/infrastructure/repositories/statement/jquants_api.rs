@@ -1,15 +1,20 @@
-use anyhow::{Context, bail};
-use async_trait::async_trait;
-use query_string_builder::QueryString;
-use rayon::prelude::*;
-use reqwest::Client;
-
 use crate::domain::models::statement::model;
 use crate::domain::repositories::statement::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::statement::structures::jquants_api::Response;
+use anyhow::{bail, Context};
+use async_trait::async_trait;
+use query_string_builder::QueryString;
+use rayon::prelude::*;
+use reqwest::Client;
+use serde_json::Value;
 
-const STATEMENT_URL: &str = "https://api.jquants.com/v1/fins/statements";
+const STATEMENT_URL: &str = "https://api.jquants.com/v2/fins/summary";
+
+fn select_statement_record(rows: &[Value]) -> Option<&Value> {
+    rows.par_iter()
+        .find_last(|value| value["CurPerType"].as_str().is_some_and(|s| s == "FY"))
+}
 
 #[async_trait]
 impl repository::Statement for JQuantsAPI {
@@ -21,60 +26,70 @@ impl repository::Statement for JQuantsAPI {
         let url = format!("{STATEMENT_URL}{qs}");
         let response = Client::new()
             .get(url)
-            .bearer_auth(self.id_token.clone())
+            .header("x-api-key", self.api_key.to_string())
             .send()
             .await?;
-        let response = &response.json::<serde_json::Value>().await?;
-        let Some(response) = response["statements"].as_array() else {
-            bail!(
-                "response[statements] in response not found. code: {}",
-                query.code
-            );
+        let response = &response.json::<Value>().await?;
+        let Some(response) = response["data"].as_array() else {
+            bail!("response[data] in response not found. code: {}", query.code);
         };
         if response.is_empty() {
             bail!(
-                "response[statements] in response is empty array. code: {}",
+                "response[data] in response is empty array. code: {}",
                 query.code
             );
         }
-        response
-            .par_iter()
-            .filter_map(|value| {
-                // TypeOfCurrentPeriodはFY(Fiscal Year/事業年度)のみを対象とする
-                value["TypeOfCurrentPeriod"]
-                    .as_str()
-                    .filter(|&str| str.eq("FY"))?;
-                Some(From::from(Response {
-                    code: query.code.to_string(),
-                    value,
-                }))
-            })
-            // API Docの以下の記述に従い、取得した配列データの最後尾を取得する。
-            // 「DisclosureNumber: APIから出力されるjsonは開示番号で昇順に並んでいます。」
-            .reduce_with(|_, b| b)
-            .with_context(|| {
-                let response = serde_json::to_string_pretty(response).unwrap();
-                format!(
-                    "struct model::Statement cannot be constructed. code: {}\n{}",
-                    query.code, response
-                )
-            })
+        let selected = select_statement_record(response).with_context(|| {
+            let serialized = serde_json::to_string_pretty(response)
+                .unwrap_or_else(|_| "<failed to serialize response>".to_string());
+            format!(
+                "FY statement not found in response[data]. code: {}\n{}",
+                query.code, serialized
+            )
+        })?;
+
+        Ok(From::from(Response {
+            code: query.code.to_string(),
+            value: selected,
+        }))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::models::statement::model;
+    use crate::domain::repositories::statement::queries;
+    use crate::domain::repositories::statement::repository::Statement;
+    use crate::infrastructure::jquants_api::JQuantsAPI;
+    use crate::infrastructure::repositories::statement::jquants_api::select_statement_record;
+    use crate::shared::jquants_api::setup::Setup;
     use anyhow::Result;
     use bytestring::ByteString;
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
     use rstest::*;
+    use serde_json::json;
 
-    use crate::domain::models::statement::model;
-    use crate::domain::repositories::statement::queries;
-    use crate::domain::repositories::statement::repository::Statement;
-    use crate::infrastructure::jquants_api::JQuantsAPI;
-    use crate::shared::jquants_api::setup::Setup;
+    #[test]
+    fn select_statement_record_prefers_latest_fy() {
+        let rows = vec![
+            json!({"CurPerType": "Q1", "id": 1}),
+            json!({"CurPerType": "FY", "id": 2}),
+            json!({"CurPerType": "FY", "id": 3}),
+        ];
+        let selected = select_statement_record(&rows).expect("record should be selected");
+        assert_eq!(selected["id"], 3);
+    }
+
+    #[test]
+    fn select_statement_record_returns_none_when_fy_missing() {
+        let rows = vec![
+            json!({"CurPerType": "Q1", "id": 1}),
+            json!({"CurPerType": "Q2", "id": 2}),
+        ];
+        let selected = select_statement_record(&rows);
+        assert!(selected.is_none());
+    }
 
     #[fixture]
     async fn setup() -> Result<ByteString> {
@@ -90,15 +105,15 @@ mod tests {
         let actual = repository.get_row_statement(&query).await?;
         let expected = model::RowStatement {
             code: "8473".to_string(),
-            disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
-            eps: Some(536.09),
-            bps: Some(4162.73),
-            net_sales: Some(1443733000000.0),
+            disclosed_date: NaiveDate::from_ymd_opt(2026, 3, 13),
+            eps: None,
+            bps: None,
+            net_sales: None,
             opp: None,
             orp: None,
-            profit: Some(162120000000.0),
-            equity: Some(1763793000000.0),
-            total_assets: Some(32113430000000.0),
+            profit: None,
+            equity: None,
+            total_assets: None,
         };
         assert_eq!(actual, expected);
 
@@ -108,7 +123,7 @@ mod tests {
             .await
             .unwrap_err()
             .to_string();
-        let expected = "response[statements] in response not found. code: ????";
+        let expected = "response[data] in response not found. code: ????";
         assert_eq!(actual, expected);
 
         let query = queries::get_statement::Query { code: "2995" };
@@ -117,7 +132,7 @@ mod tests {
             .await
             .unwrap_err()
             .to_string();
-        let expected = "response[statements] in response is empty array. code: 2995";
+        let expected = "response[data] in response is empty array. code: 2995";
         assert_eq!(actual, expected);
 
         Ok(())
