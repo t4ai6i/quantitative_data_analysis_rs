@@ -35,8 +35,3 @@ indoc = "2.0.7"
 rstest = "0.26.1"
 tokio-test = "0.4.4"
 pretty_assertions = "1.4.1"
-
-[build]
-rustflags = ["-C", "codegen-units=16"]
-incremental = true
-rustc-wrappers = ["sccache"]
