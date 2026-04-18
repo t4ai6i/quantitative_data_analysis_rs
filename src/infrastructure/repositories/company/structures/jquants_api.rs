@@ -9,8 +9,8 @@ impl From<Response<'_>> for model::RowCompany {
     fn from(value: Response<'_>) -> Self {
         let Response(value) = value;
         let code = String::from_json_string_value("Code", value).ok();
-        let name = String::from_json_string_value("CompanyNameEnglish", value).ok();
-        let market = String::from_json_string_value("MarketCode", value).ok();
+        let name = String::from_json_string_value("CoNameEn", value).ok();
+        let market = String::from_json_string_value("Mkt", value).ok();
         Self {
             code,
             name,

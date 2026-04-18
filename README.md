@@ -51,12 +51,10 @@ regression safety.
 
 ## Configuration
 
-- Place your cached token in `jquants_api_token.json` (created automatically on first run).
-- Provide J-Quants credentials via environment variables before executing any example or binary:
+- Provide J-Quants API key via environment variable before executing any example or binary:
 
   ```bash
-  export JQUANTS_MAIL_ADDRESS="your-email@example.com"
-  export JQUANTS_PASSWORD="your-jquants-password"
+  export JQUANTS_API_KEY="your-jquants-api-key"
   ```
 
 - Optional inputs (dates, markets, crossover filters) are passed directly when calling controllers or editing the

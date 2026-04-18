@@ -10,7 +10,7 @@ use crate::domain::repositories::company::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::company::structures::jquants_api::Response;
 
-const COMPANY_URL: &str = "https://api.jquants.com/v1/listed/info";
+const COMPANY_URL: &str = "https://api.jquants.com/v2/equities/master";
 
 #[async_trait]
 impl repository::Company for JQuantsAPI {
@@ -22,11 +22,11 @@ impl repository::Company for JQuantsAPI {
         let url = format!("{COMPANY_URL}{qs}");
         let response = Client::new()
             .get(url)
-            .bearer_auth(self.id_token.clone())
+            .header("x-api-key", self.api_key.to_string())
             .send()
             .await?;
         let response = &response.json::<Value>().await?;
-        let value = response["info"]
+        let value = response["data"]
             .get(0)
             .with_context(|| format!("Not found company. code = {}", query.code))?;
         Ok(From::from(Response(value)))
@@ -35,12 +35,12 @@ impl repository::Company for JQuantsAPI {
     async fn get_vec_row_company(&self) -> Result<Vec<model::RowCompany>> {
         let response = Client::new()
             .get(COMPANY_URL)
-            .bearer_auth(self.id_token.clone())
+            .header("x-api-key", self.api_key.to_string())
             .send()
             .await?;
         let response = &response.json::<Value>().await?;
-        let Some(companies) = response["info"].as_array() else {
-            bail!("[info] in response not found")
+        let Some(companies) = response["data"].as_array() else {
+            bail!("[data] in response not found")
         };
         let vec_row_company = companies
             .par_iter()

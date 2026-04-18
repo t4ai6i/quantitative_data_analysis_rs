@@ -1,6 +1,6 @@
 [package]
 name = "quantitative-data-analysis-rs"
-version = "0.33.0"
+version = "0.34.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -35,8 +35,3 @@ indoc = "2.0.7"
 rstest = "0.26.1"
 tokio-test = "0.4.4"
 pretty_assertions = "1.4.1"
-
-[build]
-rustflags = ["-C", "codegen-units=16"]
-incremental = true
-rustc-wrappers = ["sccache"]
