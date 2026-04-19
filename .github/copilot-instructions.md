@@ -11,8 +11,7 @@
 
 ### Quick Reference
 
-- Complete guidelines: `~/.rust/rust-guidelines.txt`
-- `~/rust-toolchain` for Rust toolchain management
+- Complete guidelines: `~/rust-guidelines.txt`
 - Focus areas: Error handling, API design, performance, interoperability
 - Tools: rustfmt, clippy, cargo-audit
 
@@ -26,7 +25,7 @@
 ### AI Assistant Integration
 
 When using AI coding assistants, reference the guidelines file:
-"Please follow the Microsoft Rust guidelines in `~/.rust/rust-guidelines.txt`"
+"Please follow the Microsoft Rust guidelines in `~/rust-guidelines.txt`"
 
 ## コミュニケーション
 

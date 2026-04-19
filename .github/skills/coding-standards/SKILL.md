@@ -25,7 +25,7 @@ description: Rust の設計原則と品質ゲートを一貫適用し、ヘキ�
 
 ## 作業手順
 
-1. 変更前に `~/.rust/rust-guidelines.txt` を参照し、該当セクション（エラー処理・API 設計・性能）を確認。
+1. 変更前に `~/rust-guidelines.txt` を参照し、該当セクション（エラー処理・API 設計・性能）を確認。
 2. 実装ではレイヤリングと依存方向を常に意識し、必要ならユースケース→インフラの順で改修する。
 3. フォーマットと静的解析をローカルで実行:
    ```bash
@@ -47,5 +47,5 @@ description: Rust の設計原則と品質ゲートを一貫適用し、ヘキ�
 
 ## 参考資料
 
-- Microsoft Pragmatic Rust Guidelines: `~/.rust/rust-guidelines.txt`
+- Microsoft Pragmatic Rust Guidelines: `~/rust-guidelines.txt`
 - リポジトリ共通方針: `.github/copilot-instructions.md`
