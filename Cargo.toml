@@ -32,6 +32,5 @@ ta = "=0.5.0"
 
 [dev-dependencies]
 indoc = "2.0.7"
-rstest = "0.26.1"
 tokio-test = "0.4.4"
 pretty_assertions = "1.4.1"

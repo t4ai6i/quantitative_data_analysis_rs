@@ -12,6 +12,9 @@ pub trait TrendAnalysis {
         const MARUBOZU_BODY_MIN_RATIO: usize,
         const MARUBOZU_WICK_MAX_RATIO: usize,
         const DOJI_MAX_BODY_RATIO: usize,
+        const FAST_PERIOD: usize,
+        const SLOW_PERIOD: usize,
+        const SIGNAL_PERIOD: usize,
     >(
         &self,
         input: input::TrendAnalysis,

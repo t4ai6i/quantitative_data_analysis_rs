@@ -1,14 +1,14 @@
 [
   {
     "close_date": "2025-08-27",
-    "disclosed_date": "2026-03-13",
-    "pbr": null,
-    "per": null,
+    "disclosed_date": "2026-05-01",
+    "pbr": 2.4314095477477413,
+    "per": 10.125671095648,
     "oppr": null,
     "orpr": null,
-    "pr": null,
-    "mix": null,
-    "roe": null,
-    "roa": null
+    "pr": 22.544312026687656,
+    "mix": 24.61965337931188,
+    "roe": 17.717061212921553,
+    "roa": 1.116657352418128
   }
 ]

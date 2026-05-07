@@ -1,13 +1,12 @@
+use crate::domain::models::stock::model;
+use crate::domain::repositories::stock::{queries, repository};
+use crate::infrastructure::jquants_api::JQuantsAPI;
+use crate::infrastructure::repositories::stock::structures::jquants_api::Response;
 use anyhow::Context;
 use async_trait::async_trait;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
 use reqwest::Client;
-
-use crate::domain::models::stock::model;
-use crate::domain::repositories::stock::{queries, repository};
-use crate::infrastructure::jquants_api::JQuantsAPI;
-use crate::infrastructure::repositories::stock::structures::jquants_api::Response;
 
 const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v2/equities/bars/daily";
 
@@ -60,26 +59,17 @@ impl repository::Stock for JQuantsAPI {
 }
 #[cfg(test)]
 mod tests {
-    use bytestring::ByteString;
-    use chrono::NaiveDate;
-    use pretty_assertions::assert_eq;
-    use rstest::*;
-
     use crate::domain::models::stock::model;
     use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::jquants_api::JQuantsAPI;
     use crate::shared::jquants_api::setup::Setup;
+    use chrono::NaiveDate;
+    use pretty_assertions::assert_eq;
 
-    #[fixture]
-    async fn setup() -> anyhow::Result<ByteString> {
-        Setup::run().await
-    }
-
-    #[rstest]
     #[tokio::test]
-    async fn get_row_stock_test(#[future] setup: anyhow::Result<ByteString>) -> anyhow::Result<()> {
-        let token = setup.await?;
+    async fn get_row_stock_test() -> anyhow::Result<()> {
+        let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
         let query = queries::get_stock::Query {
             code: Some("84730"),
@@ -100,12 +90,9 @@ mod tests {
         Ok(())
     }
 
-    #[rstest]
     #[tokio::test]
-    async fn get_vec_row_stock_test(
-        #[future] setup: anyhow::Result<ByteString>,
-    ) -> anyhow::Result<()> {
-        let token = setup.await?;
+    async fn get_vec_row_stock_test() -> anyhow::Result<()> {
+        let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
         let query = queries::get_stocks::Query {
             code: Some("84730"),

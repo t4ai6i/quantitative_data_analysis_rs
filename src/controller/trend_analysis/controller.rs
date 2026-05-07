@@ -31,6 +31,9 @@ where
         const MARUBOZU_BODY_MIN_RATIO: usize,
         const MARUBOZU_WICK_MAX_RATIO: usize,
         const DOJI_MAX_BODY_RATIO: usize,
+        const FAST_PERIOD: usize,
+        const SLOW_PERIOD: usize,
+        const SIGNAL_PERIOD: usize,
     >(
         &self,
         code: impl Into<String>,
@@ -43,7 +46,16 @@ where
             input::TrendAnalysis::new(code, market, start_date, end_date, crossover_pattern_filter);
         let output = self
             .interactor
-            .handle::<AFTER_DAYS, FROM_END_DAYS, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+            .handle::<
+                AFTER_DAYS,
+                FROM_END_DAYS,
+                MARUBOZU_BODY_MIN_RATIO,
+                MARUBOZU_WICK_MAX_RATIO,
+                DOJI_MAX_BODY_RATIO,
+                FAST_PERIOD,
+                SLOW_PERIOD,
+                SIGNAL_PERIOD,
+            >(
                 input,
             )
             .await?;

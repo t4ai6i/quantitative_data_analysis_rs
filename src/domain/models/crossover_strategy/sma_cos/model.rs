@@ -20,42 +20,6 @@ pub struct SmaCos {
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
 pub struct SmaCoses(Vec<SmaCos>);
 
-impl SmaCoses {
-    /// Retrieves the latest date based on the closing value that matches a specified pattern.
-    ///
-    /// # Parameters
-    /// - `crossover_pattern: &CrossoverPattern`
-    ///   A reference to the `CrossoverPattern` object used to match against the `close` value
-    ///   in the `pattern_close_volume` of each `SmaCos` item.
-    ///
-    /// # Returns
-    /// - `Option<NaiveDate>`:  
-    ///   - Returns `Some(date)` if one or more `SmaCos` objects match the given pattern, where `date` is the latest matching date.
-    ///   - Returns `None` if no matches are found.
-    ///
-    /// # Process
-    /// - The method uses parallel iteration (`par_iter`) for efficiency when traversing the `MACOSES` collection.
-    /// - It filters `SmaCos` objects where the `close` field of `pattern_close_volume` equals the given `CrossoverPattern`.
-    /// - The filtered results are then sorted by the `date` field in ascending order.
-    /// - Finally, the latest date (if any) is extracted and returned.
-    ///
-    /// # Notes
-    /// - This method leverages the `rayon` library for parallel processing, ideal for handling large datasets.
-    /// - Sorting is done using `itertools`'s `sorted_by` for a clear and concise sorting step.
-    pub fn latest_based_on_close(&self, crossover_pattern: &CrossoverPattern) -> Option<NaiveDate> {
-        self.par_iter()
-            .filter_map(|sma_cos| {
-                if sma_cos.crossover_pattern_close.0.eq(crossover_pattern) {
-                    Some(sma_cos)
-                } else {
-                    None
-                }
-            })
-            .max_by(|a, b| Ord::cmp(&a.date, &b.date))
-            .map(|x| x.date)
-    }
-}
-
 impl<'a> From<SMAListPair<'a, 5, 25>> for SmaCoses {
     ///
     /// # Examples

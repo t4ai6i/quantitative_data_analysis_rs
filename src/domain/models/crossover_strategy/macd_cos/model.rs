@@ -1,5 +1,5 @@
 use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
-use crate::domain::models::macd::model::{MACDs, MACD};
+use crate::domain::models::macd::model::{MACD, MACDs};
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -18,6 +18,38 @@ pub struct MacdCos {
 pub struct MacdCoses(Vec<MacdCos>);
 
 impl<const F: usize, const S: usize, const SG: usize> From<MACDs<F, S, SG>> for MacdCoses {
+    ///
+    /// # Examples
+    /// ```
+    /// use bytes::Bytes;
+    /// use chrono::NaiveDate;
+    /// use rayon::prelude::*;
+    ///
+    /// use quantitative_data_analysis_rs::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
+    /// use quantitative_data_analysis_rs::domain::models::crossover_strategy::macd_cos::model::{ MacdCos, MacdCoses };
+    /// use quantitative_data_analysis_rs::domain::models::macd::model::MACDs;
+    /// use quantitative_data_analysis_rs::domain::models::stock::model;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::queries;
+    /// use quantitative_data_analysis_rs::domain::repositories::stock::repository::Stock;
+    /// use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
+    /// use quantitative_data_analysis_rs::infrastructure::repositories::stock::structures::internal::csv;
+    ///
+    /// const FAST_PERIOD: usize = 12;
+    /// const SLOW_PERIOD: usize = 26;
+    /// const SIGNAL_PERIOD: usize = 9;
+    /// const CSV: &[u8] = include_bytes!("../../../../../assets/8473.T.csv");
+    ///
+    /// tokio_test::block_on(async {
+    ///   let dsv = Dsv::<csv::Structure>::new(true, Bytes::from(CSV));
+    ///   let query = queries::get_stocks::Query {
+    ///     ..Default::default()
+    ///   };
+    ///   let stocks = dsv.get_stocks(&query).await.unwrap();
+    ///   let macds = MACDs::<FAST_PERIOD, SLOW_PERIOD, SIGNAL_PERIOD>::from(stocks.as_slice());
+    ///   let macd_coses = MacdCoses::from(macds);
+    ///   assert_eq!(macd_coses.len(), 245);
+    /// });
+    /// ```
     fn from(value: MACDs<F, S, SG>) -> Self {
         let vec_macd_cos = value
             .as_slice()

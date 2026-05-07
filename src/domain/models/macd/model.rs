@@ -1,8 +1,8 @@
 use crate::domain::models::stock::model::Stock;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
-use ta::indicators::MovingAverageConvergenceDivergence;
 use ta::Next;
+use ta::indicators::MovingAverageConvergenceDivergence;
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct MACD {
@@ -36,15 +36,22 @@ pub struct MACDs<const F: usize, const S: usize, const SG: usize>(Vec<MACD>);
 ///     ..Default::default()
 ///   };
 ///   let stocks = dsv.get_stocks(&query).await.unwrap();
-///   let macds = MACDs::<FAST_PERIOD, SLOW_PERIOD, SIGNAL_PERIOD>::try_from(stocks.as_slice()).unwrap();
+///   let macds = MACDs::<FAST_PERIOD, SLOW_PERIOD, SIGNAL_PERIOD>::from(stocks.as_slice());
 ///   assert_eq!(macds.len(), 35);
 /// });
 /// ```
-impl<const F: usize, const S: usize, const SG: usize> TryFrom<&[Stock]> for MACDs<F, S, SG> {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &[Stock]) -> Result<Self, Self::Error> {
-        let mut macd = MovingAverageConvergenceDivergence::new(F, S, SG)?;
+impl<const F: usize, const S: usize, const SG: usize> From<&[Stock]> for MACDs<F, S, SG> {
+    fn from(value: &[Stock]) -> Self {
+        const {
+            assert!(F > 0, "F(fast period) is greater than 0");
+        }
+        const {
+            assert!(S > 0, "S(slow period) is greater than 0");
+        }
+        const {
+            assert!(SG > 0, "SG(signal period) is greater than 0");
+        }
+        let mut macd = MovingAverageConvergenceDivergence::new(F, S, SG).unwrap();
         let macds = value
             .iter()
             .map(|stock| {
@@ -57,6 +64,6 @@ impl<const F: usize, const S: usize, const SG: usize> TryFrom<&[Stock]> for MACD
                 }
             })
             .collect::<Vec<MACD>>();
-        Ok(MACDs(macds))
+        MACDs(macds)
     }
 }

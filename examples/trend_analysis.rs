@@ -2,8 +2,6 @@ use anyhow::Result;
 use bytes::Bytes;
 use chrono::NaiveDate;
 use itertools::{multiunzip, Itertools};
-use tokio::fs::write;
-
 use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
 use quantitative_data_analysis_rs::presenter::views::high_low_direction_signal_analysis::view::HighLowDirectionSignalAnalysis;
 use quantitative_data_analysis_rs::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
@@ -12,12 +10,16 @@ use quantitative_data_analysis_rs::presenter::views::trend_analysis_summary::jso
 use quantitative_data_analysis_rs::presenter::views::trend_reversal_analysis::view::TrendReversalAnalysis;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
+use tokio::fs::write;
 
 const AFTER_DAYS_5: usize = 5;
 const FROM_END_DAYS_7: isize = 7;
 const MARUBOZU_BODY_MIN_RATIO: usize = 90;
 const MARUBOZU_WICK_MAX_RATIO: usize = 2;
 const DOJI_MAX_BODY_RATIO: usize = 5;
+const FAST_PERIOD_12: usize = 12;
+const SLOW_PERIOD_26: usize = 26;
+const SIGNAL_PERIOD_9: usize = 9;
 const DATE_FORMAT: &str = "%Y/%m/%d";
 
 const COMPANIES_TSV: &[u8] = include_bytes!("../assets/companies.tsv");
@@ -25,7 +27,7 @@ const COMPANIES_TSV: &[u8] = include_bytes!("../assets/companies.tsv");
 #[tokio::main]
 async fn main() -> Result<()> {
     // JQUANTS APIのためのトークン準備
-    let token = Setup::run().await?;
+    let token = Setup::run()?;
 
     // DSVを用いたレポジトリの準備
     let dsv = infrastructure::dsv::Dsv::<tsv::Structure>::new(false, Bytes::from(COMPANIES_TSV));
@@ -45,7 +47,16 @@ async fn main() -> Result<()> {
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+        .analyze::<
+            AFTER_DAYS_5,
+            FROM_END_DAYS_7,
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+            FAST_PERIOD_12,
+            SLOW_PERIOD_26,
+            SIGNAL_PERIOD_9,
+        >(
             "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
@@ -70,7 +81,16 @@ async fn main() -> Result<()> {
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+        .analyze::<
+            AFTER_DAYS_5,
+            FROM_END_DAYS_7,
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+            FAST_PERIOD_12,
+            SLOW_PERIOD_26,
+            SIGNAL_PERIOD_9,
+        >(
             "84730",
             "T",
             NaiveDate::from_ymd_opt(2022, 9, 9).unwrap(),
@@ -144,7 +164,16 @@ async fn main() -> Result<()> {
     let controller =
         controller::trend_analysis::controller::TrendAnalysis::new(&interactor, &presenter);
     let trend_analysis = controller
-        .analyze::<AFTER_DAYS_5, FROM_END_DAYS_7, MARUBOZU_BODY_MIN_RATIO, MARUBOZU_WICK_MAX_RATIO, DOJI_MAX_BODY_RATIO>(
+        .analyze::<
+            AFTER_DAYS_5,
+            FROM_END_DAYS_7,
+            MARUBOZU_BODY_MIN_RATIO,
+            MARUBOZU_WICK_MAX_RATIO,
+            DOJI_MAX_BODY_RATIO,
+            FAST_PERIOD_12,
+            SLOW_PERIOD_26,
+            SIGNAL_PERIOD_9,
+        >(
             "92230",
             "T",
             NaiveDate::from_ymd_opt(2023, 12, 25).unwrap(),

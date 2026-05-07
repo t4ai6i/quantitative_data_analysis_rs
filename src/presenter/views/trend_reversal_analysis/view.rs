@@ -15,6 +15,8 @@ pub struct TrendReversalAnalysis {
     pub body_engulfing_date: NaiveDate,
     #[serde(with = "naive_date::primitive")]
     pub ms_es_date: NaiveDate,
+    #[serde(with = "naive_date::primitive")]
+    pub macd_cos_date: NaiveDate,
 }
 
 impl From<&model::TrendReversalAnalysis> for TrendReversalAnalysis {
@@ -25,6 +27,7 @@ impl From<&model::TrendReversalAnalysis> for TrendReversalAnalysis {
             body_engulfing,
             ms_es,
             sma_cps,
+            macd_cos,
         } = value;
         Self {
             r#type: *r#type,
@@ -38,6 +41,9 @@ impl From<&model::TrendReversalAnalysis> for TrendReversalAnalysis {
                 .map(|(date, _)| date)
                 .unwrap_or(NaiveDate::default()),
             ms_es_date: ms_es.map(|(date, _)| date).unwrap_or(NaiveDate::default()),
+            macd_cos_date: macd_cos
+                .map(|(date, _)| date)
+                .unwrap_or(NaiveDate::default()),
         }
     }
 }

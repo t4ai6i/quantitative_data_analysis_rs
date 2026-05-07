@@ -1,9 +1,11 @@
 use crate::domain::models::body_engulfing::model::BodyEngulfings;
 use crate::domain::models::candle_stick::model::CandleSticks;
+use crate::domain::models::crossover_strategy::macd_cos::model::MacdCoses;
 use crate::domain::models::crossover_strategy::sma_cos::analysis_result;
 use crate::domain::models::crossover_strategy::sma_cos::model::SmaCoses;
 use crate::domain::models::crossover_strategy::sma_cps::model::SmaCps;
 use crate::domain::models::high_low_direction_signal::model::HighLowDirectionSignals;
+use crate::domain::models::macd::model::MACDs;
 use crate::domain::models::ms_es::model::MsEses;
 use crate::domain::models::sma::model::{SMAListPair, SMAListTrio, SMAs};
 use crate::domain::models::stocks_sma_coses_pair::model::StocksSmaCosesPair;
@@ -46,6 +48,9 @@ where
         const MARUBOZU_BODY_MIN_RATIO: usize,
         const MARUBOZU_WICK_MAX_RATIO: usize,
         const DOJI_MAX_BODY_RATIO: usize,
+        const FAST_PERIOD: usize,
+        const SLOW_PERIOD: usize,
+        const SIGNAL_PERIOD: usize,
     >(
         &self,
         input: input::TrendAnalysis,
@@ -105,6 +110,9 @@ where
         let sma_cos_analysis_result_volumes =
             analysis_result::volume::model::AnalysisResults::from(&stocks_sma_coses_pair);
 
+        let macds = MACDs::<FAST_PERIOD, SLOW_PERIOD, SIGNAL_PERIOD>::from(stocks.as_slice());
+        let macd_coses = MacdCoses::from(macds);
+
         let candle_sticks = CandleSticks::<
             MARUBOZU_BODY_MIN_RATIO,
             MARUBOZU_WICK_MAX_RATIO,
@@ -120,9 +128,11 @@ where
             ms_eses: &ms_eses,
             sma_cps: &sma_cps,
             sma_coses: &sma_coses,
+            macd_coses: &macd_coses,
         };
         let trend_reversal_analysis = TrendReversalAnalysis::from(trend_reversal_analysis_set);
 
+        // TODO: MacdCosesを追加
         let output = output::TrendAnalysis {
             company,
             stocks,

@@ -101,7 +101,8 @@ mod tests {
                 "sma_cos_date": "2023-08-15",
                 "sma_cps_date": "2023-07-04",
                 "body_engulfing_date": "2023-06-01",
-                "ms_es_date": "2023-07-26"
+                "ms_es_date": "2023-07-26",
+                "macd_cos_date": "2023-08-15"
               }
             }"#};
         let sma_cos_analysis = SmaCosAnalysis {
@@ -122,6 +123,7 @@ mod tests {
             sma_cps_date: NaiveDate::from_ymd_opt(2023, 7, 4).unwrap(),
             body_engulfing_date: NaiveDate::from_ymd_opt(2023, 6, 1).unwrap(),
             ms_es_date: NaiveDate::from_ymd_opt(2023, 7, 26).unwrap(),
+            macd_cos_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
         };
         let json_row = JsonRow {
             code: "8473".to_string(),
