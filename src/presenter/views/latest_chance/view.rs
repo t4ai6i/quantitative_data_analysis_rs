@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use std::fmt;
 
-use crate::domain::models::macos_analysis::close::model::LatestChance;
+use crate::domain::models::crossover_strategy::latest_chance::model::LatestChance;
 use crate::shared::custom_serde::naive_date::ISO8601_DATE_FORMAT;
 
 impl fmt::Display for LatestChance {

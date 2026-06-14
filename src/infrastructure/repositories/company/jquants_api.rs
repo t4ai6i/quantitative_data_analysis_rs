@@ -1,14 +1,13 @@
-use anyhow::{Context, Result, bail};
+use crate::domain::models::company::model;
+use crate::domain::repositories::company::{queries, repository};
+use crate::infrastructure::jquants_api::JQuantsAPI;
+use crate::infrastructure::repositories::company::structures::jquants_api::Response;
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
 use reqwest::Client;
 use serde_json::Value;
-
-use crate::domain::models::company::model;
-use crate::domain::repositories::company::{queries, repository};
-use crate::infrastructure::jquants_api::JQuantsAPI;
-use crate::infrastructure::repositories::company::structures::jquants_api::Response;
 
 const COMPANY_URL: &str = "https://api.jquants.com/v2/equities/master";
 
@@ -53,9 +52,7 @@ impl repository::Company for JQuantsAPI {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use bytestring::ByteString;
     use pretty_assertions::assert_eq;
-    use rstest::*;
 
     use crate::domain::models::company::model;
     use crate::domain::repositories::company::queries;
@@ -63,15 +60,9 @@ mod tests {
     use crate::infrastructure::jquants_api::JQuantsAPI;
     use crate::shared::jquants_api::setup::Setup;
 
-    #[fixture]
-    async fn setup() -> Result<ByteString> {
-        Setup::run().await
-    }
-
-    #[rstest]
     #[tokio::test]
-    async fn get_row_company_test(#[future] setup: Result<ByteString>) -> Result<()> {
-        let token = setup.await?;
+    async fn get_row_company_test() -> Result<()> {
+        let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
         let query = queries::get_company::Query {
             code: "8473",
@@ -88,10 +79,9 @@ mod tests {
         Ok(())
     }
 
-    #[rstest]
     #[tokio::test]
-    async fn get_vec_row_company_test(#[future] setup: Result<ByteString>) -> Result<()> {
-        let token = setup.await?;
+    async fn get_vec_row_company_test() -> Result<()> {
+        let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
         let vec_row_company = repository.get_vec_row_company().await?;
         assert!(vec_row_company.len() > 4400);

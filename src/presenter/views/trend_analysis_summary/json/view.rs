@@ -4,16 +4,16 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::presenter::presenters::trend_analysis::response;
-use crate::presenter::views::buy_sell_signal_analysis::view::BuySellSignalAnalysis;
-use crate::presenter::views::macos_analysis::view::MACOSAnalysis;
+use crate::presenter::views::high_low_direction_signal_analysis::view::HighLowDirectionSignalAnalysis;
+use crate::presenter::views::sma_cos_analysis::view::SmaCosAnalysis;
 use crate::presenter::views::trend_reversal_analysis::view::TrendReversalAnalysis;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct JsonRow {
     pub code: String,
     pub symbol: String,
-    pub macos_analysis: MACOSAnalysis,
-    pub ecp1_analysis: BuySellSignalAnalysis,
+    pub sma_cos_analysis: SmaCosAnalysis,
+    pub high_low_direction_signal_analysis: HighLowDirectionSignalAnalysis,
     pub trend_reversal_analysis: TrendReversalAnalysis,
 }
 
@@ -27,18 +27,19 @@ impl TryFrom<&response::TrendAnalysis> for JsonRow {
                 crossover_pattern_filter,
                 rate_of_chance,
                 latest_chance,
-                ecp1s,
+                high_low_direction_signals,
                 trend_reversal_analysis,
             } => {
-                let macos_analysis =
-                    MACOSAnalysis::from((crossover_pattern_filter, rate_of_chance, latest_chance));
-                let ecp1_analysis = BuySellSignalAnalysis::from(ecp1s.as_slice());
+                let sma_cos_analysis =
+                    SmaCosAnalysis::from((crossover_pattern_filter, rate_of_chance, latest_chance));
+                let high_low_direction_signal_analysis =
+                    HighLowDirectionSignalAnalysis::from(high_low_direction_signals.as_slice());
                 let trend_reversal_analysis = TrendReversalAnalysis::from(trend_reversal_analysis);
                 Ok(JsonRow {
                     code: company.code.to_string(),
                     symbol: company.symbol.to_string(),
-                    macos_analysis,
-                    ecp1_analysis,
+                    sma_cos_analysis,
+                    high_low_direction_signal_analysis,
                     trend_reversal_analysis,
                 })
             }
@@ -68,16 +69,15 @@ impl From<response::TrendAnalyses> for JSON {
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
-    use indoc::indoc;
-
     use crate::domain::models::buy_sell_signal::model::BuySellSignal;
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType;
-    use crate::domain::models::macos::model::Pattern;
-    use crate::presenter::views::buy_sell_signal_analysis::view::BuySellSignalAnalysis;
-    use crate::presenter::views::macos_analysis::view::MACOSAnalysis;
+    use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
+    use crate::presenter::views::high_low_direction_signal_analysis::view::HighLowDirectionSignalAnalysis;
+    use crate::presenter::views::sma_cos_analysis::view::SmaCosAnalysis;
     use crate::presenter::views::trend_analysis_summary::json::view::JsonRow;
     use crate::presenter::views::trend_reversal_analysis::view::TrendReversalAnalysis;
+    use chrono::NaiveDate;
+    use indoc::indoc;
 
     #[test]
     fn serde_test() {
@@ -85,12 +85,12 @@ mod tests {
             {
               "code": "8473",
               "symbol": "8473.T",
-              "macos_analysis": {
-                "pattern": "Neither",
+              "sma_cos_analysis": {
+                "crossover_pattern": "Neither",
                 "latest_chance": "2017-02-16",
                 "rate_of_chance": 32.7
               },
-              "ecp1_analysis": [
+              "high_low_direction_signal_analysis": [
                 {
                   "type": "Stay",
                   "date": "2017-02-16"
@@ -98,18 +98,19 @@ mod tests {
               ],
               "trend_reversal_analysis": {
                 "type": "Buy",
-                "macos_date": "2023-08-15",
-                "ecp2_date": "2023-06-01",
-                "msesp_date": "2023-07-26",
-                "macps_date": "2023-07-04"
+                "sma_cos_date": "2023-08-15",
+                "sma_cps_date": "2023-07-04",
+                "body_engulfing_date": "2023-06-01",
+                "ms_es_date": "2023-07-26",
+                "macd_cos_date": "2023-08-15"
               }
             }"#};
-        let macos_analysis = MACOSAnalysis {
-            pattern: Pattern::Neither,
+        let sma_cos_analysis = SmaCosAnalysis {
+            crossover_pattern: CrossoverPattern::Neither,
             latest_chance: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
             rate_of_chance: 32.7,
         };
-        let ecp1_analysis = BuySellSignalAnalysis::from(
+        let high_low_direction_signal_analysis = HighLowDirectionSignalAnalysis::from(
             [BuySellSignal {
                 r#type: BuySellSignalType::Stay,
                 date: NaiveDate::from_ymd_opt(2017, 2, 16).unwrap(),
@@ -118,16 +119,17 @@ mod tests {
         );
         let trend_reversal_analysis = TrendReversalAnalysis {
             r#type: BuySellSignalType::Buy,
-            macos_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
-            ecp2_date: NaiveDate::from_ymd_opt(2023, 6, 1).unwrap(),
-            msesp_date: NaiveDate::from_ymd_opt(2023, 7, 26).unwrap(),
-            macps_date: NaiveDate::from_ymd_opt(2023, 7, 4).unwrap(),
+            sma_cos_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
+            sma_cps_date: NaiveDate::from_ymd_opt(2023, 7, 4).unwrap(),
+            body_engulfing_date: NaiveDate::from_ymd_opt(2023, 6, 1).unwrap(),
+            ms_es_date: NaiveDate::from_ymd_opt(2023, 7, 26).unwrap(),
+            macd_cos_date: NaiveDate::from_ymd_opt(2023, 8, 15).unwrap(),
         };
         let json_row = JsonRow {
             code: "8473".to_string(),
             symbol: "8473.T".to_string(),
-            macos_analysis,
-            ecp1_analysis,
+            sma_cos_analysis,
+            high_low_direction_signal_analysis,
             trend_reversal_analysis,
         };
         let actual = serde_json::to_string_pretty(&json_row).unwrap();

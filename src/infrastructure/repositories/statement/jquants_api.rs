@@ -64,10 +64,8 @@ mod tests {
     use crate::infrastructure::repositories::statement::jquants_api::select_statement_record;
     use crate::shared::jquants_api::setup::Setup;
     use anyhow::Result;
-    use bytestring::ByteString;
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
-    use rstest::*;
     use serde_json::json;
 
     #[test]
@@ -91,29 +89,23 @@ mod tests {
         assert!(selected.is_none());
     }
 
-    #[fixture]
-    async fn setup() -> Result<ByteString> {
-        Setup::run().await
-    }
-
-    #[rstest]
     #[tokio::test]
-    async fn get_row_statement_test(#[future] setup: Result<ByteString>) -> Result<()> {
-        let token = setup.await?;
+    async fn get_row_statement_test() -> Result<()> {
+        let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
         let query = queries::get_statement::Query { code: "8473" };
         let actual = repository.get_row_statement(&query).await?;
         let expected = model::RowStatement {
             code: "8473".to_string(),
-            disclosed_date: NaiveDate::from_ymd_opt(2026, 3, 13),
-            eps: None,
-            bps: None,
-            net_sales: None,
+            disclosed_date: NaiveDate::from_ymd_opt(2026, 5, 1),
+            eps: Some(666.82),
+            bps: Some(2776.99),
+            net_sales: Some(1_896_607_000_000.0),
             opp: None,
             orp: None,
-            profit: None,
-            equity: None,
-            total_assets: None,
+            profit: Some(427_577_000_000.0),
+            equity: Some(2_413_363_000_000.0),
+            total_assets: Some(38_290_797_000_000.0),
         };
         assert_eq!(actual, expected);
 

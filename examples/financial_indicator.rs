@@ -1,14 +1,13 @@
 use anyhow::Result;
 use chrono::NaiveDate;
 use pretty_assertions::assert_eq;
-
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // JQUANTS APIのためのトークン準備
-    let token = Setup::run().await?;
+    let token = Setup::run()?;
 
     // JQUANTS APIを用いたレポジトリの準備
     let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token)?;

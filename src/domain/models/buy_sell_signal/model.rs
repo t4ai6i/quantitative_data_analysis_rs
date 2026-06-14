@@ -1,3 +1,4 @@
+use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use strum::Display;
@@ -11,6 +12,16 @@ pub enum BuySellSignalType {
     Stay,
     Buy,
     Sell,
+}
+
+impl From<CrossoverPattern> for BuySellSignalType {
+    fn from(crossover_pattern: CrossoverPattern) -> Self {
+        match crossover_pattern {
+            CrossoverPattern::Neither => Self::Stay,
+            CrossoverPattern::GoldenCross => Self::Buy,
+            CrossoverPattern::DeadCross => Self::Sell,
+        }
+    }
 }
 
 /// 売買シグナル

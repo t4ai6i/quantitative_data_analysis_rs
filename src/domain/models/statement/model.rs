@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 ///
 /// This struct is designed to encapsulate the key financial data points for
 /// a company or entity, including net sales, profits, and assets. It can be
-/// used to store financial data for reporting or analysis purposes.
+/// used to store financial data for reporting or analysis_result purposes.
 ///
 /// # Fields
 ///

@@ -6,16 +6,16 @@ use charts_rs::{
 use rayon::prelude::*;
 use std::backtrace::Backtrace;
 
-use crate::domain::models::macos::model::Pattern;
+use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
 use crate::presenter::presenters::trend_analysis::output;
 use crate::presenter::presenters::trend_analysis::presenter;
 use crate::presenter::presenters::trend_analysis::response;
 use crate::presenter::views::candle_stick::view::CandleSticks;
-use crate::presenter::views::macos_analysis::close::view::MACOSAnalysisCloses;
-use crate::presenter::views::macos_analysis::view::MACOSes;
-use crate::presenter::views::macos_analysis::volume::view::MACOSTrendAnalysisVolumes;
 use crate::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;
 use crate::presenter::views::sma::view::SMAs;
+use crate::presenter::views::sma_cos_analysis::close::view::SmaCosAnalysis as SmaCosAnalysisClose;
+use crate::presenter::views::sma_cos_analysis::view::SmaCoses;
+use crate::presenter::views::sma_cos_analysis::volume::view::SmaCosAnalysis as SmaCosAnalysisVolume;
 use crate::presenter::views::stock::view::Stocks;
 use crate::shared::float;
 
@@ -52,12 +52,12 @@ impl presenter::TrendAnalysis for Chart {
         charts.margin = 5.0.into();
 
         let company = output.company;
-        let sma_5_averages = output.smas_5.sma_n_closes();
-        let sma_25_averages = output.smas_25.sma_n_closes();
-        let sma_50_averages = output.smas_50.sma_n_closes();
+        let sma_5_closes = output.smas_5.sma_closes();
+        let sma_25_closes = output.smas_25.sma_closes();
+        let sma_50_closes = output.smas_50.sma_closes();
         let ohlcs: Vec<f32> = output
             .stocks
-            .ohlces()
+            .ohlcs()
             .par_iter()
             .map(|value| *value as _)
             .collect();
@@ -68,34 +68,38 @@ impl presenter::TrendAnalysis for Chart {
 
         let series_list = match output.crossover_pattern_filter {
             CrossoverPatternFilter::Both => {
-                let dead_macoses = output.macoses.sma_25_closes(Pattern::DeadCross);
-                let golden_macoses = output.macoses.sma_25_closes(Pattern::GoldenCross);
+                let dead_crosses = output.sma_coses.sma_25_closes(CrossoverPattern::DeadCross);
+                let golden_crosses = output
+                    .sma_coses
+                    .sma_25_closes(CrossoverPattern::GoldenCross);
                 vec![
-                    Series::from(("SMA5", sma_5_averages)),
-                    Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("SMA50", sma_50_averages)),
-                    Series::from(("Dead", dead_macoses)),
-                    Series::from(("Golden", golden_macoses)),
+                    Series::from(("SMA5", sma_5_closes)),
+                    Series::from(("SMA25", sma_25_closes)),
+                    Series::from(("SMA50", sma_50_closes)),
+                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Golden", golden_crosses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
             CrossoverPatternFilter::GoldenOnly => {
-                let golden_macoses = output.macoses.sma_25_closes(Pattern::GoldenCross);
+                let golden_crosses = output
+                    .sma_coses
+                    .sma_25_closes(CrossoverPattern::GoldenCross);
                 vec![
-                    Series::from(("SMA5", sma_5_averages)),
-                    Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("SMA50", sma_50_averages)),
-                    Series::from(("Golden", golden_macoses)),
+                    Series::from(("SMA5", sma_5_closes)),
+                    Series::from(("SMA25", sma_25_closes)),
+                    Series::from(("SMA50", sma_50_closes)),
+                    Series::from(("Golden", golden_crosses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
             CrossoverPatternFilter::DeadOnly => {
-                let dead_macoses = output.macoses.sma_25_closes(Pattern::DeadCross);
+                let dead_crosses = output.sma_coses.sma_25_closes(CrossoverPattern::DeadCross);
                 vec![
-                    Series::from(("SMA5", sma_5_averages)),
-                    Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("SMA50", sma_50_averages)),
-                    Series::from(("Dead", dead_macoses)),
+                    Series::from(("SMA5", sma_5_closes)),
+                    Series::from(("SMA25", sma_25_closes)),
+                    Series::from(("SMA50", sma_50_closes)),
+                    Series::from(("Dead", dead_crosses)),
                     Series::from(("OHLC", ohlcs)),
                 ]
             }
@@ -143,8 +147,8 @@ impl presenter::TrendAnalysis for Chart {
         candlestick_chart.candlestick_down_border_color = Color::from((0, 40, 143));
         charts.add(ChildChart::Candlestick(candlestick_chart, None));
 
-        let sma_5_averages = output.smas_5.sma_n_volumes();
-        let sma_25_averages = output.smas_25.sma_n_volumes();
+        let sma_5_volumes = output.smas_5.sma_volumes();
+        let sma_25_volumes = output.smas_25.sma_volumes();
         let volumes: Vec<f32> = output
             .stocks
             .volumes()
@@ -154,31 +158,35 @@ impl presenter::TrendAnalysis for Chart {
 
         let series_list = match output.crossover_pattern_filter {
             CrossoverPatternFilter::Both => {
-                let dead_macoses = output.macoses.sma_25_volumes(Pattern::DeadCross);
-                let golden_macoses = output.macoses.sma_25_volumes(Pattern::GoldenCross);
+                let dead_crosses = output.sma_coses.sma_25_volumes(CrossoverPattern::DeadCross);
+                let golden_crosses = output
+                    .sma_coses
+                    .sma_25_volumes(CrossoverPattern::GoldenCross);
                 vec![
-                    Series::from(("SMA5", sma_5_averages)),
-                    Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Dead", dead_macoses)),
-                    Series::from(("Golden", golden_macoses)),
+                    Series::from(("SMA5", sma_5_volumes)),
+                    Series::from(("SMA25", sma_25_volumes)),
+                    Series::from(("Dead", dead_crosses)),
+                    Series::from(("Golden", golden_crosses)),
                     Series::from(("Volume", volumes)),
                 ]
             }
             CrossoverPatternFilter::GoldenOnly => {
-                let golden_macoses = output.macoses.sma_25_volumes(Pattern::GoldenCross);
+                let golden_crosses = output
+                    .sma_coses
+                    .sma_25_volumes(CrossoverPattern::GoldenCross);
                 vec![
-                    Series::from(("SMA5", sma_5_averages)),
-                    Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Golden", golden_macoses)),
+                    Series::from(("SMA5", sma_5_volumes)),
+                    Series::from(("SMA25", sma_25_volumes)),
+                    Series::from(("Golden", golden_crosses)),
                     Series::from(("Volume", volumes)),
                 ]
             }
             CrossoverPatternFilter::DeadOnly => {
-                let dead_macoses = output.macoses.sma_25_volumes(Pattern::DeadCross);
+                let dead_crosses = output.sma_coses.sma_25_volumes(CrossoverPattern::DeadCross);
                 vec![
-                    Series::from(("SMA5", sma_5_averages)),
-                    Series::from(("SMA25", sma_25_averages)),
-                    Series::from(("Dead", dead_macoses)),
+                    Series::from(("SMA5", sma_5_volumes)),
+                    Series::from(("SMA25", sma_25_volumes)),
+                    Series::from(("Dead", dead_crosses)),
                     Series::from(("Volume", volumes)),
                 ]
             }
@@ -210,12 +218,12 @@ impl presenter::TrendAnalysis for Chart {
         }
         charts.add(ChildChart::Bar(volume_chart, None));
 
-        let mut rows = output.macos_analysis_closes.table_chart_header();
+        let mut rows = output.sma_cos_analysis_result_closes.table_chart_header();
         let mut body = output
-            .macos_analysis_closes
+            .sma_cos_analysis_result_closes
             .table_chart_rows(&output.crossover_pattern_filter);
         rows.append(&mut body);
-        let rate_of_chance = output.macos_analysis_closes.rate_of_chance();
+        let rate_of_chance = output.sma_cos_analysis_result_closes.rate_of_chance();
         let mut summary = rate_of_chance.table_chart_summary(&output.crossover_pattern_filter);
         rows.append(&mut summary);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());
@@ -223,9 +231,9 @@ impl presenter::TrendAnalysis for Chart {
         table_chart.width = self.width;
         charts.add(ChildChart::Table(table_chart, None));
 
-        let mut rows = output.macos_analysis_volumes.table_chart_header();
+        let mut rows = output.sma_cos_analysis_result_volumes.table_chart_header();
         let mut body = output
-            .macos_analysis_volumes
+            .sma_cos_analysis_result_volumes
             .table_chart_rows(&output.crossover_pattern_filter);
         rows.append(&mut body);
         let mut table_chart = TableChart::new_with_theme(rows, self.theme.as_str());

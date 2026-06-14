@@ -1,9 +1,10 @@
 [
   {
     "type": "Stay",
-    "macos_date": "2024-02-07",
-    "ecp2_date": "1970-01-01",
-    "msesp_date": "2024-02-13",
-    "macps_date": "1970-01-01"
+    "sma_cos_date": "2024-02-07",
+    "sma_cps_date": "1970-01-01",
+    "body_engulfing_date": "1970-01-01",
+    "ms_es_date": "2024-02-13",
+    "macd_cos_date": "2024-02-05"
   }
 ]
