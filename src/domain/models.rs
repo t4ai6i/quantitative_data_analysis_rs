@@ -12,5 +12,6 @@ pub mod sma;
 pub mod statement;
 pub mod stock;
 pub mod stocks_sma_coses_pair;
+pub mod screening;
 pub mod trend_reversal_analysis;
 pub mod volume;
