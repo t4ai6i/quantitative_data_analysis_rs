@@ -1,7 +1,7 @@
 use anyhow::Result;
 use bytes::Bytes;
 use chrono::NaiveDate;
-use itertools::{multiunzip, Itertools};
+use itertools::{Itertools, multiunzip};
 use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::tsv;
 use quantitative_data_analysis_rs::presenter::views::high_low_direction_signal_analysis::view::HighLowDirectionSignalAnalysis;
 use quantitative_data_analysis_rs::presenter::views::shared::crossover_pattern_filter::CrossoverPatternFilter;

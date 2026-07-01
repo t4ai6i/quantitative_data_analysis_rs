@@ -1,1 +1,246 @@
-// Screening scoring logic is introduced in the next step.
+use crate::domain::models::screening::model::{ScoreBreakdown, ScreeningMetrics};
+
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+pub struct ScoreRange {
+    pub floor: f64,
+    pub ceiling: f64,
+    pub weight: f64,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum ScoreDirection {
+    HigherIsBetter,
+    LowerIsBetter,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+pub struct ValueScorePolicy {
+    pub per: ScoreRange,
+    pub pbr: ScoreRange,
+    pub dividend_yield: ScoreRange,
+    pub roe: ScoreRange,
+    pub sales_growth: ScoreRange,
+}
+
+impl ValueScorePolicy {
+    pub fn standard() -> Self {
+        Self {
+            per: ScoreRange {
+                floor: 5.0,
+                ceiling: 20.0,
+                weight: 20.0,
+            },
+            pbr: ScoreRange {
+                floor: 0.5,
+                ceiling: 2.0,
+                weight: 20.0,
+            },
+            dividend_yield: ScoreRange {
+                floor: 1.0,
+                ceiling: 5.0,
+                weight: 20.0,
+            },
+            roe: ScoreRange {
+                floor: 5.0,
+                ceiling: 20.0,
+                weight: 20.0,
+            },
+            sales_growth: ScoreRange {
+                floor: 0.0,
+                ceiling: 15.0,
+                weight: 20.0,
+            },
+        }
+    }
+}
+
+/// 指標値を 0.0..1.0 の範囲に正規化する。
+pub fn normalized_score(value: f64, range: ScoreRange, direction: ScoreDirection) -> f64 {
+    if !value.is_finite() || !range.floor.is_finite() || !range.ceiling.is_finite() {
+        return 0.0;
+    }
+    if range.ceiling <= range.floor {
+        return 0.0;
+    }
+
+    match direction {
+        ScoreDirection::HigherIsBetter => {
+            if value <= range.floor {
+                0.0
+            } else if value >= range.ceiling {
+                1.0
+            } else {
+                (value - range.floor) / (range.ceiling - range.floor)
+            }
+        }
+        ScoreDirection::LowerIsBetter => {
+            if value <= range.floor {
+                1.0
+            } else if value >= range.ceiling {
+                0.0
+            } else {
+                (range.ceiling - value) / (range.ceiling - range.floor)
+            }
+        }
+    }
+}
+
+/// 欠損値は 0 点化し、理由に `missing:<metric>` を残す。
+pub fn score_value(
+    metrics: &ScreeningMetrics,
+    policy: ValueScorePolicy,
+) -> (ScoreBreakdown, f64, Vec<String>) {
+    let mut reasons = Vec::new();
+
+    let per = score_or_missing(
+        metrics.per,
+        policy.per,
+        ScoreDirection::LowerIsBetter,
+        "per",
+        &mut reasons,
+    );
+    let pbr = score_or_missing(
+        metrics.pbr,
+        policy.pbr,
+        ScoreDirection::LowerIsBetter,
+        "pbr",
+        &mut reasons,
+    );
+    let dividend_yield = score_or_missing(
+        metrics.dividend_yield,
+        policy.dividend_yield,
+        ScoreDirection::HigherIsBetter,
+        "dividend",
+        &mut reasons,
+    );
+    let roe = score_or_missing(
+        metrics.roe,
+        policy.roe,
+        ScoreDirection::HigherIsBetter,
+        "roe",
+        &mut reasons,
+    );
+    let sales_growth = score_or_missing(
+        metrics.sales_growth,
+        policy.sales_growth,
+        ScoreDirection::HigherIsBetter,
+        "sales_growth",
+        &mut reasons,
+    );
+
+    let breakdown = ScoreBreakdown {
+        per: Some(per),
+        pbr: Some(pbr),
+        dividend_yield: Some(dividend_yield),
+        roe: Some(roe),
+        sales_growth: Some(sales_growth),
+    };
+
+    let total_score = per + pbr + dividend_yield + roe + sales_growth;
+    (breakdown, total_score, reasons)
+}
+
+fn score_or_missing(
+    value: Option<f64>,
+    range: ScoreRange,
+    direction: ScoreDirection,
+    metric_name: &str,
+    reasons: &mut Vec<String>,
+) -> f64 {
+    match value {
+        Some(v) if v.is_finite() => normalized_score(v, range, direction) * range.weight,
+        _ => {
+            reasons.push(format!("missing:{metric_name}"));
+            0.0
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pretty_assertions::assert_eq;
+
+    use crate::domain::models::screening::model::ScreeningMetrics;
+    use crate::domain::models::screening::scoring::{
+        ScoreDirection, ScoreRange, ValueScorePolicy, normalized_score, score_value,
+    };
+
+    #[test]
+    fn normalized_score_returns_boundaries_for_higher_is_better() {
+        let range = ScoreRange {
+            floor: 10.0,
+            ceiling: 20.0,
+            weight: 20.0,
+        };
+
+        assert_eq!(
+            normalized_score(5.0, range, ScoreDirection::HigherIsBetter),
+            0.0
+        );
+        assert_eq!(
+            normalized_score(25.0, range, ScoreDirection::HigherIsBetter),
+            1.0
+        );
+        assert_eq!(
+            normalized_score(15.0, range, ScoreDirection::HigherIsBetter),
+            0.5
+        );
+    }
+
+    #[test]
+    fn normalized_score_returns_boundaries_for_lower_is_better() {
+        let range = ScoreRange {
+            floor: 10.0,
+            ceiling: 20.0,
+            weight: 20.0,
+        };
+
+        assert_eq!(
+            normalized_score(5.0, range, ScoreDirection::LowerIsBetter),
+            1.0
+        );
+        assert_eq!(
+            normalized_score(25.0, range, ScoreDirection::LowerIsBetter),
+            0.0
+        );
+        assert_eq!(
+            normalized_score(15.0, range, ScoreDirection::LowerIsBetter),
+            0.5
+        );
+    }
+
+    #[test]
+    fn score_value_fits_in_100_points_with_standard_policy() {
+        let metrics = ScreeningMetrics {
+            per: Some(5.0),
+            pbr: Some(0.5),
+            dividend_yield: Some(5.0),
+            roe: Some(20.0),
+            sales_growth: Some(15.0),
+        };
+
+        let (breakdown, total, reasons) = score_value(&metrics, ValueScorePolicy::standard());
+        assert_eq!(breakdown.per, Some(20.0));
+        assert_eq!(breakdown.pbr, Some(20.0));
+        assert_eq!(breakdown.dividend_yield, Some(20.0));
+        assert_eq!(breakdown.roe, Some(20.0));
+        assert_eq!(breakdown.sales_growth, Some(20.0));
+        assert_eq!(total, 100.0);
+        assert!(reasons.is_empty());
+    }
+
+    #[test]
+    fn score_value_sets_zero_and_reason_for_missing_metric() {
+        let metrics = ScreeningMetrics {
+            per: Some(10.0),
+            pbr: Some(1.0),
+            dividend_yield: None,
+            roe: Some(10.0),
+            sales_growth: Some(5.0),
+        };
+
+        let (breakdown, _total, reasons) = score_value(&metrics, ValueScorePolicy::standard());
+        assert_eq!(breakdown.dividend_yield, Some(0.0));
+        assert_eq!(reasons, vec!["missing:dividend".to_string()]);
+    }
+}

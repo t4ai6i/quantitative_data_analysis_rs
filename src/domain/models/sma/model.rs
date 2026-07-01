@@ -4,8 +4,8 @@ use crate::domain::models::volume;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
-use ta::indicators::SimpleMovingAverage;
 use ta::Next;
+use ta::indicators::SimpleMovingAverage;
 
 /// 終値、取引高の単純移動平均
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
