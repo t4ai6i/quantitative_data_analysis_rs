@@ -2,16 +2,16 @@ use crate::domain::models::statement::model;
 use crate::domain::repositories::statement::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::statement::structures::jquants_api::Response;
-use anyhow::{Context, bail};
+use anyhow::{bail, Context};
 use async_trait::async_trait;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
 use reqwest::Client;
 use serde_json::Value;
 
-const STATEMENT_URL: &str = "https://api.jquants.com/v2/fins/summary";
+const FINS_SUMMARY_URL: &str = "https://api.jquants.com/v2/fins/summary";
 
-fn select_statement_record(rows: &[Value]) -> Option<&Value> {
+fn select_latest_full_year_statement(rows: &[Value]) -> Option<&Value> {
     rows.par_iter()
         .find_last(|value| value["CurPerType"].as_str().is_some_and(|s| s == "FY"))
 }
@@ -23,7 +23,7 @@ impl repository::Statement for JQuantsAPI {
         query: &queries::get_statement::Query<'a>,
     ) -> anyhow::Result<model::RowStatement> {
         let qs = QueryString::dynamic().with_value("code", query.code);
-        let url = format!("{STATEMENT_URL}{qs}");
+        let url = format!("{FINS_SUMMARY_URL}{qs}");
         let response = Client::new()
             .get(url)
             .header("x-api-key", self.api_key.to_string())
@@ -39,7 +39,7 @@ impl repository::Statement for JQuantsAPI {
                 query.code
             );
         }
-        let selected = select_statement_record(response).with_context(|| {
+        let selected = select_latest_full_year_statement(response).with_context(|| {
             let serialized = serde_json::to_string_pretty(response)
                 .unwrap_or_else(|_| "<failed to serialize response>".to_string());
             format!(
@@ -61,7 +61,7 @@ mod tests {
     use crate::domain::repositories::statement::queries;
     use crate::domain::repositories::statement::repository::Statement;
     use crate::infrastructure::jquants_api::JQuantsAPI;
-    use crate::infrastructure::repositories::statement::jquants_api::select_statement_record;
+    use crate::infrastructure::repositories::statement::jquants_api::select_latest_full_year_statement;
     use crate::shared::jquants_api::setup::Setup;
     use anyhow::Result;
     use chrono::NaiveDate;
@@ -69,23 +69,23 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn select_statement_record_prefers_latest_fy() {
+    fn select_latest_full_year_statement_prefers_latest_fy() {
         let rows = vec![
             json!({"CurPerType": "Q1", "id": 1}),
             json!({"CurPerType": "FY", "id": 2}),
             json!({"CurPerType": "FY", "id": 3}),
         ];
-        let selected = select_statement_record(&rows).expect("record should be selected");
+        let selected = select_latest_full_year_statement(&rows).expect("record should be selected");
         assert_eq!(selected["id"], 3);
     }
 
     #[test]
-    fn select_statement_record_returns_none_when_fy_missing() {
+    fn select_latest_full_year_statement_returns_none_when_fy_missing() {
         let rows = vec![
             json!({"CurPerType": "Q1", "id": 1}),
             json!({"CurPerType": "Q2", "id": 2}),
         ];
-        let selected = select_statement_record(&rows);
+        let selected = select_latest_full_year_statement(&rows);
         assert!(selected.is_none());
     }
 

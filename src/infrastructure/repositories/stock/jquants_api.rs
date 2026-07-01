@@ -8,7 +8,7 @@ use query_string_builder::QueryString;
 use rayon::prelude::*;
 use reqwest::Client;
 
-const DAILY_QUOTES_URL: &str = "https://api.jquants.com/v2/equities/bars/daily";
+const EQUITIES_BARS_DAILY_URL: &str = "https://api.jquants.com/v2/equities/bars/daily";
 
 #[async_trait]
 impl repository::Stock for JQuantsAPI {
@@ -20,7 +20,7 @@ impl repository::Stock for JQuantsAPI {
             .with_value("code", query.code.unwrap_or(""))
             .with_value("from", query.target_date.to_string())
             .with_value("to", query.target_date.to_string());
-        let daily_quotes_url = format!("{DAILY_QUOTES_URL}{qs}");
+        let daily_quotes_url = format!("{EQUITIES_BARS_DAILY_URL}{qs}");
         let response = Client::new()
             .get(daily_quotes_url)
             .header("x-api-key", self.api_key.to_string())
@@ -41,7 +41,7 @@ impl repository::Stock for JQuantsAPI {
             .with_value("code", query.code.unwrap_or(""))
             .with_value("from", query.start_date.unwrap_or_default().to_string())
             .with_value("to", query.end_date.unwrap_or_default().to_string());
-        let daily_quotes_url = format!("{DAILY_QUOTES_URL}{qs}");
+        let daily_quotes_url = format!("{EQUITIES_BARS_DAILY_URL}{qs}");
         let response = Client::new()
             .get(daily_quotes_url)
             .header("x-api-key", self.api_key.to_string())
