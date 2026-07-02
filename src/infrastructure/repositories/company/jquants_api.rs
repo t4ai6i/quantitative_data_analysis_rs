@@ -2,7 +2,7 @@ use crate::domain::models::company::model;
 use crate::domain::repositories::company::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::company::structures::jquants_api::Response;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
