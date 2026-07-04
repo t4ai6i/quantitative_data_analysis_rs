@@ -36,6 +36,17 @@
 When using AI coding assistants, reference the guidelines file:
 "Please follow the Microsoft Rust guidelines in `~/rust-guidelines.txt`"
 
+### ツール利用方針
+
+- コード探索・シンボル解析・参照追跡は **Serena** の利用を明示的に優先する。
+- `rg` / `glob` は Serena で不足する範囲の補助として利用する。
+
+### git-secrets 運用方針
+
+- `git secrets --aws-provider` は有効なまま運用し、無効化で回避しない。
+- `~/.aws/credentials` に `test` / `dummy` などの低エントロピー値を置かない。
+- 誤検知が出た場合、まず provider 入力（credentials）を是正し、それでも必要な場合のみ `.gitallowed` に最小範囲で例外を追加する。
+
 ## コミュニケーション
 
 - 非自明なアルゴリズムやデータ変換を触る際は簡潔なコメントで意図を共有。冗長な説明は避ける。
