@@ -17,7 +17,8 @@ and Yahoo Finance to produce chart-ready signals, summaries, and SVG/JSON artifa
 
 ## Installation
 
-1. Install the Rust toolchain specified in `rust-toolchain` (Rust 1.90.0). `rustup` automatically picks it up when you
+1. Install the Rust toolchain specified in `rust-toolchain.toml` (Rust 1.90.0). `rustup` automatically picks it up when
+   you
    enter the repo.
 2. Install build essentials for your OS (LLVM/Clang on macOS, build-essential on Linux).
 3. Clone the repository and fetch dependencies:
