@@ -1,0 +1,8 @@
+- Keep hexagonal direction: core logic in `domain`/`use_case`; adapters in `infrastructure`/`presenter`.
+- Prefer `Result` + custom/domain errors; avoid `unwrap`/`expect` outside tests/bootstrap paths.
+- Keep APIs idiomatic and explicit; pass references (`&str`, slices) where possible.
+- For non-obvious market transformations, add short intent comments only.
+- Follow project skills docs:
+  - `.github/skills/coding-standards/SKILL.md`
+  - `.github/skills/testing-practices/SKILL.md`
+- Keep changes surgical; avoid unrelated refactor around touched code.

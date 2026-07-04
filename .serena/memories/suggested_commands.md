@@ -1,0 +1,13 @@
+- Fetch deps: `cargo fetch`
+- Run examples:
+  - `cargo run --example financial_indicator`
+  - `cargo run --example trend_analysis`
+  - `cargo run --example make_companies`
+- Quality checks:
+  - `cargo fmt --all`
+  - `cargo clippy --all-targets --all-features`
+  - `cargo test`
+- Optional deeper checks from skills:
+  - `cargo nextest run --all --all-features`
+  - `cargo audit`
+- Required env for API-backed runs: `export JQUANTS_API_KEY=...`.

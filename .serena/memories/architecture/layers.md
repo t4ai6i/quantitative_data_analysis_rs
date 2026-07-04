@@ -1,0 +1,6 @@
+- Hexagonal boundary is strict: logic in `domain`/`use_case`, adapters in `infrastructure`/`presenter`.
+- `controller` composes `use_case` interactor + presenter and maps external input into use-case input DTOs.
+- `domain/repositories/*/repository.rs` defines async traits with default conversion from row models to domain models.
+- `use_case/interfaces/*` defines interactor traits; `use_case/interactors/*` implements them.
+- Infrastructure implements repository traits (e.g. `impl repository::Stock for JQuantsAPI`).
+- Presenter traits accept use-case outputs and return response/view DTOs (JSON/Chart etc.).

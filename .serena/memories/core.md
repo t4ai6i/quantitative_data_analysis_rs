@@ -1,0 +1,8 @@
+- Rust quantitative analysis toolkit with hexagonal layering.
+- Top-level modules in `src/lib.rs`: `domain`, `use_case`, `controller`, `presenter`, `infrastructure`, `shared`.
+- Read `mem:architecture/layers` for dependency direction and layer responsibilities.
+- Read `mem:architecture/data_flow` for runtime flow from controller to data sources.
+- Read `mem:tech_stack` for toolchain/dependencies.
+- Read `mem:conventions` for code and architecture constraints.
+- Read `mem:suggested_commands` for common local commands.
+- Read `mem:task_completion` for done criteria.

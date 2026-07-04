@@ -1,0 +1,8 @@
+- Language: Rust (edition 2024).
+- Toolchain pin: `rust-toolchain.toml` channel `1.90.0`.
+- Build acceleration: `.cargo/config.toml` uses `sccache`, `codegen-units=16`, incremental build.
+- Async stack: `tokio`, `async-trait`, `reqwest`.
+- Data/serialization: `serde`, `serde_json`, `csv`, `chrono`.
+- Analytics: `ta`, `itertools`, `rayon`, `charts-rs`.
+- Error stack: `anyhow`, `thiserror`.
+- External sources: J-Quants API and Yahoo Finance.
