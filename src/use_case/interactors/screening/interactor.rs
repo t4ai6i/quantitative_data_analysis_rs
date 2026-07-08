@@ -2,7 +2,7 @@ use crate::domain::models::screening::model::ScreeningResults;
 use crate::domain::repositories;
 use crate::use_case::interfaces::screening::input;
 use crate::use_case::interfaces::screening::use_case;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]

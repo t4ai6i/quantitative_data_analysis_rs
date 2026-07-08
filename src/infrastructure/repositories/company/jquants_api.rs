@@ -73,6 +73,7 @@ mod tests {
             code: Some("84730".to_string()),
             name: Some("SBI Holdings,Inc.".to_string()),
             market: Some("0111".to_string()),
+            product_category: Some("011".to_string()),
             symbol: Some("".to_string()),
         };
         assert_eq!(actual, expected);

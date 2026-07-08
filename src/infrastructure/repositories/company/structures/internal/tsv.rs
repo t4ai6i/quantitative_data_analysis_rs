@@ -21,6 +21,7 @@ impl From<Structure> for model::RowCompany {
             code: Some(code),
             name: Some(name),
             market: Some(market),
+            product_category: None,
             symbol,
         }
     }

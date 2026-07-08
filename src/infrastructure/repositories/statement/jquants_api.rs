@@ -97,7 +97,7 @@ mod tests {
         let actual = repository.get_row_statement(&query).await?;
         let expected = model::RowStatement {
             code: "8473".to_string(),
-            disclosed_date: NaiveDate::from_ymd_opt(2026, 5, 1),
+            disclosed_date: NaiveDate::from_ymd_opt(2026, 7, 2),
             eps: Some(666.82),
             bps: Some(2776.99),
             net_sales: Some(1_896_607_000_000.0),

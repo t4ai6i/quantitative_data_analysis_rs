@@ -11,10 +11,12 @@ impl From<Response<'_>> for model::RowCompany {
         let code = String::from_json_string_value("Code", value).ok();
         let name = String::from_json_string_value("CoNameEn", value).ok();
         let market = String::from_json_string_value("Mkt", value).ok();
+        let product_category = String::from_json_string_value("ProdCat", value).ok();
         Self {
             code,
             name,
             market,
+            product_category,
             symbol: Some("".to_string()),
         }
     }

@@ -6,6 +6,7 @@ pub struct RowCompany {
     pub code: Option<String>,
     pub name: Option<String>,
     pub market: Option<String>,
+    pub product_category: Option<String>,
     pub symbol: Option<String>,
 }
 
@@ -14,6 +15,7 @@ pub struct Company {
     pub code: String,
     pub name: String,
     pub market: String,
+    pub product_category: Option<String>,
     pub symbol: String,
 }
 
@@ -28,12 +30,14 @@ impl TryFrom<RowCompany> for Company {
             code,
             name,
             market,
+            product_category,
             symbol,
         } = value;
         Ok(Self {
             code: code.ok_or_else(|| anyhow::anyhow!("code is None"))?,
             name: name.ok_or_else(|| anyhow::anyhow!("name is None"))?,
             market: market.ok_or_else(|| anyhow::anyhow!("market is None"))?,
+            product_category,
             symbol: symbol.ok_or_else(|| anyhow::anyhow!("symbol is None"))?,
         })
     }

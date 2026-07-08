@@ -9,6 +9,7 @@ impl From<YQuoteItem> for model::RowCompany {
             code,
             name: Some(value.long_name),
             market: Some(value.exchange),
+            product_category: None,
             symbol: Some(value.symbol),
         }
     }
