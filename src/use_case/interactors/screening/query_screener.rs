@@ -1,27 +1,39 @@
-use anyhow::Result;
-
 use crate::domain::models::company::model::Company;
 use crate::domain::models::screening::model::ScreeningCandidate;
-use crate::domain::repositories::company::repository;
+use crate::domain::models::stock::model::Stocks;
+use crate::domain::repositories::stock::queries::get_stocks_by_date;
+use crate::domain::repositories::{company, stock};
+use anyhow::Result;
+use chrono::NaiveDate;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct QueryScreener<'a, CR> {
+pub struct QueryScreener<'a, CR, SR> {
     company_repository: &'a CR,
+    stock_repository: &'a SR,
 }
 
-impl<'a, CR> QueryScreener<'a, CR> {
-    pub fn new(company_repository: &'a CR) -> Self {
-        Self { company_repository }
+impl<'a, CR, SR> QueryScreener<'a, CR, SR> {
+    pub fn new(company_repository: &'a CR, stock_repository: &'a SR) -> Self {
+        Self {
+            company_repository,
+            stock_repository,
+        }
     }
 }
 
-impl<CR> QueryScreener<'_, CR>
+impl<CR, SR> QueryScreener<'_, CR, SR>
 where
-    CR: repository::Company + Send + Sync,
+    CR: company::repository::Company + Send + Sync,
+    SR: stock::repository::Stock + Send + Sync,
 {
     pub async fn fetch_universe_candidates(&self) -> Result<Vec<Result<ScreeningCandidate>>> {
         let companies = self.company_repository.get_companies().await?;
         Ok(build_universe_candidates(companies.as_slice()))
+    }
+
+    pub async fn fetch_base_date_stocks(&self, target_date: NaiveDate) -> Result<Stocks> {
+        let query = get_stocks_by_date::Query { date: target_date };
+        self.stock_repository.get_stocks_by_date(&query).await
     }
 }
 
@@ -34,10 +46,61 @@ fn build_universe_candidates(companies: &[Company]) -> Vec<Result<ScreeningCandi
 
 #[cfg(test)]
 mod tests {
+    use anyhow::bail;
+    use async_trait::async_trait;
+    use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
+    use std::sync::Mutex;
 
-    use crate::domain::models::company::model::Company;
+    use crate::domain::models::company::model::{Company, RowCompany};
+    use crate::domain::models::stock::model::RowStock;
+    use crate::domain::repositories::company;
+    use crate::domain::repositories::company::queries::get_company::Query;
+    use crate::domain::repositories::stock;
     use crate::use_case::interactors::screening::query_screener::build_universe_candidates;
+
+    struct DummyCompanyRepository;
+
+    #[async_trait]
+    impl company::repository::Company for DummyCompanyRepository {
+        async fn get_row_company<'a>(&self, query: &Query<'a>) -> anyhow::Result<RowCompany> {
+            bail!("not used");
+        }
+
+        async fn get_vec_row_company(&self) -> anyhow::Result<Vec<RowCompany>> {
+            bail!("not used");
+        }
+    }
+
+    struct StubStockRepository {
+        requested_date: Mutex<Option<NaiveDate>>,
+        rows: Vec<RowStock>,
+    }
+
+    #[async_trait]
+    impl stock::repository::Stock for StubStockRepository {
+        async fn get_row_stock<'a>(
+            &self,
+            query: &stock::queries::get_stock::Query<'a>,
+        ) -> anyhow::Result<RowStock> {
+            bail!("not used");
+        }
+
+        async fn get_vec_row_stock<'a>(
+            &self,
+            query: &stock::queries::get_stocks::Query<'a>,
+        ) -> anyhow::Result<Vec<RowStock>> {
+            bail!("not used");
+        }
+
+        async fn get_vec_row_stock_by_date(
+            &self,
+            query: &stock::queries::get_stocks_by_date::Query,
+        ) -> anyhow::Result<Vec<RowStock>> {
+            self.requested_date.lock().unwrap().replace(query.date);
+            Ok(self.rows.clone())
+        }
+    }
 
     #[test]
     fn build_universe_candidates_returns_errors_for_non_target_companies() {

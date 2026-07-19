@@ -24,6 +24,18 @@ pub trait Stock {
         Ok(model::Stocks(vec_stock))
     }
 
+    async fn get_stocks_by_date(
+        &self,
+        query: &queries::get_stocks_by_date::Query,
+    ) -> Result<model::Stocks> {
+        let vec_row_stock = self.get_vec_row_stock_by_date(query).await?;
+        let vec_stock = vec_row_stock
+            .into_par_iter()
+            .filter_map(|row_stock| TryFrom::try_from(row_stock).ok())
+            .collect::<Vec<model::Stock>>();
+        Ok(model::Stocks(vec_stock))
+    }
+
     async fn get_row_stock<'a>(
         &self,
         query: &queries::get_stock::Query<'a>,
@@ -32,5 +44,10 @@ pub trait Stock {
     async fn get_vec_row_stock<'a>(
         &self,
         query: &queries::get_stocks::Query<'a>,
+    ) -> Result<Vec<model::RowStock>>;
+
+    async fn get_vec_row_stock_by_date(
+        &self,
+        query: &queries::get_stocks_by_date::Query,
     ) -> Result<Vec<model::RowStock>>;
 }
