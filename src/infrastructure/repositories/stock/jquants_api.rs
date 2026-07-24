@@ -3,7 +3,7 @@ use crate::domain::repositories::stock::queries::get_stocks_by_date::Query;
 use crate::domain::repositories::stock::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::stock::structures::jquants_api::Response;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use chrono::{Days, NaiveDate};
 use query_string_builder::QueryString;
@@ -64,6 +64,11 @@ fn build_daily_bars_query(
 
 #[async_trait]
 impl repository::Stock for JQuantsAPI {
+    async fn get_base_date_prices(&self, query: &Query) -> Result<model::BaseDatePrices> {
+        let effective_date = self.resolve_effective_date(query.date).await?;
+        self.fetch_base_date_prices(effective_date).await
+    }
+
     async fn get_row_stock<'a>(
         &self,
         query: &queries::get_stock::Query<'a>,
@@ -117,6 +122,50 @@ impl repository::Stock for JQuantsAPI {
 }
 
 impl JQuantsAPI {
+    async fn fetch_base_date_prices(
+        &self,
+        effective_date: NaiveDate,
+    ) -> Result<model::BaseDatePrices> {
+        let mut rows = Vec::new();
+        let mut pagination_key: Option<String> = None;
+
+        loop {
+            let qs = build_daily_bars_query(
+                None,
+                Some(effective_date),
+                None,
+                None,
+                pagination_key.as_deref(),
+            );
+            let daily_quotes_url = format!("{EQUITIES_BARS_DAILY_URL}{qs}");
+            let response = Client::new()
+                .get(daily_quotes_url)
+                .header("x-api-key", self.api_key.to_string())
+                .send()
+                .await?;
+            let response = response.json::<serde_json::Value>().await?;
+            let Some(page_rows) = response["data"].as_array() else {
+                bail!(
+                    "response[data] in response not found. effective_date = {}",
+                    effective_date
+                );
+            };
+            let page_rows = page_rows
+                .iter()
+                .map(|row| model::BaseDatePrice::try_from(Response(row)))
+                .collect::<Result<Vec<_>>>()?;
+            rows.extend(page_rows);
+            pagination_key = response["pagination_key"]
+                .as_str()
+                .filter(|value| !value.is_empty())
+                .map(ToOwned::to_owned);
+            if pagination_key.is_none() {
+                break;
+            }
+        }
+        Ok(model::BaseDatePrices(rows))
+    }
+
     async fn resolve_effective_date(&self, target_date: NaiveDate) -> Result<NaiveDate> {
         let from_date = target_date
             .checked_sub_days(Days::new(CALENDAR_LOOKBACK_DAYS))
@@ -238,6 +287,23 @@ mod tests {
         };
         let vec_row_stock = repository.get_vec_row_stock(&query).await?;
         assert_eq!(vec_row_stock.len(), 246);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_base_date_prices_test() -> anyhow::Result<()> {
+        let token = Setup::run()?;
+        let repository = JQuantsAPI::new(token)?;
+        let query = queries::get_stocks_by_date::Query {
+            date: NaiveDate::from_ymd_opt(2025, 8, 30).unwrap(),
+        };
+
+        let actual = repository.get_base_date_prices(&query).await?;
+
+        assert!(!actual.is_empty());
+        assert!(actual.iter().any(|row| !row.code.is_empty()));
+        assert!(actual.iter().any(|row| row.adj_close.is_some()));
+
         Ok(())
     }
 }

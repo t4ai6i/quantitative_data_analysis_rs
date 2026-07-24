@@ -1,9 +1,9 @@
+use crate::domain::models::stock::model;
+use crate::shared::float::validate_value;
+use crate::shared::from_json_string_value::FromJsonStringValue;
 use chrono::NaiveDate;
 use num_traits::ToPrimitive;
 use serde_json::Value;
-
-use crate::domain::models::stock::model;
-use crate::shared::from_json_string_value::FromJsonStringValue;
 
 pub struct Response<'a>(pub &'a Value);
 
@@ -26,5 +26,18 @@ impl From<Response<'_>> for model::RowStock {
             adj_close,
             volume,
         }
+    }
+}
+
+impl TryFrom<Response<'_>> for model::BaseDatePrice {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Response<'_>) -> Result<Self, Self::Error> {
+        let Response(value) = value;
+
+        let code = String::from_json_string_value("Code", value)?;
+        let adj_close = value["AdjC"].as_f64().and_then(validate_value);
+
+        Ok(Self { code, adj_close })
     }
 }

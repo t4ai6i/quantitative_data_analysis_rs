@@ -1,6 +1,5 @@
 use crate::domain::models::company::model::Company;
 use crate::domain::models::statement::model::Statement;
-use crate::domain::models::stock::model::Stock;
 use crate::shared::float::validate_value;
 use anyhow::bail;
 
@@ -54,7 +53,7 @@ fn is_target_market(market: &str) -> bool {
         .any(|target_market| target_market == &market)
 }
 
-fn normalize_code(code: &str) -> Option<String> {
+pub(crate) fn normalize_code(code: &str) -> Option<String> {
     let code = code.trim().to_ascii_uppercase();
 
     match code.len() {
@@ -75,18 +74,18 @@ pub struct ScreeningMetrics {
     pub sales_growth: Option<f64>,
 }
 
-impl From<(&Stock, &Statement)> for ScreeningMetrics {
-    fn from((stock, statement): (&Stock, &Statement)) -> Self {
-        let price = stock.adj_close;
-
+impl From<(f64, &Statement)> for ScreeningMetrics {
+    fn from((price, statement): (f64, &Statement)) -> Self {
         let per = validate_value(price / statement.eps);
         let pbr = validate_value(price / statement.bps);
+        let dividend_yield =
+            validate_value(statement.annual_dividend_forecast / price).map(|v| v * 100.0);
         let roe = validate_value(statement.profit / statement.equity).map(|v| v * 100.0);
 
-        ScreeningMetrics {
+        Self {
             per,
             pbr,
-            dividend_yield: None,
+            dividend_yield,
             roe,
             sales_growth: None,
         }

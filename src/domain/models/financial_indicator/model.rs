@@ -124,6 +124,7 @@ mod tests {
             disclosed_date,
             eps: 100.0,
             bps: 400.0,
+            annual_dividend_forecast: 0.0,
             net_sales: 512.0,
             opp: 128.0,
             orp: 64.0,

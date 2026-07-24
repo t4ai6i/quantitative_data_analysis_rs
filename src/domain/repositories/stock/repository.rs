@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 use rayon::prelude::*;
 
@@ -7,6 +7,16 @@ use crate::domain::repositories::stock::queries;
 
 #[async_trait]
 pub trait Stock {
+    async fn get_base_date_prices(
+        &self,
+        query: &queries::get_stocks_by_date::Query,
+    ) -> Result<model::BaseDatePrices> {
+        bail!(
+            "get_base_date_prices is not implemented. date: {}",
+            query.date
+        );
+    }
+
     async fn get_stock<'a>(&self, query: &queries::get_stock::Query<'a>) -> Result<model::Stock> {
         let row_stock = self.get_row_stock(query).await?;
         TryFrom::try_from(row_stock)

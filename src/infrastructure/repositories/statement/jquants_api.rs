@@ -100,6 +100,7 @@ mod tests {
             disclosed_date: NaiveDate::from_ymd_opt(2026, 7, 2),
             eps: Some(666.82),
             bps: Some(2776.99),
+            annual_dividend_forecast: None,
             net_sales: Some(1_896_607_000_000.0),
             opp: None,
             orp: None,

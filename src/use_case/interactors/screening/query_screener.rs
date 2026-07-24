@@ -1,40 +1,75 @@
 use crate::domain::models::company::model::Company;
-use crate::domain::models::screening::model::ScreeningCandidate;
-use crate::domain::models::stock::model::Stocks;
+use crate::domain::models::screening::model::{
+    ScreeningCandidate, ScreeningMetrics, normalize_code,
+};
+use crate::domain::models::stock::model::BaseDatePrices;
 use crate::domain::repositories::stock::queries::get_stocks_by_date;
-use crate::domain::repositories::{company, stock};
+use crate::domain::repositories::{company, statement, stock};
 use anyhow::Result;
 use chrono::NaiveDate;
+use std::collections::HashMap;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct QueryScreener<'a, CR, SR> {
+pub struct QueryScreener<'a, CR, SR, SMR> {
     company_repository: &'a CR,
     stock_repository: &'a SR,
+    statement_repository: &'a SMR,
 }
 
-impl<'a, CR, SR> QueryScreener<'a, CR, SR> {
-    pub fn new(company_repository: &'a CR, stock_repository: &'a SR) -> Self {
+impl<'a, CR, SR, SMR> QueryScreener<'a, CR, SR, SMR> {
+    pub fn new(
+        company_repository: &'a CR,
+        stock_repository: &'a SR,
+        statement_repository: &'a SMR,
+    ) -> Self {
         Self {
             company_repository,
             stock_repository,
+            statement_repository,
         }
     }
 }
 
-impl<CR, SR> QueryScreener<'_, CR, SR>
+impl<CR, SR, SMR> QueryScreener<'_, CR, SR, SMR>
 where
     CR: company::repository::Company + Send + Sync,
     SR: stock::repository::Stock + Send + Sync,
+    SMR: statement::repository::Statement + Send + Sync,
 {
     pub async fn fetch_universe_candidates(&self) -> Result<Vec<Result<ScreeningCandidate>>> {
         let companies = self.company_repository.get_companies().await?;
         Ok(build_universe_candidates(companies.as_slice()))
     }
 
-    pub async fn fetch_base_date_stocks(&self, target_date: NaiveDate) -> Result<Stocks> {
+    pub async fn fetch_base_date_prices(
+        &self,
+        target_date: NaiveDate,
+    ) -> Result<HashMap<String, Option<f64>>> {
         let query = get_stocks_by_date::Query { date: target_date };
-        self.stock_repository.get_stocks_by_date(&query).await
+        let prices = self.stock_repository.get_base_date_prices(&query).await?;
+        build_price_map(&prices)
     }
+
+    pub async fn fetch_financial_metrics(
+        &self,
+        code: &str,
+        adj_close: f64,
+    ) -> Result<ScreeningMetrics> {
+        let query = statement::queries::get_statement::Query { code };
+        let statement = self.statement_repository.get_statement(&query).await?;
+        Ok(ScreeningMetrics::from((adj_close, &statement)))
+    }
+}
+
+fn build_price_map(prices: &BaseDatePrices) -> Result<HashMap<String, Option<f64>>> {
+    prices
+        .iter()
+        .map(|price| {
+            let normalized = normalize_code(price.code.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Invalid code. code: {}", price.code))?;
+            Ok((normalized, price.adj_close))
+        })
+        .collect()
 }
 
 fn build_universe_candidates(companies: &[Company]) -> Vec<Result<ScreeningCandidate>> {
@@ -46,61 +81,13 @@ fn build_universe_candidates(companies: &[Company]) -> Vec<Result<ScreeningCandi
 
 #[cfg(test)]
 mod tests {
-    use anyhow::bail;
-    use async_trait::async_trait;
-    use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
-    use std::sync::Mutex;
 
-    use crate::domain::models::company::model::{Company, RowCompany};
-    use crate::domain::models::stock::model::RowStock;
-    use crate::domain::repositories::company;
-    use crate::domain::repositories::company::queries::get_company::Query;
-    use crate::domain::repositories::stock;
-    use crate::use_case::interactors::screening::query_screener::build_universe_candidates;
-
-    struct DummyCompanyRepository;
-
-    #[async_trait]
-    impl company::repository::Company for DummyCompanyRepository {
-        async fn get_row_company<'a>(&self, query: &Query<'a>) -> anyhow::Result<RowCompany> {
-            bail!("not used");
-        }
-
-        async fn get_vec_row_company(&self) -> anyhow::Result<Vec<RowCompany>> {
-            bail!("not used");
-        }
-    }
-
-    struct StubStockRepository {
-        requested_date: Mutex<Option<NaiveDate>>,
-        rows: Vec<RowStock>,
-    }
-
-    #[async_trait]
-    impl stock::repository::Stock for StubStockRepository {
-        async fn get_row_stock<'a>(
-            &self,
-            query: &stock::queries::get_stock::Query<'a>,
-        ) -> anyhow::Result<RowStock> {
-            bail!("not used");
-        }
-
-        async fn get_vec_row_stock<'a>(
-            &self,
-            query: &stock::queries::get_stocks::Query<'a>,
-        ) -> anyhow::Result<Vec<RowStock>> {
-            bail!("not used");
-        }
-
-        async fn get_vec_row_stock_by_date(
-            &self,
-            query: &stock::queries::get_stocks_by_date::Query,
-        ) -> anyhow::Result<Vec<RowStock>> {
-            self.requested_date.lock().unwrap().replace(query.date);
-            Ok(self.rows.clone())
-        }
-    }
+    use crate::domain::models::company::model::Company;
+    use crate::domain::models::stock::model::{BaseDatePrice, BaseDatePrices};
+    use crate::use_case::interactors::screening::query_screener::{
+        build_price_map, build_universe_candidates,
+    };
 
     #[test]
     fn build_universe_candidates_returns_errors_for_non_target_companies() {
@@ -201,5 +188,34 @@ mod tests {
         assert!(actual[1].is_ok());
         assert_eq!(actual[1].as_ref().unwrap().code, "1304");
         assert_eq!(actual[1].as_ref().unwrap().market, "0113");
+    }
+
+    #[test]
+    fn build_price_map_normalizes_code_and_keeps_missing_price() {
+        let prices = BaseDatePrices(vec![
+            BaseDatePrice {
+                code: "13010".to_string(),
+                adj_close: Some(1000.0),
+            },
+            BaseDatePrice {
+                code: "137A0".to_string(),
+                adj_close: None,
+            },
+        ]);
+
+        let map = build_price_map(&prices).unwrap();
+        assert_eq!(map.get("1301"), Some(&Some(1000.0)));
+        assert_eq!(map.get("137A"), Some(&None));
+    }
+
+    #[test]
+    fn build_price_map_returns_error_for_invalid_code() {
+        let prices = BaseDatePrices(vec![BaseDatePrice {
+            code: "13@A0".to_string(),
+            adj_close: Some(1000.0),
+        }]);
+
+        let err = build_price_map(&prices).unwrap_err();
+        assert_eq!(err.to_string(), "Invalid code. code: 13@A0");
     }
 }
