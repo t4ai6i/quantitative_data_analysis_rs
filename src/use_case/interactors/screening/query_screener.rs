@@ -62,14 +62,24 @@ where
 }
 
 fn build_price_map(prices: &BaseDatePrices) -> Result<HashMap<String, Option<f64>>> {
-    prices
-        .iter()
-        .map(|price| {
-            let normalized = normalize_code(price.code.as_str())
-                .ok_or_else(|| anyhow::anyhow!("Invalid code. code: {}", price.code))?;
-            Ok((normalized, price.adj_close))
-        })
-        .collect()
+    let mut price_map = HashMap::new();
+
+    for price in prices.iter() {
+        let Some(normalized) = normalize_code(price.code.as_str()) else {
+            continue;
+        };
+
+        price_map
+            .entry(normalized)
+            .and_modify(|adj_close: &mut Option<f64>| {
+                if adj_close.is_none() && price.adj_close.is_some() {
+                    *adj_close = price.adj_close;
+                }
+            })
+            .or_insert(price.adj_close);
+    }
+
+    Ok(price_map)
 }
 
 fn build_universe_candidates(companies: &[Company]) -> Vec<Result<ScreeningCandidate>> {
@@ -209,13 +219,30 @@ mod tests {
     }
 
     #[test]
-    fn build_price_map_returns_error_for_invalid_code() {
+    fn build_price_map_skips_invalid_code() {
         let prices = BaseDatePrices(vec![BaseDatePrice {
             code: "13@A0".to_string(),
             adj_close: Some(1000.0),
         }]);
 
-        let err = build_price_map(&prices).unwrap_err();
-        assert_eq!(err.to_string(), "Invalid code. code: 13@A0");
+        let map = build_price_map(&prices).unwrap();
+        assert!(map.is_empty());
+    }
+
+    #[test]
+    fn build_price_map_prefers_some_when_normalized_code_duplicated() {
+        let prices = BaseDatePrices(vec![
+            BaseDatePrice {
+                code: "13010".to_string(),
+                adj_close: None,
+            },
+            BaseDatePrice {
+                code: "1301".to_string(),
+                adj_close: Some(1000.0),
+            },
+        ]);
+
+        let map = build_price_map(&prices).unwrap();
+        assert_eq!(map.get("1301"), Some(&Some(1000.0)));
     }
 }
