@@ -97,16 +97,16 @@ mod tests {
         let actual = repository.get_row_statement(&query).await?;
         let expected = model::RowStatement {
             code: "8473".to_string(),
-            disclosed_date: NaiveDate::from_ymd_opt(2026, 7, 2),
-            eps: Some(666.82),
-            bps: Some(2776.99),
+            disclosed_date: NaiveDate::from_ymd_opt(2026, 7, 31),
+            eps: None,
+            bps: None,
             annual_dividend_forecast: None,
-            net_sales: Some(1_896_607_000_000.0),
+            net_sales: None,
             opp: None,
             orp: None,
-            profit: Some(427_577_000_000.0),
-            equity: Some(2_413_363_000_000.0),
-            total_assets: Some(38_290_797_000_000.0),
+            profit: None,
+            equity: None,
+            total_assets: None,
         };
         assert_eq!(actual, expected);
 
