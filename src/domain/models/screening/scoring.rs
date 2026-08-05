@@ -1,4 +1,5 @@
 use crate::domain::models::screening::model::{ScoreBreakdown, ScreeningMetrics};
+use anyhow::bail;
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct ScoreRange {
@@ -20,6 +21,22 @@ pub struct ValueScorePolicy {
     pub dividend_yield: ScoreRange,
     pub roe: ScoreRange,
     pub sales_growth: ScoreRange,
+}
+
+impl TryFrom<&str> for ValueScorePolicy {
+    type Error = anyhow::Error;
+
+    fn try_from(preset_name: &str) -> Result<Self, Self::Error> {
+        match preset_name {
+            "standard" => Ok(ValueScorePolicy::standard()),
+            "value" => Ok(ValueScorePolicy::value()),
+            "dividend" => Ok(ValueScorePolicy::dividend()),
+            _ => bail!(
+                "unsupported preset name. preset_name: {}. available presets: standard, value, dividend",
+                preset_name
+            ),
+        }
+    }
 }
 
 impl ValueScorePolicy {
@@ -49,6 +66,66 @@ impl ValueScorePolicy {
                 floor: 0.0,
                 ceiling: 15.0,
                 weight: 20.0,
+            },
+        }
+    }
+
+    pub fn value() -> Self {
+        Self {
+            per: ScoreRange {
+                floor: 3.0,
+                ceiling: 15.0,
+                weight: 30.0,
+            },
+            pbr: ScoreRange {
+                floor: 0.3,
+                ceiling: 1.5,
+                weight: 30.0,
+            },
+            dividend_yield: ScoreRange {
+                floor: 1.0,
+                ceiling: 4.0,
+                weight: 15.0,
+            },
+            roe: ScoreRange {
+                floor: 5.0,
+                ceiling: 20.0,
+                weight: 15.0,
+            },
+            sales_growth: ScoreRange {
+                floor: 0.0,
+                ceiling: 12.0,
+                weight: 10.0,
+            },
+        }
+    }
+
+    pub fn dividend() -> Self {
+        Self {
+            per: ScoreRange {
+                floor: 5.0,
+                ceiling: 20.0,
+                weight: 15.0,
+            },
+            pbr: ScoreRange {
+                floor: 0.5,
+                ceiling: 2.0,
+                weight: 15.0,
+            },
+            dividend_yield: ScoreRange {
+                floor: 2.0,
+                ceiling: 6.0,
+                weight: 40.0,
+            },
+            roe: ScoreRange {
+                floor: 5.0,
+                ceiling: 20.0,
+                weight: 15.0,
+            },
+            sales_growth: ScoreRange {
+                floor: 0.0,
+                ceiling: 12.0,
+                weight: 15.0,
             },
         }
     }
@@ -242,5 +319,107 @@ mod tests {
         let (breakdown, _total, reasons) = score_value(&metrics, ValueScorePolicy::standard());
         assert_eq!(breakdown.dividend_yield, Some(0.0));
         assert_eq!(reasons, vec!["missing:dividend".to_string()]);
+    }
+
+    #[test]
+    fn value_policy_weights_sum_to_100() {
+        let p = ValueScorePolicy::value();
+        let sum = p.per.weight
+            + p.pbr.weight
+            + p.dividend_yield.weight
+            + p.roe.weight
+            + p.sales_growth.weight;
+        assert_eq!(sum, 100.0);
+    }
+
+    #[test]
+    fn dividend_policy_weights_sum_to_100() {
+        let p = ValueScorePolicy::dividend();
+        let sum = p.per.weight
+            + p.pbr.weight
+            + p.dividend_yield.weight
+            + p.roe.weight
+            + p.sales_growth.weight;
+        assert_eq!(sum, 100.0);
+    }
+
+    #[test]
+    fn dividend_preset_scores_higher_for_high_dividend_yield() {
+        let high_dividend = ScreeningMetrics {
+            per: Some(15.0),
+            pbr: Some(1.0),
+            dividend_yield: Some(6.0),
+            roe: Some(10.0),
+            sales_growth: Some(5.0),
+        };
+
+        let (_, standard_score, _) = score_value(&high_dividend, ValueScorePolicy::standard());
+        let (_, dividend_score, _) = score_value(&high_dividend, ValueScorePolicy::dividend());
+
+        // dividend プリセットは配当利回りの重みが大きいので高配当銘柄は高スコアになる
+        assert!(
+            dividend_score > standard_score,
+            "dividend={dividend_score} should be > standard={standard_score}"
+        );
+    }
+
+    #[test]
+    fn value_preset_scores_higher_for_low_per_pbr() {
+        let low_per_pbr = ScreeningMetrics {
+            per: Some(3.0),
+            pbr: Some(0.3),
+            dividend_yield: Some(2.0),
+            roe: Some(10.0),
+            sales_growth: Some(5.0),
+        };
+
+        let (_, standard_score, _) = score_value(&low_per_pbr, ValueScorePolicy::standard());
+        let (_, value_score, _) = score_value(&low_per_pbr, ValueScorePolicy::value());
+
+        // value プリセットは PER/PBR の重みが大きいのでバリュー銘柄は高スコアになる
+        assert!(
+            value_score > standard_score,
+            "value={value_score} should be > standard={standard_score}"
+        );
+    }
+
+    #[test]
+    fn standard_policy_is_backward_compatible() {
+        let perfect = ScreeningMetrics {
+            per: Some(5.0),
+            pbr: Some(0.5),
+            dividend_yield: Some(5.0),
+            roe: Some(20.0),
+            sales_growth: Some(15.0),
+        };
+        let (_, total, _) = score_value(&perfect, ValueScorePolicy::standard());
+        assert_eq!(total, 100.0);
+    }
+
+    #[test]
+    fn try_from_standard_returns_standard_policy() {
+        let policy = ValueScorePolicy::try_from("standard").unwrap();
+        assert_eq!(policy, ValueScorePolicy::standard());
+    }
+
+    #[test]
+    fn try_from_value_returns_value_policy() {
+        let policy = ValueScorePolicy::try_from("value").unwrap();
+        assert_eq!(policy, ValueScorePolicy::value());
+    }
+
+    #[test]
+    fn try_from_dividend_returns_dividend_policy() {
+        let policy = ValueScorePolicy::try_from("dividend").unwrap();
+        assert_eq!(policy, ValueScorePolicy::dividend());
+    }
+
+    #[test]
+    fn try_from_unknown_returns_error() {
+        let err = ValueScorePolicy::try_from("unknown").unwrap_err();
+        let message = err.to_string();
+
+        assert!(message.contains("unsupported preset name. preset_name: unknown"));
+        assert!(message.contains("available presets: standard, value, dividend"));
     }
 }

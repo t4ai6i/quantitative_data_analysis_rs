@@ -1,7 +1,14 @@
 use anyhow::Result;
 use chrono::NaiveDate;
+use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::csv;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
+
+const PRESET_NAME: &str = "standard";
+
+// J-Quants eq-master の市場区分コード: 0111 = プライム
+const PRIME_MARKET_CODE: &str = "0111";
+const CSV: &[u8] = include_bytes!("../assets/companies.csv");
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -10,12 +17,14 @@ async fn main() -> Result<()> {
 
     // JQUANTS APIを用いたレポジトリの準備
     let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token)?;
+    // DSVを用いたレポジトリの準備
+    let dsv = infrastructure::dsv::Dsv::<csv::Structure>::new(false, bytes::Bytes::from(CSV));
 
     // Screeningのユースケース実行気を準備
     let interactor = use_case::interactors::screening::interactor::Screening::new(
         &jquants_api,
         &jquants_api,
-        &jquants_api,
+        &dsv,
     );
 
     // PresenterはJSON型で結果を出力
@@ -24,10 +33,10 @@ async fn main() -> Result<()> {
     let controller = controller::screening::controller::Screening::new(&interactor, &presenter);
     let response = controller
         .analyze(
-            "0111",
+            PRIME_MARKET_CODE,
             20,
             Some(30),
-            "standard",
+            PRESET_NAME,
             NaiveDate::from_ymd_opt(2025, 8, 27).unwrap(),
         )
         .await?;

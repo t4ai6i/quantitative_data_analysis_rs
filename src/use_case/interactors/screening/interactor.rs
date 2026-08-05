@@ -50,6 +50,7 @@ where
 {
     async fn handle(&self, input: input::Screening) -> Result<ScreeningResults> {
         validate_input(&input)?;
+        let policy = ValueScorePolicy::try_from(input.preset_name.trim())?;
 
         let query = QueryScreener::new(
             self.company_repository,
@@ -81,8 +82,7 @@ where
                 continue;
             };
 
-            let (score_breakdown, total_score, reasons) =
-                score_value(&metrics, ValueScorePolicy::standard());
+            let (score_breakdown, total_score, reasons) = score_value(&metrics, policy);
             if total_score < min_total_score {
                 continue;
             }
@@ -126,12 +126,6 @@ fn validate_input(input: &input::Screening) -> Result<()> {
     }
     if input.preset_name.trim().is_empty() {
         bail!("preset name is empty");
-    }
-    if input.preset_name.trim() != "standard" {
-        bail!(
-            "unsupported preset name. preset_name: {}",
-            input.preset_name
-        );
     }
     Ok(())
 }
