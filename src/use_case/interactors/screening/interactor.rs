@@ -50,6 +50,7 @@ where
 {
     async fn handle(&self, input: input::Screening) -> Result<ScreeningResults> {
         validate_input(&input)?;
+
         let policy = ValueScorePolicy::try_from(input.preset_name.trim())?;
 
         let query = QueryScreener::new(
@@ -67,7 +68,11 @@ where
         let mut results = Vec::new();
 
         for candidate in candidates.into_iter().filter_map(Result::ok) {
-            if candidate.market != input.market {
+            if !input
+                .markets
+                .iter()
+                .any(|market| market == &candidate.market)
+            {
                 continue;
             }
 
@@ -118,8 +123,11 @@ where
 }
 
 fn validate_input(input: &input::Screening) -> Result<()> {
-    if input.market.trim().is_empty() {
-        bail!("market is empty");
+    if input.markets.is_empty() {
+        bail!("markets is empty");
+    }
+    if input.markets.iter().any(|market| market.trim().is_empty()) {
+        bail!("markets contains empty value");
     }
     if input.limit == 0 {
         bail!("limit must be greater than 0");

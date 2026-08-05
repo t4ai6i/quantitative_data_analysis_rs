@@ -6,8 +6,13 @@ use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_c
 
 const PRESET_NAME: &str = "standard";
 
-// J-Quants eq-master の市場区分コード: 0111 = プライム
+// J-Quants eq-master の市場区分コード
 const PRIME_MARKET_CODE: &str = "0111";
+const STANDARD_MARKET_CODE: &str = "0112";
+const GROWTH_MARKET_CODE: &str = "0113";
+
+const DEFAULT_MARKETS: &[&str] = &[PRIME_MARKET_CODE, STANDARD_MARKET_CODE, GROWTH_MARKET_CODE];
+
 const CSV: &[u8] = include_bytes!("../assets/companies.csv");
 
 #[tokio::main]
@@ -33,7 +38,10 @@ async fn main() -> Result<()> {
     let controller = controller::screening::controller::Screening::new(&interactor, &presenter);
     let response = controller
         .analyze(
-            PRIME_MARKET_CODE,
+            DEFAULT_MARKETS
+                .iter()
+                .map(|market| (*market).to_string())
+                .collect(),
             20,
             Some(30),
             PRESET_NAME,

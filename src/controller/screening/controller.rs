@@ -22,13 +22,14 @@ where
 
     pub async fn analyze(
         &self,
-        market: impl Into<String>,
+        markets: Vec<String>,
         limit: usize,
         min_total_score: Option<usize>,
         preset_name: impl Into<String>,
         target_date: NaiveDate,
     ) -> Result<response::Screening> {
-        let input = input::Screening::new(market, limit, min_total_score, preset_name, target_date);
+        let input =
+            input::Screening::new(markets, limit, min_total_score, preset_name, target_date);
         let output = self.interactor.handle(input).await?;
         let output = output::Screening::new(output);
         let response = self.presenter.handle(output)?;
