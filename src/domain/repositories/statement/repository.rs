@@ -11,6 +11,13 @@ pub trait Statement {
         query: &queries::get_statement::Query<'a>,
     ) -> Result<model::RowStatement>;
 
+    async fn get_row_full_year_statements<'a>(
+        &self,
+        query: &queries::get_statement::Query<'a>,
+    ) -> Result<Vec<model::RowStatement>> {
+        Ok(vec![self.get_row_statement(query).await?])
+    }
+
     async fn get_statement<'a>(
         &self,
         query: &queries::get_statement::Query<'a>,

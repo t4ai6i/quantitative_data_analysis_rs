@@ -23,13 +23,13 @@ async fn main() -> Result<()> {
     // JQUANTS APIを用いたレポジトリの準備
     let jquants_api = infrastructure::jquants_api::JQuantsAPI::new(token)?;
     // DSVを用いたレポジトリの準備
-    let dsv = infrastructure::dsv::Dsv::<csv::Structure>::new(false, bytes::Bytes::from(CSV));
+    // let dsv = infrastructure::dsv::Dsv::<csv::Structure>::new(false, bytes::Bytes::from(CSV));
 
     // Screeningのユースケース実行気を準備
     let interactor = use_case::interactors::screening::interactor::Screening::new(
         &jquants_api,
         &jquants_api,
-        &dsv,
+        &jquants_api,
     );
 
     // PresenterはJSON型で結果を出力
@@ -51,7 +51,26 @@ async fn main() -> Result<()> {
 
     let presenter::presenters::screening::response::Screening::JSON { screening_results } =
         response;
-    println!("{:#?}", screening_results);
+
+    println!("preset: {}", PRESET_NAME);
+    println!("markets: {}", DEFAULT_MARKETS.join(", "));
+    println!("hits: {}", screening_results.0.len());
+
+    for result in screening_results.0 {
+        println!(
+            "#{:02}, {} {} {} total={:.2} per={:?} pbr={:?} dividend={:?} roe={:?} sales_growth={:?}",
+            result.rank,
+            result.candidate.code,
+            result.candidate.market,
+            result.candidate.company_name,
+            result.total_score,
+            result.score_breakdown.per,
+            result.score_breakdown.pbr,
+            result.score_breakdown.dividend_yield,
+            result.score_breakdown.roe,
+            result.score_breakdown.sales_growth,
+        );
+    }
 
     Ok(())
 }

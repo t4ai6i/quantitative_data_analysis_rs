@@ -16,31 +16,40 @@ fn select_latest_full_year_statement(rows: &[Value]) -> Option<&Value> {
         .find_last(|value| value["CurPerType"].as_str().is_some_and(|s| s == "FY"))
 }
 
+fn select_full_year_statements(rows: &[Value]) -> Vec<&Value> {
+    rows.par_iter()
+        .filter(|value| value["CurPerType"].as_str().is_some_and(|s| s == "FY"))
+        .collect()
+}
+
+async fn fetch_statement_rows(api_key: &str, code: &str) -> anyhow::Result<Vec<Value>> {
+    let qs = QueryString::dynamic().with_value("code", code);
+    let url = format!("{FINS_SUMMARY_URL}{qs}");
+    let response = Client::new()
+        .get(url)
+        .header("x-api-key", api_key.to_string())
+        .send()
+        .await?;
+    let response = response.json::<Value>().await?;
+    let Some(rows) = response["data"].as_array() else {
+        bail!("response[data] in response not found. code: {}", code);
+    };
+    if rows.is_empty() {
+        bail!("response[data] in response is empty array. code: {}", code);
+    }
+
+    Ok(rows.to_vec())
+}
+
 #[async_trait]
 impl repository::Statement for JQuantsAPI {
     async fn get_row_statement<'a>(
         &self,
         query: &queries::get_statement::Query<'a>,
     ) -> anyhow::Result<model::RowStatement> {
-        let qs = QueryString::dynamic().with_value("code", query.code);
-        let url = format!("{FINS_SUMMARY_URL}{qs}");
-        let response = Client::new()
-            .get(url)
-            .header("x-api-key", self.api_key.to_string())
-            .send()
-            .await?;
-        let response = &response.json::<Value>().await?;
-        let Some(response) = response["data"].as_array() else {
-            bail!("response[data] in response not found. code: {}", query.code);
-        };
-        if response.is_empty() {
-            bail!(
-                "response[data] in response is empty array. code: {}",
-                query.code
-            );
-        }
-        let selected = select_latest_full_year_statement(response).with_context(|| {
-            let serialized = serde_json::to_string_pretty(response)
+        let rows = fetch_statement_rows(&self.api_key, query.code).await?;
+        let selected = select_latest_full_year_statement(&rows).with_context(|| {
+            let serialized = serde_json::to_string_pretty(&rows)
                 .unwrap_or_else(|_| "<failed to serialize response>".to_string());
             format!(
                 "FY statement not found in response[data]. code: {}\n{}",
@@ -53,6 +62,33 @@ impl repository::Statement for JQuantsAPI {
             value: selected,
         }))
     }
+
+    async fn get_row_full_year_statements<'a>(
+        &self,
+        query: &queries::get_statement::Query<'a>,
+    ) -> anyhow::Result<Vec<model::RowStatement>> {
+        let rows = fetch_statement_rows(&self.api_key, query.code).await?;
+        let selected = select_full_year_statements(&rows);
+        if selected.is_empty() {
+            let serialized = serde_json::to_string_pretty(&rows)
+                .unwrap_or_else(|_| "<failed to serialize response>".to_string());
+            bail!(
+                "FY statement not found in response[data]. code: {}\n{}",
+                query.code,
+                serialized
+            );
+        }
+
+        Ok(selected
+            .into_iter()
+            .map(|value| {
+                model::RowStatement::from(Response {
+                    code: query.code.to_string(),
+                    value,
+                })
+            })
+            .collect())
+    }
 }
 
 #[cfg(test)]
@@ -61,7 +97,9 @@ mod tests {
     use crate::domain::repositories::statement::queries;
     use crate::domain::repositories::statement::repository::Statement;
     use crate::infrastructure::jquants_api::JQuantsAPI;
-    use crate::infrastructure::repositories::statement::jquants_api::select_latest_full_year_statement;
+    use crate::infrastructure::repositories::statement::jquants_api::{
+        select_full_year_statements, select_latest_full_year_statement,
+    };
     use crate::shared::jquants_api::setup::Setup;
     use anyhow::Result;
     use chrono::NaiveDate;
@@ -87,6 +125,19 @@ mod tests {
         ];
         let selected = select_latest_full_year_statement(&rows);
         assert!(selected.is_none());
+    }
+
+    #[test]
+    fn select_full_year_statements_returns_all_fy() {
+        let rows = vec![
+            json!({"CurPerType": "Q1", "id": 1}),
+            json!({"CurPerType": "FY", "id": 2}),
+            json!({"CurPerType": "FY", "id": 3}),
+        ];
+        let selected = select_full_year_statements(&rows);
+        assert_eq!(selected.len(), 2);
+        assert_eq!(selected[0]["id"], 2);
+        assert_eq!(selected[1]["id"], 3);
     }
 
     #[tokio::test]

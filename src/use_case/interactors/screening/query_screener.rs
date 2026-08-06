@@ -2,9 +2,11 @@ use crate::domain::models::company::model::Company;
 use crate::domain::models::screening::model::{
     ScreeningCandidate, ScreeningMetrics, normalize_code,
 };
+use crate::domain::models::statement::model::RowStatement;
 use crate::domain::models::stock::model::BaseDatePrices;
 use crate::domain::repositories::stock::queries::get_stocks_by_date;
 use crate::domain::repositories::{company, statement, stock};
+use crate::shared::float::validate_value;
 use anyhow::Result;
 use chrono::NaiveDate;
 use std::collections::HashMap;
@@ -57,8 +59,31 @@ where
     ) -> Result<ScreeningMetrics> {
         let query = statement::queries::get_statement::Query { code };
         let statement = self.statement_repository.get_statement(&query).await?;
-        Ok(ScreeningMetrics::from((adj_close, &statement)))
+        let row_statements = self
+            .statement_repository
+            .get_row_full_year_statements(&query)
+            .await?;
+
+        let mut metrics = ScreeningMetrics::from((adj_close, &statement));
+        metrics.sales_growth = calculate_sales_growth(&row_statements);
+        Ok(metrics)
     }
+}
+
+fn calculate_sales_growth(statements: &[RowStatement]) -> Option<f64> {
+    let mut values = statements
+        .iter()
+        .filter_map(|statement| Some((statement.disclosed_date?, statement.net_sales?)))
+        .collect::<Vec<_>>();
+    values.sort_by(|left, right| right.0.cmp(&left.0));
+
+    let (_, current_sales) = values.first().copied()?;
+    let (_, previous_sales) = values.get(1).copied()?;
+    if previous_sales <= 0.0 {
+        return None;
+    }
+
+    validate_value((current_sales - previous_sales) / previous_sales * 100.0)
 }
 
 fn build_price_map(prices: &BaseDatePrices) -> Result<HashMap<String, Option<f64>>> {
@@ -91,12 +116,14 @@ fn build_universe_candidates(companies: &[Company]) -> Vec<Result<ScreeningCandi
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
 
     use crate::domain::models::company::model::Company;
+    use crate::domain::models::statement::model::RowStatement;
     use crate::domain::models::stock::model::{BaseDatePrice, BaseDatePrices};
     use crate::use_case::interactors::screening::query_screener::{
-        build_price_map, build_universe_candidates,
+        build_price_map, build_universe_candidates, calculate_sales_growth,
     };
 
     #[test]
@@ -244,5 +271,60 @@ mod tests {
 
         let map = build_price_map(&prices).unwrap();
         assert_eq!(map.get("1301"), Some(&Some(1000.0)));
+    }
+
+    #[test]
+    fn calculate_sales_growth_uses_latest_two_disclosed_rows() {
+        let rows = vec![
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
+                net_sales: Some(1_200.0),
+                ..Default::default()
+            },
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2024, 5, 10),
+                net_sales: Some(1_000.0),
+                ..Default::default()
+            },
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2023, 5, 12),
+                net_sales: Some(800.0),
+                ..Default::default()
+            },
+        ];
+
+        let actual = calculate_sales_growth(&rows);
+        assert_eq!(actual, Some(20.0));
+    }
+
+    #[test]
+    fn calculate_sales_growth_returns_none_when_previous_non_positive() {
+        let rows = vec![
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
+                net_sales: Some(1_200.0),
+                ..Default::default()
+            },
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2024, 5, 10),
+                net_sales: Some(0.0),
+                ..Default::default()
+            },
+        ];
+
+        let actual = calculate_sales_growth(&rows);
+        assert_eq!(actual, None);
+    }
+
+    #[test]
+    fn calculate_sales_growth_returns_none_when_less_than_two_rows() {
+        let rows = vec![RowStatement {
+            disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
+            net_sales: Some(1_200.0),
+            ..Default::default()
+        }];
+
+        let actual = calculate_sales_growth(&rows);
+        assert_eq!(actual, None);
     }
 }

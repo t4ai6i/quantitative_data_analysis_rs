@@ -22,7 +22,8 @@ impl From<Response<'_>> for model::RowStatement {
         let disclosed_date = NaiveDate::from_json_string_value("DiscDate", value).ok();
         let eps = parse_f64("EPS");
         let bps = parse_f64("BPS");
-        let annual_dividend_forecast = parse_f64("FDivAnn");
+        // FY は DivAnn（実績配当）に入ることが多く、FDivAnn（予想配当）は空の場合がある。
+        let annual_dividend_forecast = parse_f64("DivAnn").or_else(|| parse_f64("FDivAnn"));
         let net_sales = parse_f64("Sales");
         let opp = parse_f64("OP");
         let orp = parse_f64("OdP");
@@ -43,5 +44,42 @@ impl From<Response<'_>> for model::RowStatement {
             equity,
             total_assets,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Response;
+    use crate::domain::models::statement::model;
+    use serde_json::json;
+
+    #[test]
+    fn annual_dividend_forecast_uses_divann_first() {
+        let value = json!({
+            "DiscDate": "2026-05-09",
+            "DivAnn": "170.0",
+            "FDivAnn": ""
+        });
+
+        let actual = model::RowStatement::from(Response {
+            code: "8473".to_string(),
+            value: &value,
+        });
+        assert_eq!(actual.annual_dividend_forecast, Some(170.0));
+    }
+
+    #[test]
+    fn annual_dividend_forecast_falls_back_to_fdivann() {
+        let value = json!({
+            "DiscDate": "2024-02-07",
+            "DivAnn": "",
+            "FDivAnn": "160.0"
+        });
+
+        let actual = model::RowStatement::from(Response {
+            code: "8473".to_string(),
+            value: &value,
+        });
+        assert_eq!(actual.annual_dividend_forecast, Some(160.0));
     }
 }
