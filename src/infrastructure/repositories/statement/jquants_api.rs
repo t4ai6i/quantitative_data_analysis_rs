@@ -16,6 +16,24 @@ fn select_latest_full_year_statement(rows: &[Value]) -> Option<&Value> {
         .find_last(|value| value["CurPerType"].as_str().is_some_and(|s| s == "FY"))
 }
 
+fn has_usable_financial_values(row: &Value) -> bool {
+    ["Sales", "EPS"].iter().any(|key| {
+        row[*key]
+            .as_str()
+            .is_some_and(|value| !value.trim().is_empty())
+    })
+}
+
+fn select_preferred_full_year_statement(rows: &[Value]) -> Option<&Value> {
+    rows.par_iter()
+        .rev()
+        .find_first(|value| {
+            value["CurPerType"].as_str().is_some_and(|s| s == "FY")
+                && has_usable_financial_values(value)
+        })
+        .or_else(|| select_latest_full_year_statement(rows))
+}
+
 fn select_full_year_statements(rows: &[Value]) -> Vec<&Value> {
     rows.par_iter()
         .filter(|value| value["CurPerType"].as_str().is_some_and(|s| s == "FY"))
@@ -48,7 +66,7 @@ impl repository::Statement for JQuantsAPI {
         query: &queries::get_statement::Query<'a>,
     ) -> anyhow::Result<model::RowStatement> {
         let rows = fetch_statement_rows(&self.api_key, query.code).await?;
-        let selected = select_latest_full_year_statement(&rows).with_context(|| {
+        let selected = select_preferred_full_year_statement(&rows).with_context(|| {
             let serialized = serde_json::to_string_pretty(&rows)
                 .unwrap_or_else(|_| "<failed to serialize response>".to_string());
             format!(
@@ -99,6 +117,7 @@ mod tests {
     use crate::infrastructure::jquants_api::JQuantsAPI;
     use crate::infrastructure::repositories::statement::jquants_api::{
         select_full_year_statements, select_latest_full_year_statement,
+        select_preferred_full_year_statement,
     };
     use crate::shared::jquants_api::setup::Setup;
     use anyhow::Result;
@@ -138,6 +157,30 @@ mod tests {
         assert_eq!(selected.len(), 2);
         assert_eq!(selected[0]["id"], 2);
         assert_eq!(selected[1]["id"], 3);
+    }
+
+    #[test]
+    fn select_preferred_full_year_statement_prefers_latest_usable_fy() {
+        let rows = vec![
+            json!({"CurPerType": "FY", "id": 1, "Sales": "1000", "EPS": "10"}),
+            json!({"CurPerType": "FY", "id": 2, "Sales": "", "EPS": ""}),
+            json!({"CurPerType": "FY", "id": 3, "Sales": "1200", "EPS": "12"}),
+            json!({"CurPerType": "FY", "id": 4, "Sales": "", "EPS": ""}),
+        ];
+        let selected =
+            select_preferred_full_year_statement(&rows).expect("record should be selected");
+        assert_eq!(selected["id"], 3);
+    }
+
+    #[test]
+    fn select_preferred_full_year_statement_falls_back_to_latest_fy() {
+        let rows = vec![
+            json!({"CurPerType": "FY", "id": 1, "Sales": "", "EPS": ""}),
+            json!({"CurPerType": "FY", "id": 2, "Sales": "", "EPS": ""}),
+        ];
+        let selected =
+            select_preferred_full_year_statement(&rows).expect("record should be selected");
+        assert_eq!(selected["id"], 2);
     }
 
     #[tokio::test]

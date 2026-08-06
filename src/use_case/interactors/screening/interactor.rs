@@ -80,11 +80,13 @@ where
                 continue;
             };
 
-            let Ok(metrics) = query
+            let metrics = match query
                 .fetch_financial_metrics(candidate.code.as_str(), adj_close)
                 .await
-            else {
-                continue;
+            {
+                Ok(metrics) => metrics,
+                Err(error) if is_statement_unavailable_error(&error) => continue,
+                Err(error) => return Err(error),
             };
 
             let (score_breakdown, total_score, reasons) = score_value(&metrics, policy);
@@ -122,6 +124,13 @@ where
     }
 }
 
+fn is_statement_unavailable_error(error: &anyhow::Error) -> bool {
+    let message = error.to_string();
+    message.contains("response[data] in response not found")
+        || message.contains("response[data] in response is empty array")
+        || message.contains("FY statement not found in response[data]")
+}
+
 fn validate_input(input: &input::Screening) -> Result<()> {
     if input.markets.is_empty() {
         bail!("markets is empty");
@@ -136,4 +145,31 @@ fn validate_input(input: &input::Screening) -> Result<()> {
         bail!("preset name is empty");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::anyhow;
+
+    use super::is_statement_unavailable_error;
+
+    #[test]
+    fn unavailable_statement_errors_are_classified() {
+        assert!(is_statement_unavailable_error(&anyhow!(
+            "response[data] in response not found. code: 1305"
+        )));
+        assert!(is_statement_unavailable_error(&anyhow!(
+            "response[data] in response is empty array. code: 1308"
+        )));
+        assert!(is_statement_unavailable_error(&anyhow!(
+            "FY statement not found in response[data]. code: 9999"
+        )));
+    }
+
+    #[test]
+    fn non_unavailable_errors_are_not_classified() {
+        assert!(!is_statement_unavailable_error(&anyhow!(
+            "network timeout while calling fins summary"
+        )));
+    }
 }
