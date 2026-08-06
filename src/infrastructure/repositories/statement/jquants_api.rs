@@ -50,7 +50,13 @@ async fn fetch_statement_rows(api_key: &str, code: &str) -> anyhow::Result<Vec<V
         .await?;
     let response = response.json::<Value>().await?;
     let Some(rows) = response["data"].as_array() else {
-        bail!("response[data] in response not found. code: {}", code);
+        let serialized = serde_json::to_string(&response)
+            .unwrap_or_else(|_| "<failed to serialize>".to_string());
+        bail!(
+            "response[data] in response not found. code: {} response: {}",
+            code,
+            serialized
+        );
     };
     if rows.is_empty() {
         bail!("response[data] in response is empty array. code: {}", code);
@@ -210,8 +216,7 @@ mod tests {
             .await
             .unwrap_err()
             .to_string();
-        let expected = "response[data] in response not found. code: ????";
-        assert_eq!(actual, expected);
+        assert!(actual.contains("response[data] in response not found. code: ????"));
 
         let query = queries::get_statement::Query { code: "2995" };
         let actual = repository

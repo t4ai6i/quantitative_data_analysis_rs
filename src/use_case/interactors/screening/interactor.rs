@@ -126,9 +126,17 @@ where
 
 fn is_statement_unavailable_error(error: &anyhow::Error) -> bool {
     let message = error.to_string();
+    if is_rate_limited_error_message(&message) {
+        return false;
+    }
+
     message.contains("response[data] in response not found")
         || message.contains("response[data] in response is empty array")
         || message.contains("FY statement not found in response[data]")
+}
+
+fn is_rate_limited_error_message(message: &str) -> bool {
+    message.contains("Rate limit exceeded")
 }
 
 fn validate_input(input: &input::Screening) -> Result<()> {
@@ -151,7 +159,7 @@ fn validate_input(input: &input::Screening) -> Result<()> {
 mod tests {
     use anyhow::anyhow;
 
-    use super::is_statement_unavailable_error;
+    use super::{is_rate_limited_error_message, is_statement_unavailable_error};
 
     #[test]
     fn unavailable_statement_errors_are_classified() {
@@ -171,5 +179,14 @@ mod tests {
         assert!(!is_statement_unavailable_error(&anyhow!(
             "network timeout while calling fins summary"
         )));
+    }
+
+    #[test]
+    fn rate_limited_response_is_not_classified_as_unavailable_data() {
+        let error = anyhow!(
+            "response[data] in response not found. code: 139A response: {{\"message\":\"Rate limit exceeded. Please try again later.\"}}"
+        );
+        assert!(!is_statement_unavailable_error(&error));
+        assert!(is_rate_limited_error_message(&error.to_string()));
     }
 }
