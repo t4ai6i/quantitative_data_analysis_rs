@@ -1,6 +1,5 @@
 use anyhow::Result;
 use chrono::NaiveDate;
-use quantitative_data_analysis_rs::infrastructure::repositories::company::structures::internal::csv;
 use quantitative_data_analysis_rs::shared::jquants_api::setup::Setup;
 use quantitative_data_analysis_rs::{controller, infrastructure, presenter, use_case};
 
@@ -13,7 +12,7 @@ const GROWTH_MARKET_CODE: &str = "0113";
 
 const DEFAULT_MARKETS: &[&str] = &[PRIME_MARKET_CODE, STANDARD_MARKET_CODE, GROWTH_MARKET_CODE];
 
-const CSV: &[u8] = include_bytes!("../assets/companies.csv");
+// const CSV: &[u8] = include_bytes!("../assets/companies.csv");
 
 #[tokio::main]
 async fn main() -> Result<()> {

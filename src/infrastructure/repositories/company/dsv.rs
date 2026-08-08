@@ -64,7 +64,7 @@ mod tests {
             code: Some("13080".to_string()),
             name: Some("Listed Index Fund TOPIX".to_string()),
             market: Some("0109".to_string()),
-            product_category: None,
+            product_category: Some("014".to_string()),
             symbol: Some("13080.0109".to_string()),
         };
         assert_eq!(actual, expected);

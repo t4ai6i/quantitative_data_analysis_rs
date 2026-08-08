@@ -15,7 +15,7 @@ pub struct Company {
     pub code: String,
     pub name: String,
     pub market: String,
-    pub product_category: Option<String>,
+    pub product_category: String,
     pub symbol: String,
 }
 
@@ -37,7 +37,8 @@ impl TryFrom<RowCompany> for Company {
             code: code.ok_or_else(|| anyhow::anyhow!("code is None"))?,
             name: name.ok_or_else(|| anyhow::anyhow!("name is None"))?,
             market: market.ok_or_else(|| anyhow::anyhow!("market is None"))?,
-            product_category,
+            product_category: product_category
+                .ok_or_else(|| anyhow::anyhow!("product_category is None"))?,
             symbol: symbol.ok_or_else(|| anyhow::anyhow!("symbol is None"))?,
         })
     }

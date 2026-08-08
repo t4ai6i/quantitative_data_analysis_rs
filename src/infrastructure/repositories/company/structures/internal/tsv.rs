@@ -9,11 +9,38 @@ pub struct Structure {
     pub code: String,
     pub name: String,
     pub market: String,
+    pub product_category: String,
+    pub symbol: String,
+}
+
+impl From<model::Company> for Structure {
+    fn from(value: model::Company) -> Self {
+        let model::Company {
+            code,
+            name,
+            market,
+            product_category,
+            symbol,
+        } = value;
+        Self {
+            code,
+            name,
+            market,
+            product_category,
+            symbol,
+        }
+    }
 }
 
 impl From<Structure> for model::RowCompany {
     fn from(value: Structure) -> Self {
-        let Structure { code, name, market } = value;
+        let Structure {
+            code,
+            name,
+            market,
+            product_category,
+            ..
+        } = value;
         let symbol = Symbol::try_from((code.as_str(), market.as_str()))
             .ok()
             .map(|symbol| symbol.to_string());
@@ -21,7 +48,7 @@ impl From<Structure> for model::RowCompany {
             code: Some(code),
             name: Some(name),
             market: Some(market),
-            product_category: None,
+            product_category: Some(product_category),
             symbol,
         }
     }
@@ -46,6 +73,6 @@ mod tests {
     #[test]
     fn vec_company_test() {
         let vec_company = Structure::from_slice::<false>(COMPANIES);
-        assert_eq!(vec_company.len(), 4412);
+        assert_eq!(vec_company.len(), 4444);
     }
 }

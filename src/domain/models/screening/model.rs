@@ -18,13 +18,7 @@ impl TryFrom<&Company> for ScreeningCandidate {
     type Error = anyhow::Error;
 
     fn try_from(company: &Company) -> Result<Self, Self::Error> {
-        let Some(product_category) = company.product_category.as_ref() else {
-            bail!(
-                "Missing product_category in company. code: {}",
-                company.code
-            );
-        };
-        if product_category != DOMESTIC_STOCK_PRODUCT_CATEGORY {
+        if company.product_category.as_str() != DOMESTIC_STOCK_PRODUCT_CATEGORY {
             bail!("Not domestic stock. code: {}", company.code);
         }
         if !is_target_market(company.market.as_str()) {
