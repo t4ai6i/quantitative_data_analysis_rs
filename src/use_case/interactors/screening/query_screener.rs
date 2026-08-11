@@ -73,12 +73,33 @@ where
 fn calculate_sales_growth(statements: &[RowStatement]) -> Option<f64> {
     let mut values = statements
         .iter()
-        .filter_map(|statement| Some((statement.disclosed_date?, statement.net_sales?)))
+        .filter_map(|statement| {
+            Some((
+                statement
+                    .current_fiscal_year_end_date
+                    .unwrap_or(statement.disclosed_date?),
+                statement.disclosed_date?,
+                statement.net_sales?,
+            ))
+        })
         .collect::<Vec<_>>();
-    values.sort_by(|left, right| right.0.cmp(&left.0));
+    values.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| right.1.cmp(&left.1)));
 
-    let (_, current_sales) = values.first().copied()?;
-    let (_, previous_sales) = values.get(1).copied()?;
+    let latest_by_fiscal_year = values.into_iter().fold(
+        Vec::<(chrono::NaiveDate, f64)>::new(),
+        |mut acc, (fiscal_year_end, _, sales)| {
+            if acc
+                .last()
+                .is_none_or(|(last_fiscal_year_end, _)| *last_fiscal_year_end != fiscal_year_end)
+            {
+                acc.push((fiscal_year_end, sales));
+            }
+            acc
+        },
+    );
+
+    let (_, current_sales) = latest_by_fiscal_year.first().copied()?;
+    let (_, previous_sales) = latest_by_fiscal_year.get(1).copied()?;
     if previous_sales <= 0.0 {
         return None;
     }
@@ -274,20 +295,23 @@ mod tests {
     }
 
     #[test]
-    fn calculate_sales_growth_uses_latest_two_disclosed_rows() {
+    fn calculate_sales_growth_uses_latest_two_fiscal_years() {
         let rows = vec![
             RowStatement {
                 disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2025, 3, 31),
                 net_sales: Some(1_200.0),
                 ..Default::default()
             },
             RowStatement {
                 disclosed_date: NaiveDate::from_ymd_opt(2024, 5, 10),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2024, 3, 31),
                 net_sales: Some(1_000.0),
                 ..Default::default()
             },
             RowStatement {
                 disclosed_date: NaiveDate::from_ymd_opt(2023, 5, 12),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2023, 3, 31),
                 net_sales: Some(800.0),
                 ..Default::default()
             },
@@ -302,11 +326,13 @@ mod tests {
         let rows = vec![
             RowStatement {
                 disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2025, 3, 31),
                 net_sales: Some(1_200.0),
                 ..Default::default()
             },
             RowStatement {
                 disclosed_date: NaiveDate::from_ymd_opt(2024, 5, 10),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2024, 3, 31),
                 net_sales: Some(0.0),
                 ..Default::default()
             },
@@ -320,11 +346,60 @@ mod tests {
     fn calculate_sales_growth_returns_none_when_less_than_two_rows() {
         let rows = vec![RowStatement {
             disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 9),
+            current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2025, 3, 31),
             net_sales: Some(1_200.0),
             ..Default::default()
         }];
 
         let actual = calculate_sales_growth(&rows);
         assert_eq!(actual, None);
+    }
+
+    #[test]
+    fn calculate_sales_growth_ignores_later_revisions_in_same_fiscal_year() {
+        let rows = vec![
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2026, 6, 5),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2026, 3, 31),
+                net_sales: Some(4_505_720.0),
+                ..Default::default()
+            },
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2026, 5, 13),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2026, 3, 31),
+                net_sales: Some(4_505_720.0),
+                ..Default::default()
+            },
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2025, 5, 8),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2025, 3, 31),
+                net_sales: Some(4_581_551.0),
+                ..Default::default()
+            },
+        ];
+
+        let actual = calculate_sales_growth(&rows);
+        assert_eq!(actual, Some(-1.6551381835539973));
+    }
+
+    #[test]
+    fn calculate_sales_growth_keeps_distinct_fiscal_years_with_same_disclosed_year() {
+        let rows = vec![
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2022, 11, 14),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2023, 3, 31),
+                net_sales: Some(5_778_772.0),
+                ..Default::default()
+            },
+            RowStatement {
+                disclosed_date: NaiveDate::from_ymd_opt(2022, 5, 13),
+                current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2022, 3, 31),
+                net_sales: Some(3_963_091.0),
+                ..Default::default()
+            },
+        ];
+
+        let actual = calculate_sales_growth(&rows);
+        assert_eq!(actual, Some(45.81476933030304));
     }
 }

@@ -9,6 +9,8 @@ use crate::shared::float::validate_value;
 pub struct Structure {
     pub code: String,
     pub disclosed_date: NaiveDate,
+    #[serde(default)]
+    pub current_fiscal_year_end_date: Option<NaiveDate>,
     pub bps: Option<f64>,
     pub eps: Option<f64>,
     pub annual_dividend_forecast: Option<f64>,
@@ -25,6 +27,7 @@ impl From<model::Statement> for Structure {
         let model::Statement {
             code,
             disclosed_date,
+            current_fiscal_year_end_date,
             bps,
             eps,
             annual_dividend_forecast,
@@ -39,6 +42,7 @@ impl From<model::Statement> for Structure {
         Self {
             code,
             disclosed_date,
+            current_fiscal_year_end_date,
             bps: validate_value(bps),
             eps: validate_value(eps),
             annual_dividend_forecast: validate_value(annual_dividend_forecast),
@@ -57,6 +61,7 @@ impl From<Structure> for model::RowStatement {
         let Structure {
             code,
             disclosed_date,
+            current_fiscal_year_end_date,
             bps,
             eps,
             annual_dividend_forecast,
@@ -71,6 +76,7 @@ impl From<Structure> for model::RowStatement {
         Self {
             code,
             disclosed_date: Some(disclosed_date),
+            current_fiscal_year_end_date,
             bps,
             eps,
             annual_dividend_forecast,

@@ -20,6 +20,7 @@ impl From<Response<'_>> for model::RowStatement {
         };
 
         let disclosed_date = NaiveDate::from_json_string_value("DiscDate", value).ok();
+        let current_fiscal_year_end_date = NaiveDate::from_json_string_value("CurFYEn", value).ok();
         let eps = parse_f64("EPS");
         let bps = parse_f64("BPS");
         // FY は DivAnn（実績配当）に入ることが多く、FDivAnn（予想配当）は空の場合がある。
@@ -34,6 +35,7 @@ impl From<Response<'_>> for model::RowStatement {
         Self {
             code,
             disclosed_date,
+            current_fiscal_year_end_date,
             eps,
             bps,
             annual_dividend_forecast,
@@ -51,12 +53,14 @@ impl From<Response<'_>> for model::RowStatement {
 mod tests {
     use super::Response;
     use crate::domain::models::statement::model;
+    use chrono::NaiveDate;
     use serde_json::json;
 
     #[test]
     fn annual_dividend_forecast_uses_divann_first() {
         let value = json!({
             "DiscDate": "2026-05-09",
+            "CurFYEn": "2026-03-31",
             "DivAnn": "170.0",
             "FDivAnn": ""
         });
@@ -65,6 +69,10 @@ mod tests {
             code: "8473".to_string(),
             value: &value,
         });
+        assert_eq!(
+            actual.current_fiscal_year_end_date,
+            NaiveDate::from_ymd_opt(2026, 3, 31)
+        );
         assert_eq!(actual.annual_dividend_forecast, Some(170.0));
     }
 
@@ -72,6 +80,7 @@ mod tests {
     fn annual_dividend_forecast_falls_back_to_fdivann() {
         let value = json!({
             "DiscDate": "2024-02-07",
+            "CurFYEn": "2024-03-31",
             "DivAnn": "",
             "FDivAnn": "160.0"
         });
@@ -80,6 +89,10 @@ mod tests {
             code: "8473".to_string(),
             value: &value,
         });
+        assert_eq!(
+            actual.current_fiscal_year_end_date,
+            NaiveDate::from_ymd_opt(2024, 3, 31)
+        );
         assert_eq!(actual.annual_dividend_forecast, Some(160.0));
     }
 }

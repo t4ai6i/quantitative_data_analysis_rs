@@ -43,6 +43,7 @@ use chrono::NaiveDate;
 pub struct Statement {
     pub code: String,
     pub disclosed_date: NaiveDate,
+    pub current_fiscal_year_end_date: Option<NaiveDate>,
     pub bps: f64,
     pub eps: f64,
     pub annual_dividend_forecast: f64,
@@ -58,6 +59,7 @@ pub struct Statement {
 pub struct RowStatement {
     pub code: String,
     pub disclosed_date: Option<NaiveDate>,
+    pub current_fiscal_year_end_date: Option<NaiveDate>,
     pub bps: Option<f64>,
     pub eps: Option<f64>,
     pub annual_dividend_forecast: Option<f64>,
@@ -76,6 +78,7 @@ impl TryFrom<RowStatement> for Statement {
         let RowStatement {
             code,
             disclosed_date,
+            current_fiscal_year_end_date,
             bps,
             eps,
             annual_dividend_forecast,
@@ -90,6 +93,7 @@ impl TryFrom<RowStatement> for Statement {
         Ok(Self {
             disclosed_date: disclosed_date
                 .ok_or_else(|| anyhow::anyhow!("code:{} disclosed_date is None", code.as_str()))?,
+            current_fiscal_year_end_date,
             bps: bps.unwrap_or(f64::NAN),
             eps: eps.unwrap_or(f64::NAN),
             annual_dividend_forecast: annual_dividend_forecast.unwrap_or(f64::NAN),

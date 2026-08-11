@@ -48,22 +48,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use bytes::Bytes;
-    use chrono::NaiveDate;
-
-    use crate::domain::models::statement::model;
     use crate::domain::repositories::statement::queries;
     use crate::domain::repositories::statement::repository::Statement;
     use crate::infrastructure::dsv::Dsv;
     use crate::infrastructure::repositories::statement::structures::internal::tsv;
+    use bytes::Bytes;
 
+    const SAMPLE_CODE: &str = "7203";
     const TSV: &[u8] = include_bytes!("../../../../assets/statements.tsv");
 
     #[tokio::test]
     async fn get_row_full_year_statements_returns_sorted_by_disclosed_date_desc()
     -> anyhow::Result<()> {
         let repository = Dsv::<tsv::Structure>::new(true, Bytes::from(TSV));
-        let query = queries::get_statement::Query { code: "8473" };
+        let query = queries::get_statement::Query { code: SAMPLE_CODE };
         let actual = repository.get_row_full_year_statements(&query).await?;
         assert!(!actual.is_empty());
         for i in 0..actual.len() - 1 {
@@ -77,7 +75,7 @@ mod tests {
     #[tokio::test]
     async fn get_row_statement_returns_latest() -> anyhow::Result<()> {
         let repository = Dsv::<tsv::Structure>::new(true, Bytes::from(TSV));
-        let query = queries::get_statement::Query { code: "8473" };
+        let query = queries::get_statement::Query { code: SAMPLE_CODE };
         let actual = repository.get_row_statement(&query).await?;
         let all_statements = repository.get_row_full_year_statements(&query).await?;
         assert_eq!(actual.code, all_statements[0].code);
