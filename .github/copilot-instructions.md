@@ -73,3 +73,20 @@ When using AI coding assistants, reference the guidelines file:
 - **testing-practices**
     - テスト実行順序・品質ゲート・ログ共有手順
     - 📄 `.github/skills/testing-practices/SKILL.md`
+
+## J-Quants レート制限と責務分離（常時参照）
+
+- 最終確認日: 2026-08-12
+- 公式仕様: `https://jpx-jquants.com/ja/spec/rate-limits`
+- Lightプラン上限: **60リクエスト/分**
+- エンドポイント個別上限（プラン非依存）:
+  - `/v2/fins/summary`: 60/分
+  - `/v2/fins/details`: 60/分
+- 超過時: HTTP `429 Too Many Requests`
+- 大幅超過継続時: 約5分の全面遮断が発生し得る
+
+### 本プロジェクトの責務
+
+- 本プロジェクトはライブラリとして他プロジェクトから利用される前提。
+- レート制御（上限制御、スロットリング、バックオフ、再試行ポリシー）は**呼び出し側プロジェクトの責務**とする。
+- 本ライブラリ側は429等の結果を明示的に返し、呼び出し側が制御判断できる設計を優先する。

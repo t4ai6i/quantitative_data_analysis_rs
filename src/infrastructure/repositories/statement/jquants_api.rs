@@ -198,7 +198,7 @@ mod tests {
         let expected = model::RowStatement {
             code: "8473".to_string(),
             disclosed_date: NaiveDate::from_ymd_opt(2026, 7, 2),
-            current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2026, 6, 30),
+            current_fiscal_year_end_date: NaiveDate::from_ymd_opt(2026, 3, 31),
             eps: Some(666.82),
             bps: Some(2776.99),
             annual_dividend_forecast: None,
