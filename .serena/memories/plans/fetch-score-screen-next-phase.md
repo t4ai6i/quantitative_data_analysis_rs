@@ -32,15 +32,20 @@
 - `latest_statement`: Option<FetchLatestStatement>
 - `full_year_sales`: Vec<FetchFullYearSales>
 
-### ScoreStocks
+### ScoreStock (1件分・単数形)
 
 - `code`: String
 - `scored_at`: DateTime<Utc>
 - `status`: ScoreStatus (ok | failed | skipped)
 - `error_type`: Option<ScoreErrorType>
-- `input_ref`: { fetch_file: String }
 - `score`: Option<{ total: f64, components: Map<String, ComponentDetail> }>
     - ComponentDetail: { raw: f64, normalized: f64, points: f64 }
+
+**設計注釈:**
+- input_ref は削除（元ファイル情報不要）
+- 入力は1件分の FetchScoringData のみ
+- interactor は I/O なし、計算のみ
+- ファイル読み込みは repository 層で実施、examples が1件ずつループ呼び出し
 
 ### ScreenStocks
 

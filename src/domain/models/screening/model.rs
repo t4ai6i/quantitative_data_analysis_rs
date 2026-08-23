@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use crate::domain::models::company::model::Company;
 use crate::domain::models::statement::model::Statement;
 use crate::shared::float::validate_value;
@@ -93,6 +95,21 @@ pub struct ScoreBreakdown {
     pub dividend_yield: Option<f64>,
     pub roe: Option<f64>,
     pub sales_growth: Option<f64>,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+pub struct ScoreComponentDetail {
+    pub raw: f64,
+    pub normalized: f64,
+    pub points: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ScoreComputation {
+    pub breakdown: ScoreBreakdown,
+    pub total_score: f64,
+    pub components: BTreeMap<String, ScoreComponentDetail>,
+    pub reasons: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]

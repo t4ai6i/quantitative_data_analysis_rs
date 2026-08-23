@@ -2,11 +2,10 @@ use crate::domain::models::company::model::Company;
 use crate::domain::models::screening::model::{
     ScreeningCandidate, ScreeningMetrics, normalize_code,
 };
-use crate::domain::models::statement::model::RowStatement;
+use crate::domain::models::screening::scoring::calculate_sales_growth;
 use crate::domain::models::stock::model::BaseDatePrices;
 use crate::domain::repositories::stock::queries::get_stocks_by_date;
 use crate::domain::repositories::{company, statement, stock};
-use crate::shared::float::validate_value;
 use anyhow::Result;
 use chrono::NaiveDate;
 use std::collections::HashMap;
@@ -70,43 +69,6 @@ where
     }
 }
 
-fn calculate_sales_growth(statements: &[RowStatement]) -> Option<f64> {
-    let mut values = statements
-        .iter()
-        .filter_map(|statement| {
-            Some((
-                statement
-                    .current_fiscal_year_end_date
-                    .unwrap_or(statement.disclosed_date?),
-                statement.disclosed_date?,
-                statement.net_sales?,
-            ))
-        })
-        .collect::<Vec<_>>();
-    values.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| right.1.cmp(&left.1)));
-
-    let latest_by_fiscal_year = values.into_iter().fold(
-        Vec::<(chrono::NaiveDate, f64)>::new(),
-        |mut acc, (fiscal_year_end, _, sales)| {
-            if acc
-                .last()
-                .is_none_or(|(last_fiscal_year_end, _)| *last_fiscal_year_end != fiscal_year_end)
-            {
-                acc.push((fiscal_year_end, sales));
-            }
-            acc
-        },
-    );
-
-    let (_, current_sales) = latest_by_fiscal_year.first().copied()?;
-    let (_, previous_sales) = latest_by_fiscal_year.get(1).copied()?;
-    if previous_sales <= 0.0 {
-        return None;
-    }
-
-    validate_value((current_sales - previous_sales) / previous_sales * 100.0)
-}
-
 fn build_price_map(prices: &BaseDatePrices) -> Result<HashMap<String, Option<f64>>> {
     let mut price_map = HashMap::new();
 
@@ -141,10 +103,11 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::domain::models::company::model::Company;
+    use crate::domain::models::screening::scoring::calculate_sales_growth;
     use crate::domain::models::statement::model::RowStatement;
     use crate::domain::models::stock::model::{BaseDatePrice, BaseDatePrices};
     use crate::use_case::interactors::screening::query_screener::{
-        build_price_map, build_universe_candidates, calculate_sales_growth,
+        build_price_map, build_universe_candidates,
     };
 
     #[test]
