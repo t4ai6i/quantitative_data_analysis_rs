@@ -47,7 +47,7 @@ where
         let Ok(company) = company else {
             return Ok(output::FetchScoringData {
                 code: input.code,
-                fetched_at: chrono::Utc::now(),
+                fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyCompany),
                 company: None,
@@ -66,7 +66,7 @@ where
         let Ok(stock) = stock else {
             return Ok(output::FetchScoringData {
                 code: input.code,
-                fetched_at: chrono::Utc::now(),
+                fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyStock),
                 company: Some(output::FetchCompany::from(company)),
@@ -83,7 +83,7 @@ where
         let Ok(latest_statement) = latest_statement else {
             return Ok(output::FetchScoringData {
                 code: input.code,
-                fetched_at: chrono::Utc::now(),
+                fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyStatement),
                 company: Some(output::FetchCompany::from(company)),
@@ -111,7 +111,7 @@ where
 
         Ok(output::FetchScoringData {
             code: input.code,
-            fetched_at: chrono::Utc::now(),
+            fetched_at: input.fetched_at,
             status: output::FetchStatus::Ok,
             error_type: None,
             company: Some(output::FetchCompany::from(company)),

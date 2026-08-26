@@ -25,7 +25,7 @@ impl ScoreStock {
 impl use_case::ScoreStock for ScoreStock {
     async fn handle(&self, input: input::ScoreStock) -> Result<output::ScoreStock> {
         let code = input.data.code.clone();
-        let scored_at = Utc::now();
+        let scored_at = input.scored_at;
 
         if input.data.status != FetchStatus::Ok {
             return Ok(skipped_result(code, scored_at));
@@ -149,7 +149,7 @@ fn skipped_result(code: String, scored_at: DateTime<Utc>) -> output::ScoreStock 
 
 #[cfg(test)]
 mod tests {
-    use chrono::{NaiveDate, Utc};
+    use chrono::{DateTime, NaiveDate, Utc};
 
     use crate::presenter::presenters::fetch_scoring_data::output::{
         FetchCompany, FetchFullYearSales, FetchLatestStatement, FetchPrice, FetchScoringData,
@@ -163,10 +163,15 @@ mod tests {
 
     use super::ScoreStock;
 
+    // テスト用の固定時刻定数
+    fn fixed_now() -> DateTime<Utc> {
+        "2026-08-26T18:00:00Z".parse().unwrap()
+    }
+
     fn build_ok_data() -> FetchScoringData {
         FetchScoringData {
             code: "1301".to_string(),
-            fetched_at: Utc::now(),
+            fetched_at: fixed_now(),
             status: FetchStatus::Ok,
             error_type: None,
             company: Some(FetchCompany {
@@ -204,7 +209,7 @@ mod tests {
     }
 
     fn build_input(data: FetchScoringData, preset_name: &str) -> input::ScoreStock {
-        input::ScoreStock::new(data, preset_name)
+        input::ScoreStock::new(data, preset_name, fixed_now())
     }
 
     #[tokio::test]
