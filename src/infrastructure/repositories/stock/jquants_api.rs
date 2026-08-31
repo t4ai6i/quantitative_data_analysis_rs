@@ -5,36 +5,12 @@ use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::stock::structures::jquants_api::Response;
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
-use chrono::{Days, NaiveDate};
+use chrono::NaiveDate;
 use query_string_builder::QueryString;
 use rayon::prelude::*;
 use reqwest::Client;
 
 const EQUITIES_BARS_DAILY_URL: &str = "https://api.jquants.com/v2/equities/bars/daily";
-const MARKETS_CALENDAR_URL: &str = "https://api.jquants.com/v2/markets/calendar";
-const CALENDAR_LOOKBACK_DAYS: u64 = 31;
-
-fn is_trading_day(hol_div: &str) -> bool {
-    matches!(hol_div, "1" | "2")
-}
-
-fn select_previous_business_day(
-    rows: &[serde_json::Value],
-    target_date: NaiveDate,
-) -> Option<NaiveDate> {
-    rows.iter()
-        .filter_map(|row| {
-            let date_str = row["Date"].as_str()?;
-            let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
-            let hol_div = row["HolDiv"].as_str()?;
-            if is_trading_day(hol_div) && date <= target_date {
-                Some(date)
-            } else {
-                None
-            }
-        })
-        .max()
-}
 
 fn build_daily_bars_query(
     code: Option<&str>,
@@ -65,8 +41,7 @@ fn build_daily_bars_query(
 #[async_trait]
 impl repository::Stock for JQuantsAPI {
     async fn get_base_date_prices(&self, query: &Query) -> Result<model::BaseDatePrices> {
-        let effective_date = self.resolve_effective_date(query.date).await?;
-        self.fetch_base_date_prices(effective_date).await
+        self.fetch_base_date_prices(query.date).await
     }
 
     async fn get_row_stock<'a>(
@@ -115,8 +90,7 @@ impl repository::Stock for JQuantsAPI {
     }
 
     async fn get_vec_row_stock_by_date(&self, query: &Query) -> Result<Vec<model::RowStock>> {
-        let effective_date = self.resolve_effective_date(query.date).await?;
-        self.fetch_daily_bars(None, Some(effective_date), None, None, None)
+        self.fetch_daily_bars(None, Some(query.date), None, None, None)
             .await
     }
 }
@@ -164,30 +138,6 @@ impl JQuantsAPI {
             }
         }
         Ok(model::BaseDatePrices(rows))
-    }
-
-    async fn resolve_effective_date(&self, target_date: NaiveDate) -> Result<NaiveDate> {
-        let from_date = target_date
-            .checked_sub_days(Days::new(CALENDAR_LOOKBACK_DAYS))
-            .unwrap_or(target_date);
-        let qs = QueryString::dynamic()
-            .with_value("from", from_date.to_string())
-            .with_value("to", target_date.to_string());
-        let markets_calendar_url = format!("{MARKETS_CALENDAR_URL}{qs}");
-        let response = Client::new()
-            .get(markets_calendar_url)
-            .header("x-api-key", self.api_key.to_string())
-            .send()
-            .await?;
-        let response = response.json::<serde_json::Value>().await?;
-        let Some(rows) = response["data"].as_array() else {
-            bail!(
-                "response[data] in response not found. target_date = {}",
-                target_date
-            );
-        };
-        select_previous_business_day(rows, target_date)
-            .with_context(|| format!("Trading day not found for target_date: {}", target_date))
     }
 
     async fn fetch_daily_bars(

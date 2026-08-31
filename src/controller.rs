@@ -1,3 +1,4 @@
+pub mod fetch_scoring_data;
 pub mod financial_indicator;
 pub mod financial_indicator_summary;
 pub mod screening;

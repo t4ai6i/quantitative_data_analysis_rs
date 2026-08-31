@@ -2,6 +2,7 @@
 
 examples/**/*.svg
 examples/**/*.tsv
+examples/**/*.json
 
 /target
 

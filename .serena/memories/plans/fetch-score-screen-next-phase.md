@@ -85,7 +85,7 @@
 
 ### Phase 5: examples 3本
 
-- 5-1. `examples/fetch_scoring_data.rs`（sample_companies.tsv + JQUANTS API 実呼び出し・前回結果削除）
+- 5-1. `examples/fetch_scoring_data.rs`（companies.tsv + JQUANTS API 実呼び出し・前回結果削除）
 - 5-2. `examples/score_stocks.rs`（前回結果削除・status!=ok を stderr 出力）
 - 5-3. `examples/screen_stocks.rs`（前回結果削除・top 10 stdout + summary stderr）
 

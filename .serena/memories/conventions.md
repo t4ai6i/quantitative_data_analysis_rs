@@ -6,3 +6,5 @@
   - `.github/skills/coding-standards/SKILL.md`
   - `.github/skills/testing-practices/SKILL.md`
 - Keep changes surgical; avoid unrelated refactor around touched code.
+- When deciding where to place filtering/query logic, use this rule of thumb: if the logic depends on the data source, keep it in the repository; if it is a pure transformation/filter on already-loaded domain data, keep it in the model.
+- Prefer `model` methods for in-memory collection filtering/selection, and repository methods for I/O-backed retrieval or source-specific query semantics.
