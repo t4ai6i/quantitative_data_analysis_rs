@@ -1,7 +1,5 @@
 use crate::domain::models::screening::model::{ScoreComponentDetail, ScreeningMetrics};
-use crate::domain::models::screening::scoring::{
-    ValueScorePolicy, calculate_sales_growth, score_with_details,
-};
+use crate::domain::models::screening::scoring::{calculate_sales_growth, score_with_details};
 use crate::domain::models::statement::model::RowStatement;
 use crate::presenter::presenters::fetch_scoring_data::output::{FetchScoringData, FetchStatus};
 use crate::presenter::presenters::score_stock::output;
@@ -31,19 +29,8 @@ impl use_case::ScoreStock for ScoreStock {
             return Ok(skipped_result(code, scored_at));
         }
 
-        let policy = match ValueScorePolicy::try_from(input.preset_name.as_str()) {
-            Ok(policy) => policy,
-            Err(_) => {
-                return Ok(failed_result(
-                    code,
-                    scored_at,
-                    output::ScoreErrorType::InvalidInput,
-                ));
-            }
-        };
-
         let metrics = build_metrics(&input.data);
-        let computation = score_with_details(&metrics, policy);
+        let computation = score_with_details(&metrics, input.policy);
 
         Ok(output::ScoreStock {
             code,
@@ -123,20 +110,6 @@ fn to_presenter_components(
         .collect()
 }
 
-fn failed_result(
-    code: String,
-    scored_at: DateTime<Utc>,
-    error_type: output::ScoreErrorType,
-) -> output::ScoreStock {
-    output::ScoreStock {
-        code,
-        scored_at,
-        status: output::ScoreStatus::Failed,
-        error_type: Some(error_type),
-        score: None,
-    }
-}
-
 fn skipped_result(code: String, scored_at: DateTime<Utc>) -> output::ScoreStock {
     output::ScoreStock {
         code,
@@ -151,6 +124,7 @@ fn skipped_result(code: String, scored_at: DateTime<Utc>) -> output::ScoreStock 
 mod tests {
     use chrono::{DateTime, NaiveDate, Utc};
 
+    use crate::domain::models::screening::scoring::ValueScorePolicy;
     use crate::presenter::presenters::fetch_scoring_data::output::{
         FetchCompany, FetchFullYearSales, FetchLatestStatement, FetchPrice, FetchScoringData,
         FetchStatus,
@@ -208,8 +182,8 @@ mod tests {
         }
     }
 
-    fn build_input(data: FetchScoringData, preset_name: &str) -> input::ScoreStock {
-        input::ScoreStock::new(data, preset_name, fixed_now())
+    fn build_input(data: FetchScoringData, policy: ValueScorePolicy) -> input::ScoreStock {
+        input::ScoreStock::new(data, policy, fixed_now())
     }
 
     #[tokio::test]
@@ -218,7 +192,7 @@ mod tests {
         data.status = FetchStatus::EmptyData;
 
         let actual = ScoreStock::new()
-            .handle(build_input(data, "standard"))
+            .handle(build_input(data, ValueScorePolicy::standard()))
             .await
             .unwrap();
 
@@ -229,22 +203,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn handle_returns_failed_when_preset_name_is_invalid() {
-        let actual = ScoreStock::new()
-            .handle(build_input(build_ok_data(), "unknown"))
-            .await
-            .unwrap();
-
-        assert_eq!(actual.code, "1301");
-        assert_eq!(actual.status, ScoreStatus::Failed);
-        assert_eq!(actual.error_type, Some(ScoreErrorType::InvalidInput));
-        assert!(actual.score.is_none());
-    }
-
-    #[tokio::test]
     async fn handle_returns_ok_and_maps_components() {
         let actual = ScoreStock::new()
-            .handle(build_input(build_ok_data(), "standard"))
+            .handle(build_input(build_ok_data(), ValueScorePolicy::standard()))
             .await
             .unwrap();
 

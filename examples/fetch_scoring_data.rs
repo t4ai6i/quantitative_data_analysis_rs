@@ -44,15 +44,15 @@ async fn main() -> Result<()> {
     let presenter = presenter::presenters::fetch_scoring_data::presenter::Json;
     let controller =
         controller::fetch_scoring_data::controller::FetchScoringData::new(&interactor, &presenter);
+
     let now = Utc::now();
     let target_date = now.with_timezone(&Tokyo).date_naive();
     let query = Query { target_date };
-    let target_date = jquants_api.get_previous_business_day(&query).await?;
-    let fetched_at = now;
+    let previous_business_day = jquants_api.get_previous_business_day(&query).await?;
 
     let companies = company_tsv.get_companies().await?;
-    let companies = companies.domestic_prime_standard_growth_companies();
-    let total = companies.len();
+    let target_companies = companies.domestic_prime_standard_growth_companies();
+    let total = target_companies.len();
     let started_at = Instant::now();
     let mut success_count = 0usize;
     let mut failure_count = 0usize;
@@ -60,9 +60,9 @@ async fn main() -> Result<()> {
     let mut partial_file = File::create(PARTIAL_OUTPUT_PATH)?;
     partial_file.write_all(b"[\n")?;
 
-    for (index, company) in companies.into_iter().enumerate() {
+    for (index, company) in target_companies.into_iter().enumerate() {
         let result = controller
-            .fetch(company.code, target_date, fetched_at)
+            .fetch(company.code, previous_business_day, Utc::now())
             .await?;
 
         if index > 0 {

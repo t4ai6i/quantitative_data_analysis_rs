@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FetchScoringData {
     pub code: String,
     pub fetched_at: DateTime<Utc>,
@@ -13,7 +13,7 @@ pub struct FetchScoringData {
     pub full_year_sales: Vec<FetchFullYearSales>,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FetchStatus {
     Ok,
@@ -23,7 +23,7 @@ pub enum FetchStatus {
     Skipped,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FetchErrorType {
     RateLimited,
@@ -34,18 +34,18 @@ pub enum FetchErrorType {
     RepositoryError,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FetchCompany {
     pub name: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct FetchPrice {
     pub date: Option<NaiveDate>,
     pub adj_close: Option<f64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct FetchLatestStatement {
     pub disclosed_date: Option<NaiveDate>,
     pub eps: Option<f64>,
@@ -55,7 +55,7 @@ pub struct FetchLatestStatement {
     pub equity: Option<f64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct FetchFullYearSales {
     pub current_fiscal_year_end_date: Option<NaiveDate>,
     pub disclosed_date: Option<NaiveDate>,
