@@ -245,7 +245,7 @@ mod tests {
         let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
         let query = queries::get_stocks_by_date::Query {
-            date: NaiveDate::from_ymd_opt(2025, 8, 30).unwrap(),
+            date: NaiveDate::from_ymd_opt(2026, 8, 28).unwrap(),
         };
 
         let actual = repository.get_base_date_prices(&query).await?;

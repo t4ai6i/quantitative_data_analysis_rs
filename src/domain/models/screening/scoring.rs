@@ -1,8 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::domain::models::screening::model::{
-    ScoreBreakdown, ScoreComponentDetail, ScoreComputation, ScreeningMetrics,
-};
+use crate::domain::models::screening::model::ScoreComponentDetail;
 use crate::domain::models::statement::model::RowStatement;
 use crate::shared::float::validate_value;
 use anyhow::bail;
@@ -168,6 +166,52 @@ pub fn normalized_score(value: f64, range: ScoreRange, direction: ScoreDirection
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ScreeningMetrics {
+    pub per: Option<f64>,
+    pub pbr: Option<f64>,
+    pub dividend_yield: Option<f64>,
+    pub roe: Option<f64>,
+    pub sales_growth: Option<f64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ScoreBreakdown {
+    pub per: Option<f64>,
+    pub pbr: Option<f64>,
+    pub dividend_yield: Option<f64>,
+    pub roe: Option<f64>,
+    pub sales_growth: Option<f64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ScoreComputation {
+    pub breakdown: ScoreBreakdown,
+    pub total_score: f64,
+    pub components: BTreeMap<String, ScoreComponentDetail>,
+    pub reasons: Vec<String>,
+}
+
+impl From<(f64, &crate::domain::models::statement::model::Statement)> for ScreeningMetrics {
+    fn from(
+        (price, statement): (f64, &crate::domain::models::statement::model::Statement),
+    ) -> Self {
+        let per = validate_value(price / statement.eps);
+        let pbr = validate_value(price / statement.bps);
+        let dividend_yield =
+            validate_value(statement.annual_dividend_forecast / price).map(|v| v * 100.0);
+        let roe = validate_value(statement.profit / statement.equity).map(|v| v * 100.0);
+
+        Self {
+            per,
+            pbr,
+            dividend_yield,
+            roe,
+            sales_growth: None,
+        }
+    }
+}
+
 /// 欠損値は 0 点化し、理由に `missing:<metric>` を残す。
 pub fn score_value(
     metrics: &ScreeningMetrics,
@@ -186,7 +230,6 @@ pub fn score_with_details(
     policy: ValueScorePolicy,
 ) -> ScoreComputation {
     let mut reasons = Vec::new();
-
     let per = score_or_missing(
         metrics.per,
         policy.per,
@@ -312,7 +355,7 @@ pub fn calculate_sales_growth(statements: &[RowStatement]) -> Option<f64> {
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use crate::domain::models::screening::model::ScreeningMetrics;
+    use crate::domain::models::screening::scoring::ScreeningMetrics;
     use crate::domain::models::screening::scoring::{
         ScoreDirection, ScoreRange, ValueScorePolicy, calculate_sales_growth, normalized_score,
         score_value, score_with_details,

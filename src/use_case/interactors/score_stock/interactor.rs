@@ -1,5 +1,7 @@
-use crate::domain::models::screening::model::{ScoreComponentDetail, ScreeningMetrics};
-use crate::domain::models::screening::scoring::{calculate_sales_growth, score_with_details};
+use crate::domain::models::screening::model::ScoreComponentDetail;
+use crate::domain::models::screening::scoring::{
+    ScreeningMetrics, calculate_sales_growth, score_with_details,
+};
 use crate::domain::models::statement::model::RowStatement;
 use crate::presenter::presenters::fetch_scoring_data::output::{FetchScoringData, FetchStatus};
 use crate::presenter::presenters::score_stock::output;
