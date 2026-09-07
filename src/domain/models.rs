@@ -11,7 +11,7 @@ pub mod high_low_direction_signal;
 pub mod macd;
 pub mod ms_es;
 pub mod rsi;
-pub mod screening;
+pub mod scoring;
 pub mod sma;
 pub mod statement;
 pub mod stock;

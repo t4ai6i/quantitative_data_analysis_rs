@@ -1,4 +1,4 @@
-use crate::domain::models::screening::scoring::ValueScorePolicy;
+use crate::domain::models::scoring::model::ValueScorePolicy;
 use crate::presenter::presenters::fetch_scoring_data::output::FetchScoringData;
 use crate::presenter::presenters::score_stock::{presenter, response};
 use crate::use_case::interfaces::score_stock::{input, use_case};

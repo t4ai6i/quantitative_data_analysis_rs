@@ -1,9 +1,15 @@
 use std::collections::BTreeMap;
 
-use crate::domain::models::screening::model::ScoreComponentDetail;
 use crate::domain::models::statement::model::RowStatement;
 use crate::shared::float::validate_value;
 use anyhow::bail;
+
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+pub struct ScoreComponentDetail {
+    pub raw: f64,
+    pub normalized: f64,
+    pub points: f64,
+}
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct ScoreRange {
@@ -167,7 +173,7 @@ pub fn normalized_score(value: f64, range: ScoreRange, direction: ScoreDirection
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct ScreeningMetrics {
+pub struct ScoringMetrics {
     pub per: Option<f64>,
     pub pbr: Option<f64>,
     pub dividend_yield: Option<f64>,
@@ -192,43 +198,7 @@ pub struct ScoreComputation {
     pub reasons: Vec<String>,
 }
 
-impl From<(f64, &crate::domain::models::statement::model::Statement)> for ScreeningMetrics {
-    fn from(
-        (price, statement): (f64, &crate::domain::models::statement::model::Statement),
-    ) -> Self {
-        let per = validate_value(price / statement.eps);
-        let pbr = validate_value(price / statement.bps);
-        let dividend_yield =
-            validate_value(statement.annual_dividend_forecast / price).map(|v| v * 100.0);
-        let roe = validate_value(statement.profit / statement.equity).map(|v| v * 100.0);
-
-        Self {
-            per,
-            pbr,
-            dividend_yield,
-            roe,
-            sales_growth: None,
-        }
-    }
-}
-
-/// 欠損値は 0 点化し、理由に `missing:<metric>` を残す。
-pub fn score_value(
-    metrics: &ScreeningMetrics,
-    policy: ValueScorePolicy,
-) -> (ScoreBreakdown, f64, Vec<String>) {
-    let computation = score_with_details(metrics, policy);
-    (
-        computation.breakdown,
-        computation.total_score,
-        computation.reasons,
-    )
-}
-
-pub fn score_with_details(
-    metrics: &ScreeningMetrics,
-    policy: ValueScorePolicy,
-) -> ScoreComputation {
+pub fn score_with_details(metrics: &ScoringMetrics, policy: ValueScorePolicy) -> ScoreComputation {
     let mut reasons = Vec::new();
     let per = score_or_missing(
         metrics.per,
@@ -355,10 +325,10 @@ pub fn calculate_sales_growth(statements: &[RowStatement]) -> Option<f64> {
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use crate::domain::models::screening::scoring::ScreeningMetrics;
-    use crate::domain::models::screening::scoring::{
+    use crate::domain::models::scoring::model::ScoringMetrics;
+    use crate::domain::models::scoring::model::{
         ScoreDirection, ScoreRange, ValueScorePolicy, calculate_sales_growth, normalized_score,
-        score_value, score_with_details,
+        score_with_details,
     };
     use crate::domain::models::statement::model::RowStatement;
     use chrono::NaiveDate;
@@ -408,8 +378,8 @@ mod tests {
     }
 
     #[test]
-    fn score_value_fits_in_100_points_with_standard_policy() {
-        let metrics = ScreeningMetrics {
+    fn score_with_details_fits_in_100_points_with_standard_policy() {
+        let metrics = ScoringMetrics {
             per: Some(5.0),
             pbr: Some(0.5),
             dividend_yield: Some(5.0),
@@ -417,19 +387,19 @@ mod tests {
             sales_growth: Some(15.0),
         };
 
-        let (breakdown, total, reasons) = score_value(&metrics, ValueScorePolicy::standard());
-        assert_eq!(breakdown.per, Some(20.0));
-        assert_eq!(breakdown.pbr, Some(20.0));
-        assert_eq!(breakdown.dividend_yield, Some(20.0));
-        assert_eq!(breakdown.roe, Some(20.0));
-        assert_eq!(breakdown.sales_growth, Some(20.0));
-        assert_eq!(total, 100.0);
-        assert!(reasons.is_empty());
+        let actual = score_with_details(&metrics, ValueScorePolicy::standard());
+        assert_eq!(actual.breakdown.per, Some(20.0));
+        assert_eq!(actual.breakdown.pbr, Some(20.0));
+        assert_eq!(actual.breakdown.dividend_yield, Some(20.0));
+        assert_eq!(actual.breakdown.roe, Some(20.0));
+        assert_eq!(actual.breakdown.sales_growth, Some(20.0));
+        assert_eq!(actual.total_score, 100.0);
+        assert!(actual.reasons.is_empty());
     }
 
     #[test]
     fn score_with_details_returns_component_breakdown() {
-        let metrics = ScreeningMetrics {
+        let metrics = ScoringMetrics {
             per: Some(5.0),
             pbr: Some(0.5),
             dividend_yield: Some(5.0),
@@ -447,8 +417,8 @@ mod tests {
     }
 
     #[test]
-    fn score_value_sets_zero_and_reason_for_missing_metric() {
-        let metrics = ScreeningMetrics {
+    fn score_with_details_sets_zero_and_reason_for_missing_metric() {
+        let metrics = ScoringMetrics {
             per: Some(10.0),
             pbr: Some(1.0),
             dividend_yield: None,
@@ -456,9 +426,9 @@ mod tests {
             sales_growth: Some(5.0),
         };
 
-        let (breakdown, _total, reasons) = score_value(&metrics, ValueScorePolicy::standard());
-        assert_eq!(breakdown.dividend_yield, Some(0.0));
-        assert_eq!(reasons, vec!["missing:dividend".to_string()]);
+        let actual = score_with_details(&metrics, ValueScorePolicy::standard());
+        assert_eq!(actual.breakdown.dividend_yield, Some(0.0));
+        assert_eq!(actual.reasons, vec!["missing:dividend".to_string()]);
     }
 
     #[test]
@@ -485,7 +455,7 @@ mod tests {
 
     #[test]
     fn dividend_preset_scores_higher_for_high_dividend_yield() {
-        let high_dividend = ScreeningMetrics {
+        let high_dividend = ScoringMetrics {
             per: Some(15.0),
             pbr: Some(1.0),
             dividend_yield: Some(6.0),
@@ -493,8 +463,10 @@ mod tests {
             sales_growth: Some(5.0),
         };
 
-        let (_, standard_score, _) = score_value(&high_dividend, ValueScorePolicy::standard());
-        let (_, dividend_score, _) = score_value(&high_dividend, ValueScorePolicy::dividend());
+        let standard_score =
+            score_with_details(&high_dividend, ValueScorePolicy::standard()).total_score;
+        let dividend_score =
+            score_with_details(&high_dividend, ValueScorePolicy::dividend()).total_score;
 
         // dividend プリセットは配当利回りの重みが大きいので高配当銘柄は高スコアになる
         assert!(
@@ -505,7 +477,7 @@ mod tests {
 
     #[test]
     fn value_preset_scores_higher_for_low_per_pbr() {
-        let low_per_pbr = ScreeningMetrics {
+        let low_per_pbr = ScoringMetrics {
             per: Some(3.0),
             pbr: Some(0.3),
             dividend_yield: Some(2.0),
@@ -513,8 +485,9 @@ mod tests {
             sales_growth: Some(5.0),
         };
 
-        let (_, standard_score, _) = score_value(&low_per_pbr, ValueScorePolicy::standard());
-        let (_, value_score, _) = score_value(&low_per_pbr, ValueScorePolicy::value());
+        let standard_score =
+            score_with_details(&low_per_pbr, ValueScorePolicy::standard()).total_score;
+        let value_score = score_with_details(&low_per_pbr, ValueScorePolicy::value()).total_score;
 
         // value プリセットは PER/PBR の重みが大きいのでバリュー銘柄は高スコアになる
         assert!(
@@ -525,14 +498,14 @@ mod tests {
 
     #[test]
     fn standard_policy_is_backward_compatible() {
-        let perfect = ScreeningMetrics {
+        let perfect = ScoringMetrics {
             per: Some(5.0),
             pbr: Some(0.5),
             dividend_yield: Some(5.0),
             roe: Some(20.0),
             sales_growth: Some(15.0),
         };
-        let (_, total, _) = score_value(&perfect, ValueScorePolicy::standard());
+        let total = score_with_details(&perfect, ValueScorePolicy::standard()).total_score;
         assert_eq!(total, 100.0);
     }
 

@@ -1,4 +1,4 @@
-use crate::domain::models::screening::scoring::ValueScorePolicy;
+use crate::domain::models::scoring::model::ValueScorePolicy;
 use crate::presenter::presenters::fetch_scoring_data::output::FetchScoringData;
 use chrono::{DateTime, Utc};
 

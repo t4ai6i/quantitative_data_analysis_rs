@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
-use quantitative_data_analysis_rs::domain::models::screening::scoring::ValueScorePolicy;
+use quantitative_data_analysis_rs::domain::models::scoring::model::ValueScorePolicy;
 use quantitative_data_analysis_rs::presenter::presenters::fetch_scoring_data::output::FetchScoringData;
 use quantitative_data_analysis_rs::presenter::presenters::score_stock::output::ScoreStatus;
 use quantitative_data_analysis_rs::use_case::interactors::score_stock::interactor;

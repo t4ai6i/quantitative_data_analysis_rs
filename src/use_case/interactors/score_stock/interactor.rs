@@ -1,6 +1,5 @@
-use crate::domain::models::screening::model::ScoreComponentDetail;
-use crate::domain::models::screening::scoring::{
-    ScreeningMetrics, calculate_sales_growth, score_with_details,
+use crate::domain::models::scoring::model::{
+    ScoreComponentDetail, ScoringMetrics, calculate_sales_growth, score_with_details,
 };
 use crate::domain::models::statement::model::RowStatement;
 use crate::presenter::presenters::fetch_scoring_data::output::{FetchScoringData, FetchStatus};
@@ -47,7 +46,7 @@ impl use_case::ScoreStock for ScoreStock {
     }
 }
 
-fn build_metrics(data: &FetchScoringData) -> ScreeningMetrics {
+fn build_metrics(data: &FetchScoringData) -> ScoringMetrics {
     let price = data.price.as_ref().and_then(|price| price.adj_close);
     let latest_statement = data.latest_statement.as_ref();
     let per = match (price, latest_statement.and_then(|statement| statement.eps)) {
@@ -74,7 +73,7 @@ fn build_metrics(data: &FetchScoringData) -> ScreeningMetrics {
     };
     let sales_growth = calculate_sales_growth(&build_row_statements(data));
 
-    ScreeningMetrics {
+    ScoringMetrics {
         per,
         pbr,
         dividend_yield,
@@ -126,7 +125,7 @@ fn skipped_result(code: String, scored_at: DateTime<Utc>) -> output::ScoreStock 
 mod tests {
     use chrono::{DateTime, NaiveDate, Utc};
 
-    use crate::domain::models::screening::scoring::ValueScorePolicy;
+    use crate::domain::models::scoring::model::ValueScorePolicy;
     use crate::presenter::presenters::fetch_scoring_data::output::{
         FetchCompany, FetchFullYearSales, FetchLatestStatement, FetchPrice, FetchScoringData,
         FetchStatus,
