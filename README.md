@@ -15,14 +15,14 @@ and Yahoo Finance to produce chart-ready signals, summaries, and SVG/JSON artifa
 - CSV/TSV ingestion utilities plus ready-made assets under `assets/` accelerate local experiments.
 - Async-first data access via J-Quants REST API and Yahoo Finance scrapers, including helper tooling for token rotation.
 
-## Screening policy
+## Scoring universe policy
 
-When building screening candidates from J-Quants master data, we use both `ProdCat` and `Mkt`:
+When selecting the universe for scoring from J-Quants master data, we use both `ProdCat` and `Mkt`:
 
 - `ProdCat = "011"` keeps ordinary domestic listed stocks and excludes ETFs, REITs, foreign stocks, and similar products.
 - `Mkt = "0111" | "0112" | "0113"` keeps only Prime, Standard, and Growth listings and excludes other market codes such as TOKYO PRO MARKET.
 
-This keeps the screening set focused on the common Japanese equity universe used by the analyzers.
+This keeps the scoring candidate set focused on the common Japanese equity universe used by the analyzers.
 
 ## Installation
 
