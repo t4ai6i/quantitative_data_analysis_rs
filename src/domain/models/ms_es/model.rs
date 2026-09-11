@@ -1,5 +1,8 @@
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
+use crate::domain::models::technical_analysis::model::{
+    DirectionType, EventFact, EventKind, EventParams,
+};
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
 
@@ -92,6 +95,41 @@ impl From<&[CandleStick]> for MsEses {
     }
 }
 
+pub struct MsEsEvents<'a> {
+    pub mseses: &'a MsEses,
+}
+
+impl From<MsEsEvents<'_>> for Vec<EventFact> {
+    fn from(value: MsEsEvents<'_>) -> Self {
+        let MsEsEvents { mseses } = value;
+
+        mseses
+            .iter()
+            .filter_map(|signal| match signal.r#type {
+                BuySellSignalType::Buy => Some(EventFact {
+                    kind: EventKind::MorningStar,
+                    occurred_at: signal.date,
+                    direction: DirectionType::Uptrend,
+                    event_params: EventParams::Pattern {
+                        pattern_name: EventKind::MorningStar,
+                        window_bars: 3,
+                    },
+                }),
+                BuySellSignalType::Sell => Some(EventFact {
+                    kind: EventKind::EveningStar,
+                    occurred_at: signal.date,
+                    direction: DirectionType::Downtrend,
+                    event_params: EventParams::Pattern {
+                        pattern_name: EventKind::EveningStar,
+                        window_bars: 3,
+                    },
+                }),
+                BuySellSignalType::Stay => None,
+            })
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::domain::models::buy_sell_signal::model::BuySellSignalType::Sell;
@@ -100,7 +138,8 @@ mod tests {
         BuySellSignalType::{Buy, Stay},
     };
     use crate::domain::models::candle_stick::model::CandleSticks;
-    use crate::domain::models::ms_es::model::MsEses;
+    use crate::domain::models::ms_es::model::{MsEsEvents, MsEses};
+    use crate::domain::models::technical_analysis::model::{EventFact, EventKind};
     use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::dsv::Dsv;
@@ -186,5 +225,32 @@ mod tests {
         assert_eq!(actual_buy, expected_buy);
         assert_eq!(actual_sell, expected_sell);
         Ok(())
+    }
+
+    #[test]
+    fn converts_morning_and_evening_stars_to_events() {
+        let mses = MsEses(vec![
+            BuySellSignal {
+                r#type: Buy,
+                date: NaiveDate::from_ymd_opt(2024, 1, 10).unwrap(),
+            },
+            BuySellSignal {
+                r#type: Sell,
+                date: NaiveDate::from_ymd_opt(2024, 1, 11).unwrap(),
+            },
+        ]);
+
+        let events: Vec<EventFact> = Vec::from(MsEsEvents { mseses: &mses });
+
+        assert!(
+            events
+                .iter()
+                .any(|event| event.kind == EventKind::MorningStar)
+        );
+        assert!(
+            events
+                .iter()
+                .any(|event| event.kind == EventKind::EveningStar)
+        );
     }
 }

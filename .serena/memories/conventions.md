@@ -1,10 +1,6 @@
-- Keep hexagonal direction: core logic in `domain`/`use_case`; adapters in `infrastructure`/`presenter`.
-- Prefer `Result` + custom/domain errors; avoid `unwrap`/`expect` outside tests/bootstrap paths.
-- Keep APIs idiomatic and explicit; pass references (`&str`, slices) where possible.
-- For non-obvious market transformations, add short intent comments only.
-- Follow project skills docs:
-  - `.github/skills/coding-standards/SKILL.md`
-  - `.github/skills/testing-practices/SKILL.md`
-- Keep changes surgical; avoid unrelated refactor around touched code.
-- When deciding where to place filtering/query logic, use this rule of thumb: if the logic depends on the data source, keep it in the repository; if it is a pure transformation/filter on already-loaded domain data, keep it in the model.
-- Prefer `model` methods for in-memory collection filtering/selection, and repository methods for I/O-backed retrieval or source-specific query semantics.
+- Keep business logic in `domain`/`use_case`; adapters only in `infrastructure`/`presenter`.
+- Prefer `Result` and custom error types; avoid `unwrap`/`expect` outside tests or initialization.
+- Public APIs should use meaningful types and borrowed inputs like `&str`/`&[T]` where practical.
+- Avoid unnecessary allocations and clones; prefer iterators and standard traits.
+- Add short comments only where intent is non-obvious.
+- Preserve existing style and minimize changes to touched modules.

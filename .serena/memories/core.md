@@ -1,8 +1,5 @@
-- Rust quantitative analysis toolkit with hexagonal layering.
-- Top-level modules in `src/lib.rs`: `domain`, `use_case`, `controller`, `presenter`, `infrastructure`, `shared`.
-- Read `mem:architecture/layers` for dependency direction and layer responsibilities.
-- Read `mem:architecture/data_flow` for runtime flow from controller to data sources.
-- Read `mem:tech_stack` for toolchain/dependencies.
-- Read `mem:conventions` for code and architecture constraints.
-- Read `mem:suggested_commands` for common local commands.
-- Read `mem:task_completion` for done criteria.
+- Rust library for quantitative data analysis; preserve hexagonal boundaries: `domain`/`use_case` own business logic, `infrastructure`/`presenter` adapt external systems.
+- When working in Rust code, consult `mem:tech_stack`, `mem:conventions`, and `mem:task_completion` as needed.
+- Project-wide rule: do not let `domain`/`use_case` depend on `infrastructure`/`presenter`.
+- J-Quants rate-limiting is caller responsibility; this library should surface 429s clearly rather than hide them.
+- Use Serena for symbol-aware discovery/editing before falling back to raw file tools.
