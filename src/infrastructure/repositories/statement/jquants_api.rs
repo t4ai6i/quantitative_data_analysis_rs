@@ -4,7 +4,7 @@ use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::statement::structures::jquants_api::Response;
 use anyhow::{Context, bail};
 use async_trait::async_trait;
-use query_string_builder::QueryString;
+use query_string_builder::QueryStringOwned;
 use rayon::prelude::*;
 use reqwest::Client;
 use serde_json::Value;
@@ -41,7 +41,7 @@ fn select_full_year_statements(rows: &[Value]) -> Vec<&Value> {
 }
 
 async fn fetch_statement_rows(api_key: &str, code: &str) -> anyhow::Result<Vec<Value>> {
-    let qs = QueryString::dynamic().with_value("code", code);
+    let qs = QueryStringOwned::new().with("code", code);
     let url = format!("{FINS_SUMMARY_URL}{qs}");
     let response = Client::new()
         .get(url)

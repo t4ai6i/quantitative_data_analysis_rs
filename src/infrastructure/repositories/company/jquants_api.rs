@@ -4,7 +4,7 @@ use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::company::structures::jquants_api::Response;
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
-use query_string_builder::QueryString;
+use query_string_builder::QueryStringOwned;
 use rayon::prelude::*;
 use reqwest::Client;
 use serde_json::Value;
@@ -17,7 +17,7 @@ impl repository::Company for JQuantsAPI {
         &self,
         query: &queries::get_company::Query<'a>,
     ) -> Result<model::RowCompany> {
-        let qs = QueryString::dynamic().with_value("code", query.code);
+        let qs = QueryStringOwned::new().with("code", query.code);
         let url = format!("{EQUITIES_MASTER_URL}{qs}");
         let response = Client::new()
             .get(url)

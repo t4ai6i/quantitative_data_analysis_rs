@@ -31,12 +31,14 @@ fn select_previous_business_day(rows: &[Value], target_date: NaiveDate) -> Optio
 }
 
 fn build_query(from: NaiveDate, to: NaiveDate, pagination_key: Option<&str>) -> String {
-    let mut qs = QueryString::dynamic()
-        .with_value("from", from.to_string())
-        .with_value("to", to.to_string());
+    let from = from.to_string();
+    let to = to.to_string();
+    let mut qs = QueryString::new()
+        .with("from", from.as_str())
+        .with("to", to.as_str());
 
     if let Some(pagination_key) = pagination_key {
-        qs = qs.with_value("pagination_key", pagination_key);
+        qs = qs.with("pagination_key", pagination_key);
     }
 
     qs.to_string()

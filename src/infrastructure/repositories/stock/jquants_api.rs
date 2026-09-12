@@ -6,7 +6,7 @@ use crate::infrastructure::repositories::stock::structures::jquants_api::Respons
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use chrono::NaiveDate;
-use query_string_builder::QueryString;
+use query_string_builder::{QueryString, QueryStringOwned};
 use rayon::prelude::*;
 use reqwest::Client;
 
@@ -19,21 +19,24 @@ fn build_daily_bars_query(
     to: Option<NaiveDate>,
     pagination_key: Option<&str>,
 ) -> String {
-    let mut qs = QueryString::dynamic();
+    let mut qs = QueryString::new();
     if let Some(code) = code {
-        qs = qs.with_value("code", code);
+        qs = qs.with("code", code);
     }
-    if let Some(date) = date {
-        qs = qs.with_value("date", date.to_string());
+    let date = date.map(|date| date.to_string());
+    if let Some(date) = date.as_deref() {
+        qs = qs.with("date", date);
     }
-    if let Some(from) = from {
-        qs = qs.with_value("from", from.to_string());
+    let from = from.map(|from| from.to_string());
+    if let Some(from) = from.as_deref() {
+        qs = qs.with("from", from);
     }
-    if let Some(to) = to {
-        qs = qs.with_value("to", to.to_string());
+    let to = to.map(|to| to.to_string());
+    if let Some(to) = to.as_deref() {
+        qs = qs.with("to", to);
     }
     if let Some(pagination_key) = pagination_key {
-        qs = qs.with_value("pagination_key", pagination_key);
+        qs = qs.with("pagination_key", pagination_key);
     }
     qs.to_string()
 }
@@ -48,10 +51,11 @@ impl repository::Stock for JQuantsAPI {
         &self,
         query: &queries::get_stock::Query<'a>,
     ) -> Result<model::RowStock> {
-        let qs = QueryString::dynamic()
-            .with_value("code", query.code.unwrap_or(""))
-            .with_value("from", query.target_date.to_string())
-            .with_value("to", query.target_date.to_string());
+        let target_date = query.target_date.to_string();
+        let qs = QueryStringOwned::new()
+            .with("code", query.code.unwrap_or(""))
+            .with("from", target_date.as_str())
+            .with("to", target_date.as_str());
         let daily_quotes_url = format!("{EQUITIES_BARS_DAILY_URL}{qs}");
         let response = Client::new()
             .get(daily_quotes_url)
@@ -69,10 +73,12 @@ impl repository::Stock for JQuantsAPI {
         &self,
         query: &queries::get_stocks::Query<'a>,
     ) -> Result<Vec<model::RowStock>> {
-        let qs = QueryString::dynamic()
-            .with_value("code", query.code.unwrap_or(""))
-            .with_value("from", query.start_date.unwrap_or_default().to_string())
-            .with_value("to", query.end_date.unwrap_or_default().to_string());
+        let from = query.start_date.unwrap_or_default().to_string();
+        let to = query.end_date.unwrap_or_default().to_string();
+        let qs = QueryStringOwned::new()
+            .with("code", query.code.unwrap_or(""))
+            .with("from", from.as_str())
+            .with("to", to.as_str());
         let daily_quotes_url = format!("{EQUITIES_BARS_DAILY_URL}{qs}");
         let response = Client::new()
             .get(daily_quotes_url)
