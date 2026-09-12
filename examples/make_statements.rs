@@ -14,7 +14,7 @@ use std::time::Instant;
 use tokio::fs::remove_file;
 use tokio::time::{Duration, sleep};
 
-const COMPANIES_TSV: &[u8] = include_bytes!("companies.tsv");
+const COMPANIES_TSV: &[u8] = include_bytes!("../assets/companies.tsv");
 const PARTIAL_STATEMENTS_PATH: &str = "./examples/statements.tsv.partial";
 const STATEMENTS_PATH: &str = "./examples/statements.tsv";
 const PROGRESS_STEP: usize = 50;

@@ -10,7 +10,7 @@ use std::fs::File;
 use std::io::Write;
 use tokio::fs::remove_file;
 
-const FETCH_SCORING_DATA_JSON: &str = include_str!("fetch_scoring_data.json");
+const FETCH_SCORING_DATA_JSON: &str = include_str!("../assets/fetch_scoring_data.json");
 const PARTIAL_OUTPUT_PATH: &str = "./examples/score_stocks.json.partial";
 const OUTPUT_PATH: &str = "./examples/score_stocks.json";
 

@@ -19,8 +19,8 @@ use tokio::time::{Duration, sleep};
 use quantitative_data_analysis_rs::domain::repositories::market_calendar::queries::get_previous_business_day::Query;
 use quantitative_data_analysis_rs::domain::repositories::market_calendar::repository::MarketCalendar;
 
-const COMPANIES_TSV: &[u8] = include_bytes!("companies.tsv");
-const STATEMENTS_TSV: &[u8] = include_bytes!("statements.tsv");
+const COMPANIES_TSV: &[u8] = include_bytes!("../assets/companies.tsv");
+const STATEMENTS_TSV: &[u8] = include_bytes!("../assets/statements.tsv");
 const PARTIAL_OUTPUT_PATH: &str = "./examples/fetch_scoring_data.json.partial";
 const OUTPUT_PATH: &str = "./examples/fetch_scoring_data.json";
 const PROGRESS_STEP: usize = 50;
