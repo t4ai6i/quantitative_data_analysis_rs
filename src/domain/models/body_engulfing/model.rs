@@ -121,20 +121,20 @@ impl From<BodyEngulfingEvents<'_>> for Vec<EventFact> {
             .iter()
             .filter_map(|signal| match signal.r#type {
                 BuySellSignalType::Buy => Some(EventFact {
-                    kind: EventKind::BodyEngulfing,
+                    kind: EventKind::BullishEngulfing,
                     occurred_at: signal.date,
                     direction: DirectionType::Uptrend,
                     event_params: EventParams::Pattern {
-                        pattern_name: EventKind::BodyEngulfing,
+                        pattern_name: EventKind::BullishEngulfing,
                         window_bars: 2,
                     },
                 }),
                 BuySellSignalType::Sell => Some(EventFact {
-                    kind: EventKind::BodyEngulfing,
+                    kind: EventKind::BearishEngulfing,
                     occurred_at: signal.date,
                     direction: DirectionType::Downtrend,
                     event_params: EventParams::Pattern {
-                        pattern_name: EventKind::BodyEngulfing,
+                        pattern_name: EventKind::BearishEngulfing,
                         window_bars: 2,
                     },
                 }),
@@ -271,7 +271,7 @@ mod tests {
         assert!(
             events
                 .iter()
-                .any(|event| event.kind == EventKind::BodyEngulfing)
+                .any(|event| event.kind == EventKind::BullishEngulfing)
         );
     }
 }
