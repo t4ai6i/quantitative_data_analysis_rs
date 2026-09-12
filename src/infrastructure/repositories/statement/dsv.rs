@@ -54,7 +54,7 @@ mod tests {
     use crate::infrastructure::repositories::statement::structures::internal::tsv;
     use bytes::Bytes;
 
-    const SAMPLE_CODE: &str = "7203";
+    const SAMPLE_CODE: &str = "72030";
     const TSV: &[u8] = include_bytes!("../../../../assets/statements.tsv");
 
     #[tokio::test]
