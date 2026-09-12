@@ -1,11 +1,15 @@
 use crate::domain::models::close;
+use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
 use crate::domain::models::stock::model::Stock;
+use crate::domain::models::technical_analysis::model::{
+    DerivedFact, EventFact, EventKind, EventParams, MetricKind,
+};
 use crate::domain::models::volume;
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
-use ta::indicators::SimpleMovingAverage;
 use ta::Next;
+use ta::indicators::SimpleMovingAverage;
 
 /// 終値、取引高の単純移動平均
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
@@ -81,6 +85,72 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
     }
 }
 
+impl<const N: usize> From<&SMAs<N>> for Vec<DerivedFact> {
+    fn from(value: &SMAs<N>) -> Self {
+        value
+            .iter()
+            .map(|sma| DerivedFact {
+                metric: MetricKind::Sma,
+                date: sma.date,
+                value: sma.close.0,
+                period: Some(N as u32),
+            })
+            .collect()
+    }
+}
+
+pub struct SmaCrossEvents<'a, const N: usize, const O: usize> {
+    pub sma_list_pair: SMAListPair<'a, N, O>,
+}
+
+impl<'a, const N: usize, const O: usize> From<SmaCrossEvents<'a, N, O>> for Vec<EventFact> {
+    fn from(value: SmaCrossEvents<'a, N, O>) -> Self {
+        let SmaCrossEvents {
+            sma_list_pair: SMAListPair { smas_n, smas_o },
+        } = value;
+
+        smas_n
+            .windows(2)
+            .filter_map(|window| {
+                let past = &window[0];
+                let target = &window[1];
+
+                let past_sma_o = smas_o.iter().find(|sma| sma.date == past.date)?;
+                let target_sma_o = smas_o.iter().find(|sma| sma.date == target.date)?;
+
+                let pattern = CrossoverPattern::from((
+                    past.close.0.partial_cmp(&past_sma_o.close.0),
+                    target.close.0.partial_cmp(&target_sma_o.close.0),
+                ));
+
+                match pattern {
+                    CrossoverPattern::GoldenCross => Some(EventFact {
+                        kind: EventKind::GoldenCross,
+                        occurred_at: target.date,
+                        event_params: EventParams::Cross {
+                            fast_metric: MetricKind::Sma,
+                            fast_period: N as u32,
+                            slow_metric: MetricKind::Sma,
+                            slow_period: O as u32,
+                        },
+                    }),
+                    CrossoverPattern::DeadCross => Some(EventFact {
+                        kind: EventKind::DeadCross,
+                        occurred_at: target.date,
+                        event_params: EventParams::Cross {
+                            fast_metric: MetricKind::Sma,
+                            fast_period: N as u32,
+                            slow_metric: MetricKind::Sma,
+                            slow_period: O as u32,
+                        },
+                    }),
+                    CrossoverPattern::Neither => None,
+                }
+            })
+            .collect()
+    }
+}
+
 pub struct SMAPair<'a, const N: usize, const O: usize> {
     pub sma_n: &'a SMA<N>,
     pub sma_o: Option<&'a SMA<O>>,
@@ -95,4 +165,81 @@ pub struct SMAListTrio<'a, const N: usize, const O: usize, const P: usize> {
     pub smas_n: &'a [SMA<N>],
     pub smas_o: &'a [SMA<O>],
     pub smas_p: &'a [SMA<P>],
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{SMAListPair, SMAs, SmaCrossEvents};
+    use crate::domain::models::stock::model::Stock;
+    use crate::domain::models::technical_analysis::model::{
+        DerivedFact, EventFact, EventKind, MetricKind,
+    };
+    use chrono::NaiveDate;
+    use pretty_assertions::assert_eq;
+
+    fn stock(date: NaiveDate, close: f64, volume: u64) -> Stock {
+        Stock {
+            date,
+            close,
+            volume,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn converts_close_values_to_derived_facts() {
+        let stocks = (0..6)
+            .map(|i| {
+                stock(
+                    NaiveDate::from_ymd_opt(2024, 1, 1 + i as u32).unwrap(),
+                    100.0 + i as f64,
+                    1_000 + i as u64,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let smas = SMAs::<3>::from(stocks.as_slice());
+        let facts: Vec<DerivedFact> = Vec::from(&smas);
+
+        assert_eq!(facts.len(), 4);
+        assert!(facts.iter().all(|fact| fact.metric == MetricKind::Sma));
+        assert!(facts.iter().all(|fact| fact.period == Some(3)));
+        assert_eq!(facts[0].date, NaiveDate::from_ymd_opt(2024, 1, 3).unwrap());
+        assert_eq!(
+            facts.last().unwrap().date,
+            NaiveDate::from_ymd_opt(2024, 1, 6).unwrap()
+        );
+        assert!((facts.last().unwrap().value - 104.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn converts_sma_5_25_crossovers_to_events() {
+        let start_date = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let stocks = (0..60)
+            .map(|i| {
+                let close = if i < 25 {
+                    100.0 - i as f64
+                } else {
+                    10.0 + (i - 25) as f64 * 2.0
+                };
+                let date = start_date + chrono::Duration::days(i as i64);
+                stock(date, close, 1_000 + i as u64)
+            })
+            .collect::<Vec<_>>();
+
+        let smas_5 = SMAs::<5>::from(stocks.as_slice());
+        let smas_25 = SMAs::<25>::from(stocks.as_slice());
+        let events: Vec<EventFact> = Vec::from(SmaCrossEvents {
+            sma_list_pair: SMAListPair {
+                smas_n: smas_5.as_slice(),
+                smas_o: smas_25.as_slice(),
+            },
+        });
+
+        assert!(
+            events
+                .iter()
+                .any(|event| event.kind == EventKind::GoldenCross)
+        );
+    }
 }

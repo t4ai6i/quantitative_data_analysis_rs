@@ -1,5 +1,6 @@
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
+use crate::domain::models::technical_analysis::model::{EventFact, EventKind, EventParams};
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
 use std::cmp::Ordering;
@@ -106,6 +107,33 @@ impl From<&[CandleStick]> for BodyEngulfings {
     }
 }
 
+pub struct BodyEngulfingEvents<'a> {
+    pub body_engulfings: &'a BodyEngulfings,
+}
+
+impl From<BodyEngulfingEvents<'_>> for Vec<EventFact> {
+    fn from(value: BodyEngulfingEvents<'_>) -> Self {
+        let BodyEngulfingEvents { body_engulfings } = value;
+
+        body_engulfings
+            .iter()
+            .filter_map(|signal| match signal.r#type {
+                BuySellSignalType::Buy => Some(EventFact {
+                    kind: EventKind::BullishEngulfing,
+                    occurred_at: signal.date,
+                    event_params: EventParams::Pattern { window_bars: 2 },
+                }),
+                BuySellSignalType::Sell => Some(EventFact {
+                    kind: EventKind::BearishEngulfing,
+                    occurred_at: signal.date,
+                    event_params: EventParams::Pattern { window_bars: 2 },
+                }),
+                BuySellSignalType::Stay => None,
+            })
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
@@ -113,13 +141,14 @@ mod tests {
     use chrono::NaiveDate;
     use pretty_assertions::assert_eq;
 
-    use crate::domain::models::body_engulfing::model::BodyEngulfings;
+    use crate::domain::models::body_engulfing::model::{BodyEngulfingEvents, BodyEngulfings};
     use crate::domain::models::buy_sell_signal::model::tests::TupleVecBuySellSignal;
     use crate::domain::models::buy_sell_signal::model::{
         BuySellSignal,
         BuySellSignalType::{Buy, Sell},
     };
     use crate::domain::models::candle_stick::model::CandleSticks;
+    use crate::domain::models::technical_analysis::model::{EventFact, EventKind};
     use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::dsv::Dsv;
@@ -210,5 +239,29 @@ mod tests {
         assert_eq!(actual_buy, expected_buy);
         assert_eq!(actual_sell, expected_sell);
         Ok(())
+    }
+
+    #[test]
+    fn converts_body_engulfing_signals_to_events() {
+        let body_engulfings = BodyEngulfings(vec![
+            BuySellSignal {
+                r#type: Buy,
+                date: NaiveDate::from_ymd_opt(2024, 1, 10).unwrap(),
+            },
+            BuySellSignal {
+                r#type: Sell,
+                date: NaiveDate::from_ymd_opt(2024, 1, 11).unwrap(),
+            },
+        ]);
+
+        let events: Vec<EventFact> = Vec::from(BodyEngulfingEvents {
+            body_engulfings: &body_engulfings,
+        });
+
+        assert!(
+            events
+                .iter()
+                .any(|event| event.kind == EventKind::BullishEngulfing)
+        );
     }
 }

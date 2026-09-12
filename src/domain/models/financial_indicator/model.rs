@@ -122,8 +122,10 @@ mod tests {
         let statement = Statement {
             code: "".to_string(),
             disclosed_date,
+            current_fiscal_year_end_date: None,
             eps: 100.0,
             bps: 400.0,
+            annual_dividend_forecast: 0.0,
             net_sales: 512.0,
             opp: 128.0,
             orp: 64.0,

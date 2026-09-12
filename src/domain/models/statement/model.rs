@@ -15,6 +15,8 @@ use chrono::NaiveDate;
 ///   Represents the value of equity on a per-share basis.
 /// * `eps` (`f64`) - Earnings Per Share (EPS, 一株あたり当期純利益).
 ///   Represents the company's profitability on a per-share basis.
+/// * `annual_dividend_forecast` (`f64`) - Annual dividend forecast (年間配当予想).
+///   Represents the expected dividend per share for the year.
 /// * `net_sales` (`f64`) - Net sales (売上高).
 ///   Indicates the total revenue generated from sales, excluding returns, allowances, and discounts.
 /// * `opp` (`f64`) - Operating profit (営業利益).
@@ -41,8 +43,10 @@ use chrono::NaiveDate;
 pub struct Statement {
     pub code: String,
     pub disclosed_date: NaiveDate,
+    pub current_fiscal_year_end_date: Option<NaiveDate>,
     pub bps: f64,
     pub eps: f64,
+    pub annual_dividend_forecast: f64,
     pub net_sales: f64,
     pub opp: f64,
     pub orp: f64,
@@ -55,8 +59,10 @@ pub struct Statement {
 pub struct RowStatement {
     pub code: String,
     pub disclosed_date: Option<NaiveDate>,
+    pub current_fiscal_year_end_date: Option<NaiveDate>,
     pub bps: Option<f64>,
     pub eps: Option<f64>,
+    pub annual_dividend_forecast: Option<f64>,
     pub net_sales: Option<f64>,
     pub opp: Option<f64>,
     pub orp: Option<f64>,
@@ -72,8 +78,10 @@ impl TryFrom<RowStatement> for Statement {
         let RowStatement {
             code,
             disclosed_date,
+            current_fiscal_year_end_date,
             bps,
             eps,
+            annual_dividend_forecast,
             net_sales,
             opp,
             orp,
@@ -85,8 +93,10 @@ impl TryFrom<RowStatement> for Statement {
         Ok(Self {
             disclosed_date: disclosed_date
                 .ok_or_else(|| anyhow::anyhow!("code:{} disclosed_date is None", code.as_str()))?,
+            current_fiscal_year_end_date,
             bps: bps.unwrap_or(f64::NAN),
             eps: eps.unwrap_or(f64::NAN),
+            annual_dividend_forecast: annual_dividend_forecast.unwrap_or(f64::NAN),
             net_sales: net_sales.unwrap_or(f64::NAN),
             opp: opp.unwrap_or(f64::NAN),
             orp: orp.unwrap_or(f64::NAN),

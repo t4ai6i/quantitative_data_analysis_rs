@@ -2,14 +2,14 @@ use crate::domain::models::company::model;
 use crate::domain::repositories::company::{queries, repository};
 use crate::infrastructure::jquants_api::JQuantsAPI;
 use crate::infrastructure::repositories::company::structures::jquants_api::Response;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
-use query_string_builder::QueryString;
+use query_string_builder::QueryStringOwned;
 use rayon::prelude::*;
 use reqwest::Client;
 use serde_json::Value;
 
-const COMPANY_URL: &str = "https://api.jquants.com/v2/equities/master";
+const EQUITIES_MASTER_URL: &str = "https://api.jquants.com/v2/equities/master";
 
 #[async_trait]
 impl repository::Company for JQuantsAPI {
@@ -17,8 +17,8 @@ impl repository::Company for JQuantsAPI {
         &self,
         query: &queries::get_company::Query<'a>,
     ) -> Result<model::RowCompany> {
-        let qs = QueryString::dynamic().with_value("code", query.code);
-        let url = format!("{COMPANY_URL}{qs}");
+        let qs = QueryStringOwned::new().with("code", query.code);
+        let url = format!("{EQUITIES_MASTER_URL}{qs}");
         let response = Client::new()
             .get(url)
             .header("x-api-key", self.api_key.to_string())
@@ -33,7 +33,7 @@ impl repository::Company for JQuantsAPI {
 
     async fn get_vec_row_company(&self) -> Result<Vec<model::RowCompany>> {
         let response = Client::new()
-            .get(COMPANY_URL)
+            .get(EQUITIES_MASTER_URL)
             .header("x-api-key", self.api_key.to_string())
             .send()
             .await?;
@@ -73,6 +73,7 @@ mod tests {
             code: Some("84730".to_string()),
             name: Some("SBI Holdings,Inc.".to_string()),
             market: Some("0111".to_string()),
+            product_category: Some("011".to_string()),
             symbol: Some("".to_string()),
         };
         assert_eq!(actual, expected);

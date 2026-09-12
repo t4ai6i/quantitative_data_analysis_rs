@@ -16,12 +16,8 @@ async fn main() -> anyhow::Result<()> {
         .delimiter(b'\t')
         .has_headers(false)
         .from_writer(vec![]);
-    companies.iter().for_each(|company| {
-        let tsv = tsv::Structure {
-            code: company.code.clone(),
-            name: company.name.clone(),
-            market: company.market.clone(),
-        };
+    companies.0.into_iter().for_each(|company| {
+        let tsv = tsv::Structure::from(company);
         writer.serialize(tsv).unwrap();
     });
     writer.flush()?;

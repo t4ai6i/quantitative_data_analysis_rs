@@ -1,8 +1,10 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use rayon::prelude::*;
 
 use crate::domain::models::stock::model;
+use crate::domain::models::stock::model::RowStock;
+use crate::domain::repositories::stock::queries::get_stocks_by_date::Query;
 use crate::domain::repositories::stock::{queries, repository};
 use crate::infrastructure::repositories::stock::structures::yahoo_finance_api::Response;
 use crate::infrastructure::symbol::Symbol;
@@ -49,6 +51,13 @@ impl repository::Stock for YahooFinanceAPI<'_> {
             .map(|quote| From::from(Response(quote)))
             .collect();
         Ok(vec_row_stock)
+    }
+
+    async fn get_vec_row_stock_by_date(&self, query: &Query) -> Result<Vec<RowStock>> {
+        bail!(
+            "get_vec_row_stock_by_date is not implemented for YahooFinanceAPI. Use get_vec_row_stock instead. date: {}",
+            query.date
+        );
     }
 }
 

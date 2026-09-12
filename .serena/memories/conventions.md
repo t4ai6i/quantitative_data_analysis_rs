@@ -1,0 +1,6 @@
+- Keep business logic in `domain`/`use_case`; adapters only in `infrastructure`/`presenter`.
+- Prefer `Result` and custom error types; avoid `unwrap`/`expect` outside tests or initialization.
+- Public APIs should use meaningful types and borrowed inputs like `&str`/`&[T]` where practical.
+- Avoid unnecessary allocations and clones; prefer iterators and standard traits.
+- Add short comments only where intent is non-obvious.
+- Preserve existing style and minimize changes to touched modules.

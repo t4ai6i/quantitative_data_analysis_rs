@@ -1,0 +1,5 @@
+- Language: Rust.
+- Architecture: hexagonal layout with `domain`, `use_case`, `infrastructure`, `presenter` under `src/`.
+- Quality tools: `cargo fmt`, `cargo clippy --all-targets --all-features`, `cargo test --all-features`.
+- Additional security check when relevant: `cargo audit`.
+- Follow Microsoft Pragmatic Rust Guidelines from `~/rust-guidelines.txt`.

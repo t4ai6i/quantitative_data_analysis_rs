@@ -1,0 +1,5 @@
+- Rust library for quantitative data analysis; preserve hexagonal boundaries: `domain`/`use_case` own business logic, `infrastructure`/`presenter` adapt external systems.
+- When working in Rust code, consult `mem:tech_stack`, `mem:conventions`, and `mem:task_completion` as needed.
+- Project-wide rule: do not let `domain`/`use_case` depend on `infrastructure`/`presenter`.
+- J-Quants rate-limiting is caller responsibility; this library should surface 429s clearly rather than hide them.
+- Use Serena for symbol-aware discovery/editing before falling back to raw file tools.

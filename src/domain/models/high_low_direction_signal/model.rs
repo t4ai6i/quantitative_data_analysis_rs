@@ -1,5 +1,6 @@
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::stock::model::Stock;
+use crate::domain::models::technical_analysis::model::{EventFact, EventKind, EventParams};
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
 use std::cmp::Ordering;
@@ -83,6 +84,33 @@ impl From<&[Stock]> for HighLowDirectionSignals {
     }
 }
 
+pub struct HighLowDirectionEvents<'a> {
+    pub signals: &'a HighLowDirectionSignals,
+}
+
+impl From<HighLowDirectionEvents<'_>> for Vec<EventFact> {
+    fn from(value: HighLowDirectionEvents<'_>) -> Self {
+        let HighLowDirectionEvents { signals } = value;
+
+        signals
+            .iter()
+            .filter_map(|signal| match signal.r#type {
+                BuySellSignalType::Buy => Some(EventFact {
+                    kind: EventKind::HighDirection,
+                    occurred_at: signal.date,
+                    event_params: EventParams::Pattern { window_bars: 2 },
+                }),
+                BuySellSignalType::Sell => Some(EventFact {
+                    kind: EventKind::LowDirection,
+                    occurred_at: signal.date,
+                    event_params: EventParams::Pattern { window_bars: 2 },
+                }),
+                BuySellSignalType::Stay => None,
+            })
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
@@ -95,7 +123,10 @@ mod tests {
         BuySellSignal,
         BuySellSignalType::{Buy, Sell},
     };
-    use crate::domain::models::high_low_direction_signal::model::HighLowDirectionSignals;
+    use crate::domain::models::high_low_direction_signal::model::{
+        HighLowDirectionEvents, HighLowDirectionSignals,
+    };
+    use crate::domain::models::technical_analysis::model::{EventFact, EventKind};
     use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::dsv::Dsv;
@@ -206,5 +237,27 @@ mod tests {
         assert_eq!(actual_buy, expected_buy);
         assert_eq!(actual_sell, expected_sell);
         Ok(())
+    }
+
+    #[test]
+    fn converts_high_low_direction_signals_to_events() {
+        let signals = HighLowDirectionSignals(vec![
+            BuySellSignal {
+                r#type: Buy,
+                date: NaiveDate::from_ymd_opt(2024, 1, 10).unwrap(),
+            },
+            BuySellSignal {
+                r#type: Sell,
+                date: NaiveDate::from_ymd_opt(2024, 1, 11).unwrap(),
+            },
+        ]);
+
+        let events: Vec<EventFact> = Vec::from(HighLowDirectionEvents { signals: &signals });
+
+        assert!(
+            events
+                .iter()
+                .any(|event| event.kind == EventKind::HighDirection)
+        );
     }
 }

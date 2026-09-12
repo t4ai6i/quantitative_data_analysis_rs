@@ -27,6 +27,15 @@ pub struct Stock {
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
 pub struct Stocks(pub Vec<Stock>);
 
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+pub struct BaseDatePrice {
+    pub code: String,
+    pub adj_close: Option<f64>,
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
+pub struct BaseDatePrices(pub Vec<BaseDatePrice>);
+
 impl TryFrom<RowStock> for Stock {
     type Error = anyhow::Error;
 

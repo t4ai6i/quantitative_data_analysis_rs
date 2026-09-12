@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use bytestring::ByteString;
 
 pub struct JQuantsAPI {
@@ -7,7 +7,10 @@ pub struct JQuantsAPI {
 
 impl JQuantsAPI {
     pub fn new(api_key: ByteString) -> Result<Self> {
-        ensure!(!api_key.trim().is_empty(), "J-Quants API key must not be empty");
+        ensure!(
+            !api_key.trim().is_empty(),
+            "J-Quants API key must not be empty"
+        );
         Ok(Self { api_key })
     }
 }

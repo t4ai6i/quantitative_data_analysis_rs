@@ -4,6 +4,7 @@ use std::backtrace::Backtrace;
 use std::fmt::{Debug, Display};
 
 use crate::domain::models::stock::model;
+use crate::domain::repositories::stock::queries::get_stocks_by_date::Query;
 use crate::domain::repositories::stock::{queries, repository};
 use crate::infrastructure::dsv::Dsv;
 use crate::infrastructure::from_slice::FromSlice;
@@ -49,6 +50,16 @@ where
     ) -> Result<Vec<model::RowStock>> {
         let processed = T::process_tabular_data(self.buffer.as_ref(), self.has_headers)?;
         Ok(processed)
+    }
+
+    async fn get_vec_row_stock_by_date(&self, query: &Query) -> Result<Vec<model::RowStock>> {
+        let vec_row_stock = self
+            .get_vec_row_stock(&queries::get_stocks::Query::default())
+            .await?;
+        Ok(vec_row_stock
+            .into_iter()
+            .filter(|row_stock| row_stock.date.is_some_and(|date| date.eq(&query.date)))
+            .collect())
     }
 }
 

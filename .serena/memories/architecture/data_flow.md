@@ -1,0 +1,7 @@
+- Typical flow: controller `analyze` -> use_case interactor `handle` -> repository traits -> infra adapters -> domain model computations -> presenter `handle` -> response DTO.
+- Trend analysis interactor orchestrates:
+  - company + stocks fetch
+  - SMA/MACD/candlestick derivations
+  - crossover and trend reversal aggregations
+  - output struct consumed by presenter.
+- Financial indicator interactor fetches latest valid stock in ~1 week window and latest statement, then builds domain `FinancialIndicator`.

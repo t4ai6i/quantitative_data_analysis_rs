@@ -1,0 +1,6 @@
+- `cargo fmt`
+- `cargo clippy --all-targets --all-features`
+- `cargo test --all-features`
+- `cargo nextest run --all --all-features` when longer CI-like validation is needed
+- `cargo audit` when dependency/security checks are needed
+- macOS shell behavior is standard bash/zsh; use normal GNU-style command forms unless a tool output says otherwise.

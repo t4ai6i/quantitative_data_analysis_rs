@@ -1,0 +1,4 @@
+- For Rust changes, run: `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --all-features`.
+- If formatting or linting fails, fix the code and rerun the same command set.
+- If dependency/security posture changes matter, add `cargo audit`.
+- Report changed file paths in backticks and keep any command output summary concise.
