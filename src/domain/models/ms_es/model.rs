@@ -1,8 +1,6 @@
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
-use crate::domain::models::technical_analysis::model::{
-    DirectionType, EventFact, EventKind, EventParams,
-};
+use crate::domain::models::technical_analysis::model::{EventFact, EventKind, EventParams};
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
 
@@ -109,20 +107,12 @@ impl From<MsEsEvents<'_>> for Vec<EventFact> {
                 BuySellSignalType::Buy => Some(EventFact {
                     kind: EventKind::MorningStar,
                     occurred_at: signal.date,
-                    direction: DirectionType::Uptrend,
-                    event_params: EventParams::Pattern {
-                        pattern_name: EventKind::MorningStar,
-                        window_bars: 3,
-                    },
+                    event_params: EventParams::Pattern { window_bars: 3 },
                 }),
                 BuySellSignalType::Sell => Some(EventFact {
                     kind: EventKind::EveningStar,
                     occurred_at: signal.date,
-                    direction: DirectionType::Downtrend,
-                    event_params: EventParams::Pattern {
-                        pattern_name: EventKind::EveningStar,
-                        window_bars: 3,
-                    },
+                    event_params: EventParams::Pattern { window_bars: 3 },
                 }),
                 BuySellSignalType::Stay => None,
             })

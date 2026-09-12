@@ -1,7 +1,7 @@
 use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
 use crate::domain::models::stock::model::Stock;
 use crate::domain::models::technical_analysis::model::{
-    DerivedFact, DirectionType, EventFact, EventKind, EventParams, MetricKind,
+    DerivedFact, EventFact, EventKind, EventParams, MetricKind,
 };
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
@@ -121,7 +121,6 @@ impl<'a, const F: usize, const S: usize, const SG: usize> From<MacdCrossEvents<'
                     CrossoverPattern::GoldenCross => Some(EventFact {
                         kind: EventKind::GoldenCross,
                         occurred_at: target.date,
-                        direction: DirectionType::Uptrend,
                         event_params: EventParams::Cross {
                             fast_metric: MetricKind::Macd,
                             fast_period: S as u32,
@@ -132,7 +131,6 @@ impl<'a, const F: usize, const S: usize, const SG: usize> From<MacdCrossEvents<'
                     CrossoverPattern::DeadCross => Some(EventFact {
                         kind: EventKind::DeadCross,
                         occurred_at: target.date,
-                        direction: DirectionType::Downtrend,
                         event_params: EventParams::Cross {
                             fast_metric: MetricKind::Macd,
                             fast_period: S as u32,

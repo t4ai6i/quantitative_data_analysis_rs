@@ -1,13 +1,6 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum DirectionType {
-    Uptrend,
-    Downtrend,
-    Neutral,
-}
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub enum EventKind {
     GoldenCross,
@@ -16,9 +9,8 @@ pub enum EventKind {
     EveningStar,
     BullishEngulfing,
     BearishEngulfing,
-    HighLowDirection,
-    VolumeSpike,
-    Breakout,
+    HighDirection,
+    LowDirection,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
@@ -49,13 +41,7 @@ pub enum EventParams {
         slow_metric: MetricKind,
         slow_period: u32,
     },
-    Threshold {
-        metric: MetricKind,
-        threshold: f64,
-        direction: DirectionType,
-    },
     Pattern {
-        pattern_name: EventKind,
         window_bars: u32,
     },
 }
@@ -64,7 +50,6 @@ pub enum EventParams {
 pub struct EventFact {
     pub kind: EventKind,
     pub occurred_at: NaiveDate,
-    pub direction: DirectionType,
     pub event_params: EventParams,
 }
 
@@ -207,7 +192,6 @@ mod tests {
             EventFact {
                 kind: EventKind::GoldenCross,
                 occurred_at: NaiveDate::from_ymd_opt(2024, 1, 30).unwrap(),
-                direction: crate::domain::models::technical_analysis::model::DirectionType::Uptrend,
                 event_params: EventParams::Cross {
                     fast_metric: MetricKind::Sma,
                     fast_period: 5,
@@ -218,8 +202,6 @@ mod tests {
             EventFact {
                 kind: EventKind::DeadCross,
                 occurred_at: NaiveDate::from_ymd_opt(2024, 1, 29).unwrap(),
-                direction:
-                    crate::domain::models::technical_analysis::model::DirectionType::Downtrend,
                 event_params: EventParams::Cross {
                     fast_metric: MetricKind::Macd,
                     fast_period: 12,

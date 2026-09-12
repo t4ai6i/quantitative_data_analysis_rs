@@ -1,8 +1,6 @@
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::stock::model::Stock;
-use crate::domain::models::technical_analysis::model::{
-    DirectionType, EventFact, EventKind, EventParams,
-};
+use crate::domain::models::technical_analysis::model::{EventFact, EventKind, EventParams};
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
 use std::cmp::Ordering;
@@ -98,22 +96,14 @@ impl From<HighLowDirectionEvents<'_>> for Vec<EventFact> {
             .iter()
             .filter_map(|signal| match signal.r#type {
                 BuySellSignalType::Buy => Some(EventFact {
-                    kind: EventKind::HighLowDirection,
+                    kind: EventKind::HighDirection,
                     occurred_at: signal.date,
-                    direction: DirectionType::Uptrend,
-                    event_params: EventParams::Pattern {
-                        pattern_name: EventKind::HighLowDirection,
-                        window_bars: 2,
-                    },
+                    event_params: EventParams::Pattern { window_bars: 2 },
                 }),
                 BuySellSignalType::Sell => Some(EventFact {
-                    kind: EventKind::HighLowDirection,
+                    kind: EventKind::LowDirection,
                     occurred_at: signal.date,
-                    direction: DirectionType::Downtrend,
-                    event_params: EventParams::Pattern {
-                        pattern_name: EventKind::HighLowDirection,
-                        window_bars: 2,
-                    },
+                    event_params: EventParams::Pattern { window_bars: 2 },
                 }),
                 BuySellSignalType::Stay => None,
             })
@@ -267,7 +257,7 @@ mod tests {
         assert!(
             events
                 .iter()
-                .any(|event| event.kind == EventKind::HighLowDirection)
+                .any(|event| event.kind == EventKind::HighDirection)
         );
     }
 }

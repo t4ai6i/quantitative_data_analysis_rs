@@ -1,8 +1,6 @@
 use crate::domain::models::buy_sell_signal::model::{BuySellSignal, BuySellSignalType};
 use crate::domain::models::candle_stick::model::{BullishBearishType, CandleStick};
-use crate::domain::models::technical_analysis::model::{
-    DirectionType, EventFact, EventKind, EventParams,
-};
+use crate::domain::models::technical_analysis::model::{EventFact, EventKind, EventParams};
 use deref_derive::{Deref, DerefMut};
 use rayon::prelude::*;
 use std::cmp::Ordering;
@@ -123,20 +121,12 @@ impl From<BodyEngulfingEvents<'_>> for Vec<EventFact> {
                 BuySellSignalType::Buy => Some(EventFact {
                     kind: EventKind::BullishEngulfing,
                     occurred_at: signal.date,
-                    direction: DirectionType::Uptrend,
-                    event_params: EventParams::Pattern {
-                        pattern_name: EventKind::BullishEngulfing,
-                        window_bars: 2,
-                    },
+                    event_params: EventParams::Pattern { window_bars: 2 },
                 }),
                 BuySellSignalType::Sell => Some(EventFact {
                     kind: EventKind::BearishEngulfing,
                     occurred_at: signal.date,
-                    direction: DirectionType::Downtrend,
-                    event_params: EventParams::Pattern {
-                        pattern_name: EventKind::BearishEngulfing,
-                        window_bars: 2,
-                    },
+                    event_params: EventParams::Pattern { window_bars: 2 },
                 }),
                 BuySellSignalType::Stay => None,
             })
