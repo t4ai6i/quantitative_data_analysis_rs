@@ -41,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
     let mut success_count = 0usize;
     let mut failure_count = 0usize;
 
-    for (index, company) in companies.into_iter().enumerate() {
+    for (index, company) in companies.0.into_iter().enumerate() {
         let code = company.code;
         let query = get_statement::Query {
             code: code.as_str(),

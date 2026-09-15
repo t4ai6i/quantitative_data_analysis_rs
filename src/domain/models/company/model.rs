@@ -26,11 +26,13 @@ pub struct Company {
 pub struct Companies(pub Vec<Company>);
 
 impl Companies {
-    pub fn domestic_prime_standard_growth_companies(&self) -> Vec<Company> {
-        self.iter()
+    pub fn domestic_prime_standard_growth_companies(&self) -> Self {
+        let companies = self
+            .iter()
             .filter(|company| is_target_company(company))
             .cloned()
-            .collect()
+            .collect();
+        Self(companies)
     }
 }
 

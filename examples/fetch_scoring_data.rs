@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
     let mut partial_file = File::create(PARTIAL_OUTPUT_PATH)?;
     partial_file.write_all(b"[\n")?;
 
-    for (index, company) in target_companies.into_iter().enumerate() {
+    for (index, company) in target_companies.0.into_iter().enumerate() {
         let result = controller
             .fetch(company.code, previous_business_day, Utc::now())
             .await?;
