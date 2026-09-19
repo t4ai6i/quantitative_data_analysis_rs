@@ -55,11 +55,11 @@ mod tests {
         assert_eq!(actual[0].code, SAMPLE_CODE);
         assert_eq!(
             actual[0].disclosed_date,
-            NaiveDate::from_ymd_opt(2026, 5, 8)
+            NaiveDate::from_ymd_opt(2022, 5, 11)
         );
         let actual = actual.last().unwrap();
         assert_eq!(actual.code, SAMPLE_CODE);
-        assert_eq!(actual.disclosed_date, NaiveDate::from_ymd_opt(2022, 5, 11));
+        assert_eq!(actual.disclosed_date, NaiveDate::from_ymd_opt(2026, 5, 8));
         Ok(())
     }
 }
