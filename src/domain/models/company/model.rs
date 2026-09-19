@@ -36,6 +36,11 @@ impl Companies {
     }
 }
 
+fn is_target_company(company: &Company) -> bool {
+    company.product_category.as_str() == DOMESTIC_STOCK_PRODUCT_CATEGORY
+        && TARGET_MARKETS.contains(&company.market.as_str())
+}
+
 impl TryFrom<RowCompany> for Company {
     type Error = anyhow::Error;
 
@@ -56,11 +61,6 @@ impl TryFrom<RowCompany> for Company {
             symbol: symbol.ok_or_else(|| anyhow::anyhow!("symbol is None"))?,
         })
     }
-}
-
-fn is_target_company(company: &Company) -> bool {
-    company.product_category.as_str() == DOMESTIC_STOCK_PRODUCT_CATEGORY
-        && TARGET_MARKETS.contains(&company.market.as_str())
 }
 
 #[cfg(test)]

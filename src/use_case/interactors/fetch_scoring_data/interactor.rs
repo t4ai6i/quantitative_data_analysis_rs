@@ -1,11 +1,12 @@
 use anyhow::Result;
 use async_trait::async_trait;
 
-use crate::domain::models::company::model;
+use crate::domain::models::company::model as company_model;
 use crate::domain::models::statement::model as statement_model;
+use crate::domain::models::stock::model as stock_model;
 use crate::domain::repositories;
 use crate::domain::repositories::company::queries::get_company;
-use crate::domain::repositories::statement::queries::get_statement;
+use crate::domain::repositories::statement::queries::get_statements;
 use crate::domain::repositories::stock::queries::get_stock;
 use crate::presenter::presenters::fetch_scoring_data::output;
 use crate::use_case::interfaces::fetch_scoring_data::{input, use_case};
@@ -43,8 +44,8 @@ where
             code: input.code.as_str(),
             market: None,
         };
-        let company = self.company_repository.get_company(&query).await;
-        let Ok(company) = company else {
+        let row_company = self.company_repository.get_row_company(&query).await;
+        let Ok(row_company) = row_company else {
             return Ok(output::FetchScoringData {
                 code: input.code,
                 fetched_at: input.fetched_at,
@@ -62,76 +63,75 @@ where
             market: None,
             target_date: input.target_date,
         };
-        let stock = self.stock_repository.get_row_stock(&query).await;
-        let Ok(stock) = stock else {
+        let row_stock = self.stock_repository.get_row_stock(&query).await;
+        let Ok(row_stock) = row_stock else {
             return Ok(output::FetchScoringData {
                 code: input.code,
                 fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyStock),
-                company: Some(output::FetchCompany::from(company)),
+                company: Some(output::FetchCompany::from(row_company)),
                 price: None,
                 latest_statement: None,
                 full_year_sales: vec![],
             });
         };
 
-        let query = get_statement::Query {
-            code: input.code.as_str(),
+        let query = get_statements::Query {
+            code: Some(input.code.as_str()),
         };
-        let latest_statement = self.statement_repository.get_statement(&query).await;
-        let Ok(latest_statement) = latest_statement else {
+        let mut row_statements = self
+            .statement_repository
+            .get_row_statements(&query)
+            .await
+            .unwrap_or_else(|_| vec![]);
+
+        if row_statements.is_empty() {
             return Ok(output::FetchScoringData {
                 code: input.code,
                 fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyStatement),
-                company: Some(output::FetchCompany::from(company)),
-                price: Some(output::FetchPrice::from(stock)),
+                company: Some(output::FetchCompany::from(row_company)),
+                price: Some(output::FetchPrice::from(row_stock)),
                 latest_statement: None,
                 full_year_sales: vec![],
             });
-        };
-        let full_year_statements = self
-            .statement_repository
-            .get_row_full_year_statements(&query)
-            .await
-            .unwrap_or_else(|_| vec![]);
+        }
 
-        let mut full_year_sales = full_year_statements
+        row_statements.sort_by(|a, b| {
+            let a_date = a.disclosed_date.unwrap_or_default();
+            let b_date = b.disclosed_date.unwrap_or_default();
+            a_date.cmp(&b_date)
+        });
+        let latest_statement = row_statements.last().unwrap().clone();
+
+        let full_year_sales = row_statements
             .into_iter()
             .map(output::FetchFullYearSales::from)
             .collect::<Vec<_>>();
-        full_year_sales.sort_by(|left, right| {
-            right
-                .current_fiscal_year_end_date
-                .cmp(&left.current_fiscal_year_end_date)
-                .then_with(|| right.disclosed_date.cmp(&left.disclosed_date))
-        });
 
         Ok(output::FetchScoringData {
             code: input.code,
             fetched_at: input.fetched_at,
             status: output::FetchStatus::Ok,
             error_type: None,
-            company: Some(output::FetchCompany::from(company)),
-            price: Some(output::FetchPrice::from(stock)),
+            company: Some(output::FetchCompany::from(row_company)),
+            price: Some(output::FetchPrice::from(row_stock)),
             latest_statement: Some(output::FetchLatestStatement::from(latest_statement)),
             full_year_sales,
         })
     }
 }
 
-impl From<model::Company> for output::FetchCompany {
-    fn from(value: model::Company) -> Self {
-        Self {
-            name: Some(value.name),
-        }
+impl From<company_model::RowCompany> for output::FetchCompany {
+    fn from(value: company_model::RowCompany) -> Self {
+        Self { name: value.name }
     }
 }
 
-impl From<crate::domain::models::stock::model::RowStock> for output::FetchPrice {
-    fn from(value: crate::domain::models::stock::model::RowStock) -> Self {
+impl From<stock_model::RowStock> for output::FetchPrice {
+    fn from(value: stock_model::RowStock) -> Self {
         Self {
             date: value.date,
             adj_close: value.adj_close,
@@ -139,15 +139,15 @@ impl From<crate::domain::models::stock::model::RowStock> for output::FetchPrice 
     }
 }
 
-impl From<statement_model::Statement> for output::FetchLatestStatement {
-    fn from(value: statement_model::Statement) -> Self {
+impl From<statement_model::RowStatement> for output::FetchLatestStatement {
+    fn from(value: statement_model::RowStatement) -> Self {
         Self {
-            disclosed_date: Some(value.disclosed_date),
-            eps: Some(value.eps),
-            bps: Some(value.bps),
-            annual_dividend_forecast: Some(value.annual_dividend_forecast),
-            profit: Some(value.profit),
-            equity: Some(value.equity),
+            disclosed_date: value.disclosed_date,
+            eps: value.eps,
+            bps: value.bps,
+            annual_dividend_forecast: value.annual_dividend_forecast,
+            profit: value.profit,
+            equity: value.equity,
         }
     }
 }
