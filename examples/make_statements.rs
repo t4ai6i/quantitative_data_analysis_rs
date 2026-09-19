@@ -1,8 +1,7 @@
 use bytes::Bytes;
 use csv::WriterBuilder;
-use quantitative_data_analysis_rs::domain::models::statement::model;
 use quantitative_data_analysis_rs::domain::repositories::company::repository::Company;
-use quantitative_data_analysis_rs::domain::repositories::statement::queries::get_statement;
+use quantitative_data_analysis_rs::domain::repositories::statement::queries::get_statements;
 use quantitative_data_analysis_rs::domain::repositories::statement::repository::Statement;
 use quantitative_data_analysis_rs::infrastructure::dsv::Dsv;
 use quantitative_data_analysis_rs::infrastructure::jquants_api::JQuantsAPI;
@@ -43,15 +42,13 @@ async fn main() -> anyhow::Result<()> {
 
     for (index, company) in companies.0.into_iter().enumerate() {
         let code = company.code;
-        let query = get_statement::Query {
-            code: code.as_str(),
+        let query = get_statements::Query {
+            code: Some(code.as_str()),
         };
 
-        match jquants_api.get_row_full_year_statements(&query).await {
-            Ok(mut rows) => {
-                rows.sort_by(|left, right| right.disclosed_date.cmp(&left.disclosed_date));
-                for row in rows {
-                    let statement = model::Statement::try_from(row)?;
+        match jquants_api.get_statements(&query).await {
+            Ok(statements) => {
+                for statement in statements.0 {
                     writer.serialize(statement_tsv::Structure::from(statement))?;
                 }
                 success_count += 1;

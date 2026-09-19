@@ -1,4 +1,22 @@
 use chrono::NaiveDate;
+use deref_derive::{Deref, DerefMut};
+use serde::Deserialize;
+
+#[derive(Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
+pub struct RowStatement {
+    pub code: String,
+    pub disclosed_date: Option<NaiveDate>,
+    pub current_fiscal_year_end_date: Option<NaiveDate>,
+    pub bps: Option<f64>,
+    pub eps: Option<f64>,
+    pub annual_dividend_forecast: Option<f64>,
+    pub net_sales: Option<f64>,
+    pub opp: Option<f64>,
+    pub orp: Option<f64>,
+    pub profit: Option<f64>,
+    pub equity: Option<f64>,
+    pub total_assets: Option<f64>,
+}
 
 /// Represents a financial statement with various financial metrics.
 ///
@@ -55,21 +73,8 @@ pub struct Statement {
     pub total_assets: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-pub struct RowStatement {
-    pub code: String,
-    pub disclosed_date: Option<NaiveDate>,
-    pub current_fiscal_year_end_date: Option<NaiveDate>,
-    pub bps: Option<f64>,
-    pub eps: Option<f64>,
-    pub annual_dividend_forecast: Option<f64>,
-    pub net_sales: Option<f64>,
-    pub opp: Option<f64>,
-    pub orp: Option<f64>,
-    pub profit: Option<f64>,
-    pub equity: Option<f64>,
-    pub total_assets: Option<f64>,
-}
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Deref, DerefMut)]
+pub struct Statements(pub Vec<Statement>);
 
 impl TryFrom<RowStatement> for Statement {
     type Error = anyhow::Error;

@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use chrono::Days;
 
 use crate::domain::models::financial_indicator::model;
-use crate::domain::repositories::statement::queries::get_statement;
 use crate::domain::repositories::stock::queries::get_stocks;
 use crate::domain::repositories::{statement, stock};
 use crate::presenter::presenters::financial_indicator::output;
@@ -41,16 +40,11 @@ where
             end_date: Some(input.target_date),
         };
         let stocks = self.stock_repository.get_stocks(&query).await?;
-        let stock = stocks.last().ok_or_else(|| {
+        let _stock = stocks.last().ok_or_else(|| {
             anyhow::anyhow!("no valid stock within one-week period. {:?}", &query)
         })?;
 
-        let query = get_statement::Query {
-            code: input.code.as_str(),
-        };
-        let statement = self.statement_repository.get_statement(&query).await?;
-
-        let financial_indicator = model::FinancialIndicator::from((stock, &statement));
+        let financial_indicator = model::FinancialIndicator::default();
 
         Ok(output::FinancialIndicator {
             code: input.code,
