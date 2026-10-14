@@ -134,6 +134,7 @@ impl From<stock_model::RowStock> for output::FetchPrice {
     fn from(value: stock_model::RowStock) -> Self {
         Self {
             date: value.date,
+            close: value.close,
             adj_close: value.adj_close,
         }
     }

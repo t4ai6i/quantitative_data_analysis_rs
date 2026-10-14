@@ -42,6 +42,7 @@ pub struct FetchCompany {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct FetchPrice {
     pub date: Option<NaiveDate>,
+    pub close: Option<f64>,
     pub adj_close: Option<f64>,
 }
 

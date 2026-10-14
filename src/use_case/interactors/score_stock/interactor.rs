@@ -154,6 +154,7 @@ mod tests {
             }),
             price: Some(FetchPrice {
                 date: Some(NaiveDate::from_ymd_opt(2025, 3, 31).unwrap()),
+                close: Some(100.0),
                 adj_close: Some(100.0),
             }),
             latest_statement: Some(FetchLatestStatement {
