@@ -11,12 +11,12 @@ use rayon::prelude::*;
 use ta::Next;
 use ta::indicators::SimpleMovingAverage;
 
-/// 終値、取引高の単純移動平均
+/// 調整済み終値、取引高の単純移動平均
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct SMA<const N: usize> {
     /// N日目の日付
     pub date: NaiveDate,
-    /// 終値のN日単純移動平均
+    /// 調整済み終値のN日単純移動平均
     pub close: close::model::F64,
     /// 取引高のN日単純移動平均
     pub volume: volume::model::F64,
@@ -65,13 +65,13 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
         let vec_sma = value
             .par_windows(N)
             .map(|stocks| {
-                // 終値のN日と取引高のN日の単純移動平均
+                // 調整済み終値と取引高のN日単純移動平均
                 let mut sma_close = SimpleMovingAverage::new(N).unwrap();
                 let mut sma_volume = SimpleMovingAverage::new(N).unwrap();
                 let mut close = 0.0;
                 let mut volume = 0.0;
                 for stock in stocks {
-                    close = sma_close.next(stock.close);
+                    close = sma_close.next(stock.adj_close);
                     volume = sma_volume.next(stock.volume as f64);
                 }
                 SMA {
@@ -181,13 +181,14 @@ mod tests {
         Stock {
             date,
             close,
+            adj_close: close,
             volume,
             ..Default::default()
         }
     }
 
     #[test]
-    fn converts_close_values_to_derived_facts() {
+    fn converts_adjusted_close_values_to_derived_facts() {
         let stocks = (0..6)
             .map(|i| {
                 stock(
@@ -210,6 +211,38 @@ mod tests {
             NaiveDate::from_ymd_opt(2024, 1, 6).unwrap()
         );
         assert!((facts.last().unwrap().value - 104.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn uses_adjusted_close_across_stock_split() {
+        let stocks = [
+            Stock {
+                date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+                close: 6_900.0,
+                adj_close: 2_300.0,
+                volume: 1_000,
+                ..Default::default()
+            },
+            Stock {
+                date: NaiveDate::from_ymd_opt(2024, 1, 2).unwrap(),
+                close: 6_600.0,
+                adj_close: 2_200.0,
+                volume: 1_100,
+                ..Default::default()
+            },
+            Stock {
+                date: NaiveDate::from_ymd_opt(2024, 1, 3).unwrap(),
+                close: 2_400.0,
+                adj_close: 2_400.0,
+                volume: 1_200,
+                ..Default::default()
+            },
+        ];
+
+        let smas = SMAs::<3>::from(stocks.as_slice());
+
+        assert_eq!(smas.len(), 1);
+        assert!((smas[0].close.0 - 2_300.0).abs() < 1e-9);
     }
 
     #[test]

@@ -58,7 +58,7 @@ mod tests {
             summary,
             vec![vec![
                 "".to_string(),
-                "27%".to_string(),
+                "36%".to_string(),
                 "".to_string(),
                 "".to_string(),
                 "".to_string(),
@@ -70,7 +70,7 @@ mod tests {
             summary,
             vec![vec![
                 "".to_string(),
-                "33%".to_string(),
+                "50%".to_string(),
                 "".to_string(),
                 "".to_string(),
                 "".to_string(),
