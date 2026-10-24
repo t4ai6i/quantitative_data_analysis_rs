@@ -110,7 +110,7 @@ impl presenter::TrendAnalysis for Chart {
             x_axis_data_days.clone(),
             self.theme.as_str(),
         );
-        candlestick_chart.title_text = format!("{}({})", &company.name, &company.code);
+        candlestick_chart.title_text = format!("{}({}) - Adjusted", &company.name, &company.code);
         candlestick_chart.width = self.width;
         candlestick_chart.height = self.height;
         candlestick_chart.legend_margin = Some(Box::from(30.0));

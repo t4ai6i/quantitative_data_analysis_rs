@@ -11,14 +11,14 @@ use rayon::prelude::*;
 use ta::Next;
 use ta::indicators::SimpleMovingAverage;
 
-/// 調整済み終値、取引高の単純移動平均
+/// 調整済み終値、調整済み取引高の単純移動平均
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct SMA<const N: usize> {
     /// N日目の日付
     pub date: NaiveDate,
     /// 調整済み終値のN日単純移動平均
     pub close: close::model::F64,
-    /// 取引高のN日単純移動平均
+    /// 調整済み取引高のN日単純移動平均
     pub volume: volume::model::F64,
 }
 
@@ -65,14 +65,14 @@ impl<const N: usize> From<&[Stock]> for SMAs<N> {
         let vec_sma = value
             .par_windows(N)
             .map(|stocks| {
-                // 調整済み終値と取引高のN日単純移動平均
+                // 調整済み終値と調整済み取引高のN日単純移動平均
                 let mut sma_close = SimpleMovingAverage::new(N).unwrap();
                 let mut sma_volume = SimpleMovingAverage::new(N).unwrap();
                 let mut close = 0.0;
                 let mut volume = 0.0;
                 for stock in stocks {
                     close = sma_close.next(stock.adj_close);
-                    volume = sma_volume.next(stock.volume as f64);
+                    volume = sma_volume.next(stock.adj_volume);
                 }
                 SMA {
                     date: stocks.last().unwrap().date,
@@ -183,6 +183,7 @@ mod tests {
             close,
             adj_close: close,
             volume,
+            adj_volume: volume as f64,
             ..Default::default()
         }
     }

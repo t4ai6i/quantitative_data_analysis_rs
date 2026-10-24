@@ -30,7 +30,7 @@ impl<const PERIOD: usize> From<&[Stock]> for Bollingers<PERIOD> {
         let mut bb = BollingerBands::new(PERIOD, 2.0).unwrap();
         let mut bollingers = Vec::with_capacity(value.len() - PERIOD + 1);
         for (index, stock) in value.iter().enumerate() {
-            let output = bb.next(stock.close);
+            let output = bb.next(stock.adj_close);
             if index < PERIOD - 1 {
                 continue;
             }
@@ -82,6 +82,7 @@ mod tests {
         Stock {
             date,
             close,
+            adj_close: close,
             ..Default::default()
         }
     }

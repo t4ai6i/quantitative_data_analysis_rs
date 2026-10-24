@@ -59,7 +59,7 @@ impl<const F: usize, const S: usize, const SG: usize> From<&[Stock]> for MACDs<F
         let macds = value
             .iter()
             .map(|stock| {
-                let (macd, signal, histogram) = macd.next(stock.close).into();
+                let (macd, signal, histogram) = macd.next(stock.adj_close).into();
                 MACD {
                     date: stock.date,
                     macd,
@@ -159,6 +159,7 @@ mod tests {
         Stock {
             date,
             close,
+            adj_close: close,
             ..Default::default()
         }
     }

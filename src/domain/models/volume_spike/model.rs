@@ -29,15 +29,16 @@ impl<const PERIOD: usize> From<&[Stock]> for VolumeSpikes<PERIOD> {
         let mut volume_spikes = Vec::with_capacity(value.len() - PERIOD);
 
         for (index, stock) in value.iter().enumerate() {
-            if index < PERIOD {
-                sma.next(stock.volume as f64);
+            // average of previous PERIOD bars (current bar is excluded)
+            if index == 0 {
                 continue;
             }
-
-            // average of previous PERIOD bars (current bar is excluded)
-            let average_volume = sma.next(value[index - 1].volume as f64);
+            let average_volume = sma.next(value[index - 1].adj_volume);
+            if index < PERIOD {
+                continue;
+            }
             let ratio = if average_volume > 0.0 {
-                stock.volume as f64 / average_volume
+                stock.adj_volume / average_volume
             } else {
                 0.0
             };
@@ -79,6 +80,7 @@ mod tests {
         Stock {
             date,
             volume,
+            adj_volume: volume as f64,
             ..Default::default()
         }
     }

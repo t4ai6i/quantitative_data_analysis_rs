@@ -28,7 +28,7 @@ impl<const PERIOD: usize> From<&[Stock]> for RSIs<PERIOD> {
         let mut rsi = RelativeStrengthIndex::new(PERIOD).unwrap();
         let mut rsis = Vec::with_capacity(value.len() - PERIOD);
         for (index, stock) in value.iter().enumerate() {
-            let rsi_value = rsi.next(stock.close);
+            let rsi_value = rsi.next(stock.adj_close);
             if index < PERIOD {
                 continue;
             }
@@ -68,6 +68,7 @@ mod tests {
         Stock {
             date,
             close,
+            adj_close: close,
             ..Default::default()
         }
     }

@@ -67,9 +67,9 @@ impl From<&[Stock]> for HighLowDirectionSignals {
                 let prev = stock.first().unwrap();
                 let today = stock.get(1).unwrap();
                 // 前日・当日それぞれの安値を比較する
-                let low_ordering = today.low.partial_cmp(&prev.low);
+                let low_ordering = today.adj_low.partial_cmp(&prev.adj_low);
                 // 前日・当日それぞれの高値を比較する
-                let high_ordering = today.high.partial_cmp(&prev.high);
+                let high_ordering = today.adj_high.partial_cmp(&prev.adj_high);
                 let high_low_direction_signal = HighLowDirectionSignal {
                     low_ordering,
                     high_ordering,

@@ -5,13 +5,13 @@ use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-/// 出来高ベースの解析結果
+/// 調整済み出来高ベースの解析結果
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct AnalysisResult {
     /// Crossover発生日
     pub date_of_event: NaiveDate,
-    /// Crossover発生日の出来高
-    pub volume: u64,
+    /// Crossover発生日の調整済み出来高（小数を保持）
+    pub volume: f64,
     /// CrossoverPattern
     pub pattern: CrossoverPattern,
 }
@@ -35,7 +35,7 @@ impl<'a> From<&StocksSmaCosesPair<'a>> for AnalysisResults {
                     .find_first(|stock| stock.date.eq(&sma_cos.date))?;
                 Some(AnalysisResult {
                     date_of_event: stock.date,
-                    volume: stock.volume,
+                    volume: stock.adj_volume,
                     pattern: sma_cos.crossover_pattern_volume.0,
                 })
             })

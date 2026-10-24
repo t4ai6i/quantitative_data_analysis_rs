@@ -90,10 +90,30 @@ mod tests {
             high: Some(3129.0),
             low: Some(3100.0),
             close: Some(3119.0),
-            adj_close: Some(3119.0),
+            adj_open: Some(1550.0),
+            adj_high: Some(1564.5),
+            adj_low: Some(1550.0),
+            adj_close: Some(1559.5),
             volume: Some(1571300),
+            adj_volume: Some(3142600.0),
         };
         assert_eq!(actual, expected,);
         Ok(())
+    }
+
+    #[tokio::test]
+    async fn invalid_adjusted_input_is_reported_instead_of_dropped() {
+        let csv = b"Date,Open,High,Low,Close,Adj Open,Adj High,Adj Low,Adj Close,Volume,Adj Volume\n2024-01-04,10,12,9,11,5,6,4.5,5.5,100,NaN\n";
+        let repository = Dsv::<csv::Structure>::new(true, Bytes::from_static(csv));
+        assert!(
+            repository
+                .get_stocks(&queries::get_stocks::Query::default())
+                .await
+                .is_err()
+        );
+        let query = queries::get_stocks_by_date::Query {
+            date: NaiveDate::from_ymd_opt(2024, 1, 4).unwrap(),
+        };
+        assert!(repository.get_stocks_by_date(&query).await.is_err());
     }
 }

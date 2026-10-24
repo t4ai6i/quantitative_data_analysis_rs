@@ -13,7 +13,7 @@ impl SmaCosAnalysis for model::AnalysisResults {
         vec![vec![
             "date".to_string(),
             "direction".to_string(),
-            "volume".to_string(),
+            "adjusted volume".to_string(),
         ]]
     }
 

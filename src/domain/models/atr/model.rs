@@ -5,6 +5,30 @@ use deref_derive::{Deref, DerefMut};
 use ta::Next;
 use ta::indicators::AverageTrueRange;
 
+struct AdjustedBar {
+    high: f64,
+    low: f64,
+    close: f64,
+}
+
+impl ta::High for AdjustedBar {
+    fn high(&self) -> f64 {
+        self.high
+    }
+}
+
+impl ta::Low for AdjustedBar {
+    fn low(&self) -> f64 {
+        self.low
+    }
+}
+
+impl ta::Close for AdjustedBar {
+    fn close(&self) -> f64 {
+        self.close
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct ATR {
     pub date: NaiveDate,
@@ -29,7 +53,12 @@ impl<const PERIOD: usize> From<&[Stock]> for ATRs<PERIOD> {
         let mut atrs = Vec::with_capacity(value.len() - PERIOD);
 
         for (index, stock) in value.iter().enumerate() {
-            let atr_value = atr.next(stock.close);
+            let bar = AdjustedBar {
+                high: stock.adj_high,
+                low: stock.adj_low,
+                close: stock.adj_close,
+            };
+            let atr_value = atr.next(&bar);
 
             if index < PERIOD {
                 continue;
@@ -74,6 +103,9 @@ mod tests {
             high,
             low,
             close,
+            adj_high: high,
+            adj_low: low,
+            adj_close: close,
             ..Default::default()
         }
     }

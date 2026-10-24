@@ -63,6 +63,58 @@ regression safety.
 
 ## Configuration
 
+### Stock price and CSV input contract
+
+`Stock` requires `adj_open`, `adj_high`, `adj_low`, `adj_close`, and
+`adj_volume`. Adjusted prices account for splits/consolidations and supported
+corporate actions, but not cash dividends. Adjusted volume uses the corresponding
+split/consolidation share basis and is stored as `f64` to preserve fractional
+values. Missing or invalid required values are errors, not a reason to silently
+drop a row or substitute source values.
+
+- J-Quants maps `AdjO`, `AdjH`, `AdjL`, `AdjC`, and `AdjVo` directly.
+  Its supported price adjustments include rights issues; rights issues do not
+  adjust volume.
+- Yahoo maps its provided OHLC and volume to both the source and adjusted fields.
+  The analysis `adj_close` is Yahoo's `close`, **not** its dividend-adjusted
+  `adjclose`. No additional split adjustment is applied.
+- Source fields (`open`, `high`, `low`, `close`, `volume`) preserve provider
+  values and are **not guaranteed to be unadjusted**.
+- Yahoo's split-adjusted OHLC and volume were corroborated for AAPL's 2020
+  4-for-1 split. This is not a verified guarantee for all instruments,
+  consolidations, or other corporate actions. Providers may differ in supported
+  events and rounding; cross-provider numerical equivalence is not guaranteed.
+- Adjusted history may change after subsequent corporate actions. It does not
+  guarantee point-in-time reconstruction.
+
+CSV input requires these columns (the shown order is also the headerless order):
+
+```csv
+Date,Open,High,Low,Close,Adj Open,Adj High,Adj Low,Adj Close,Volume,Adj Volume
+```
+
+All fields are required. Dates use `YYYY-MM-DD`, prices must be finite and
+positive, `Volume` is a nonnegative integer, and `Adj Volume` is finite and
+nonnegative. Legacy seven-column CSVs are rejected; their `Adj Close` must not be
+copied blindly because it may include dividend adjustments. The producer is
+responsible for supplying a consistent adjustment basis; the reader cannot infer
+it from the numbers.
+
+The stock fixtures `assets/2031.T.csv`, `assets/8473.T.csv`, and
+`assets/9223.T.csv` were replaced with J-Quants daily bars fetched on 2026-10-24.
+Their periods are respectively 2024-02-15, 2022-09-09 through 2023-09-08, and
+2023-12-25 through 2024-02-16. Fixture-based tests require no API access.
+Technical analysis uses adjusted OHLC and volume consistently: SMA, MACD, RSI,
+Bollinger bands, ATR, volume ratios, price/SMA comparisons, crossover returns,
+high/low direction, candlestick patterns, and chart/table values. Crossover
+returns are price returns excluding dividends, not total returns. ATR uses
+adjusted high/low and previous adjusted close with the existing `ta` EMA
+smoothing (`2 / (period + 1)`), not Wilder smoothing. Volume ratios compare the
+current adjusted volume against the previous N bars, excluding the current bar.
+Analysis-result `volume` and chart-view `volumes()` now use `f64` to avoid
+truncating fractional adjusted volume. Financial valuation inputs and stored
+source fields are unchanged.
+
 - Provide J-Quants API key via environment variable before executing any example or binary:
 
   ```bash
@@ -101,5 +153,5 @@ redistributing.
 ## Acknowledgements
 
 - J-Quants for providing authenticated access to fundamental and price data.
-- Yahoo Finance for historical CSV feeds used in examples.
+- Yahoo Finance for historical market data access.
 - The Rust community and the authors of the crates listed in `Cargo.toml` for the ecosystem support.

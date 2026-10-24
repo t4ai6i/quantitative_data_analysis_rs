@@ -96,10 +96,10 @@ impl<'a> From<CandleStickInput<'a>> for CandleStick {
         } = value;
         let Stock {
             date,
-            open,
-            high,
-            low,
-            close,
+            adj_open: open,
+            adj_high: high,
+            adj_low: low,
+            adj_close: close,
             ..
         } = stock;
         let MarubozuBodyMinRatio(marubozu_body_min_ratio) = marubozu_body_min_ratio;
@@ -238,6 +238,10 @@ mod tests {
             close: 1000.0,
             adj_close: 1000.0,
             volume: 10000,
+            adj_open: 1000.0,
+            adj_high: 1500.0,
+            adj_low: 500.0,
+            adj_volume: 10000.0,
         };
         let body_min_ratio = MARUBOZU_BODY_MIN_RATIO as f64 / 100.0;
         let wick_max_ratio = MARUBOZU_WICK_MAX_RATIO as f64 / 100.0;

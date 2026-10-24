@@ -16,8 +16,8 @@ impl<const N: usize> SmaCosAnalysis for model::AnalysisResults<N> {
             "chance loss".to_string(),
             "direction".to_string(),
             "per inc/dec".to_string(),
-            "close".to_string(),
-            format!("close after {} days", N),
+            "adjusted close".to_string(),
+            format!("adjusted close after {} days", N),
         ]]
     }
 

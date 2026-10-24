@@ -17,8 +17,12 @@ fn csv_sandbox() {
             "High",
             "Low",
             "Close",
+            "Adj Open",
+            "Adj High",
+            "Adj Low",
             "Adj Close",
-            "Volume"
+            "Volume",
+            "Adj Volume"
         ]
     );
     let record = reader.deserialize().next();
@@ -30,8 +34,12 @@ fn csv_sandbox() {
         "High":2695.0,
         "Low":2662.0,
         "Close":2685.0,
-        "Adj Close":2535.687744,
-        "Volume":1482200
+        "Adj Open":1331.0,
+        "Adj High":1347.5,
+        "Adj Low":1331.0,
+        "Adj Close":1342.5,
+        "Volume":1482200,
+        "Adj Volume":2964400.0
     }"#};
     let expected: Structure = serde_json::from_str(expected).unwrap();
     assert_eq!(actual, expected);

@@ -81,7 +81,7 @@ impl<'a> From<(&[Stock], SMAListTrio<'a, 5, 25, 50>)> for SmaCps {
                 let sma_n = smas_n.par_iter().find_first(|sma_n| sma_n.date.eq(&date))?;
                 let sma_o = smas_o.par_iter().find_first(|sma_o| sma_o.date.eq(&date))?;
                 let sma_p = smas_p.par_iter().find_first(|sma_p| sma_p.date.eq(&date))?;
-                let cmp1 = stock.close.partial_cmp(&sma_n.close.0);
+                let cmp1 = stock.adj_close.partial_cmp(&sma_n.close.0);
                 let cmp2 = sma_n.close.0.partial_cmp(&sma_o.close.0);
                 let cmp3 = sma_o.close.0.partial_cmp(&sma_p.close.0);
                 let r#type = BuySellSignalType::from((cmp1, cmp2, cmp3));

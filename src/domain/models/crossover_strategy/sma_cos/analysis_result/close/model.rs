@@ -12,14 +12,14 @@ use deref_derive::{Deref, DerefMut};
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::ops::{Mul, Sub};
 
-/// 終値ベースの解析結果
+/// 調整済み終値ベースの解析結果（配当を含まない価格リターン）
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct AnalysisResult {
     /// Crossover発生日
     pub date_of_event: NaiveDate,
-    /// Crossover発生日の終値
+    /// Crossover発生日の調整済み終値
     pub close: f64,
-    /// N日後の終値
+    /// N日後の調整済み終値
     pub close_after_n_days: f64,
     /// CrossoverPattern
     pub pattern: CrossoverPattern,
@@ -59,7 +59,8 @@ impl<'a, const N: usize> From<&StocksSmaCosesPair<'a>> for AnalysisResults<N> {
                         Some((stock, sma_cos, stock_after_n_days))
                     })?;
                 // 増減率を取得
-                let rate_of_change = stock_after_n_days.close.sub(stock.close) / stock.close;
+                let rate_of_change =
+                    stock_after_n_days.adj_close.sub(stock.adj_close) / stock.adj_close;
                 let rate_of_change = rate_of_change.mul(100.0);
                 let pattern_rate_of_change_pair = CrossoverPatternRateOfChangePair {
                     crossover_pattern: sma_cos.crossover_pattern_close.0,
@@ -68,8 +69,8 @@ impl<'a, const N: usize> From<&StocksSmaCosesPair<'a>> for AnalysisResults<N> {
                 let analysis_pattern = AnalysisPattern::from(pattern_rate_of_change_pair);
                 Some(AnalysisResult {
                     date_of_event: sma_cos.date,
-                    close: stock.close,
-                    close_after_n_days: stock_after_n_days.close,
+                    close: stock.adj_close,
+                    close_after_n_days: stock_after_n_days.adj_close,
                     pattern: sma_cos.crossover_pattern_close.0,
                     rate_of_change,
                     analysis_pattern,
@@ -159,6 +160,54 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     const CSV: &[u8] = include_bytes!("../../../../../../../assets/8473.T.csv");
+
+    #[test]
+    fn crossover_returns_and_volume_use_adjusted_values() {
+        use crate::domain::models::crossover_strategy::analysis_pattern::model::AnalysisPattern;
+        use crate::domain::models::crossover_strategy::crossover_pattern::model::CrossoverPattern;
+        use crate::domain::models::crossover_strategy::sma_cos::{
+            analysis_result::volume::model::AnalysisResults as VolumeResults, model::SmaCos,
+        };
+        use crate::domain::models::stock::model::Stock;
+
+        let stocks = [
+            Stock {
+                date: NaiveDate::from_ymd_opt(2024, 1, 4).unwrap(),
+                close: 300.0,
+                adj_close: 100.0,
+                volume: 67,
+                adj_volume: 200.5,
+                ..Default::default()
+            },
+            Stock {
+                date: NaiveDate::from_ymd_opt(2024, 1, 5).unwrap(),
+                close: 110.0,
+                adj_close: 110.0,
+                ..Default::default()
+            },
+        ];
+        let mut signal = SmaCos {
+            date: stocks[0].date,
+            ..Default::default()
+        };
+        signal.crossover_pattern_close.0 = CrossoverPattern::GoldenCross;
+        signal.crossover_pattern_volume.0 = CrossoverPattern::GoldenCross;
+        let mut signals = SmaCoses::default();
+        signals.push(signal);
+        let pair = StocksSmaCosesPair {
+            stocks: &stocks,
+            sma_coses: &signals,
+        };
+        let closes = AnalysisResults::<1>::from(&pair);
+        assert_eq!(
+            (closes[0].close, closes[0].close_after_n_days),
+            (100.0, 110.0)
+        );
+        assert!((closes[0].rate_of_change - 10.0).abs() < 1e-10);
+        assert_eq!(closes[0].analysis_pattern, AnalysisPattern::GoldenChance);
+        let volumes = VolumeResults::from(&pair);
+        assert_eq!(volumes[0].volume, 200.5);
+    }
 
     #[tokio::test]
     async fn sma_cos_analysis_close_test() -> Result<()> {
