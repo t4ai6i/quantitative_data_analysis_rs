@@ -1173,7 +1173,7 @@ dependencies = [
 
 [[package]]
 name = "quantitative-data-analysis-rs"
-version = "0.37.3"
+version = "0.37.4"
 dependencies = [
  "anyhow",
  "async-trait",
