@@ -1173,7 +1173,7 @@ dependencies = [
 
 [[package]]
 name = "quantitative-data-analysis-rs"
-version = "0.37.4"
+version = "0.38.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1205,9 +1205,9 @@ dependencies = [
 
 [[package]]
 name = "query-string-builder"
-version = "0.7.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "902dd46fd196c802e5b621cce8f5e4d3ff779424b2e37c07662fe88efcf1c7e3"
+checksum = "b7556f13bb8d552ecfb2ec546f4df7a6b3f98e421a49b9aa81ae75adee30163e"
 dependencies = [
  "percent-encoding",
 ]

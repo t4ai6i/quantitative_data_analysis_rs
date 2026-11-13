@@ -63,6 +63,46 @@ regression safety.
 
 ## Configuration
 
+### J-Quants financial disclosures
+
+The J-Quants statement repository retrieves every `/v2/fins/summary` page and
+returns disclosure rows in ascending disclosure date and time (JST). Rows with
+the same timestamp retain their source order; disclosure numbers do not establish
+their chronological order. A failed page, invalid response, or malformed nonempty
+field is an error, not a partial history. Rate limiting and retries remain the
+caller's responsibility.
+
+`FetchScoringData.financial_disclosures` contains the API's FY, quarterly, and
+forecast-revision rows. Each entry retains its disclosure identifier and document
+type, period and fiscal-year dates, and operating-profit actual and forecast
+fields, including the `NC` variants. Amounts are in the units provided by
+J-Quants (normally yen). Missing values are `null`; they do not mean unchanged or
+withdrawn. `FOP` refers to the current fiscal year, `NxFOP` to the next fiscal
+year. Compare both fiscal-year boundaries before associating forecasts.
+
+The API's `OP` is preserved with its original period dates and
+`operating_profit_period: "unspecified"`. Its interpretation as cumulative or
+single-quarter is not guaranteed here; no single-quarter
+differences are calculated. The `NC`-less fields may represent consolidated or
+individual values depending on document type; neither accounting basis nor
+consolidation status is inferred when the document does not establish it.
+J-Quants does not provide the time at which a disclosure became available through
+its API, and provider corrections can overwrite previously supplied values.
+These records therefore do not guarantee point-in-time reconstruction.
+J-Quants also does not guarantee snapshot consistency if data changes during
+pagination.
+
+`latest_statement` and `full_year_sales` remain FY projections, separate from the
+full history. `get_row_statements` returns the full disclosure rows, whereas
+`get_statements` remains an FY-only projection. Generated statements TSVs now
+include a `disclosure_json` column;
+`examples/make_statements.rs` writes every disclosure and stops on fetch failure.
+Existing TSV data lacks the history and must be regenerated before using it with
+`FetchScoringData`; it is rejected rather than silently producing incomplete
+history. The JSON contract adds `financial_disclosures` and old JSON must be
+regenerated. The example uses `assets/statements.tsv`, so regeneration and
+deployment of that input must be handled separately.
+
 ### Stock price and CSV input contract
 
 `Stock` requires `adj_open`, `adj_high`, `adj_low`, `adj_close`, and

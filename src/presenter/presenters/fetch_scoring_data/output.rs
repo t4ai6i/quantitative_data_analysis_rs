@@ -1,3 +1,4 @@
+use crate::domain::models::statement::model::FinancialDisclosure;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +12,7 @@ pub struct FetchScoringData {
     pub price: Option<FetchPrice>,
     pub latest_statement: Option<FetchLatestStatement>,
     pub full_year_sales: Vec<FetchFullYearSales>,
+    pub financial_disclosures: Vec<FinancialDisclosure>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]

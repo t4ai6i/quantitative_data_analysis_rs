@@ -1,3 +1,4 @@
+use anyhow::{Context, Result, ensure};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
@@ -20,6 +21,8 @@ pub struct Structure {
     pub profit: Option<f64>,
     pub equity: Option<f64>,
     pub total_assets: Option<f64>,
+    #[serde(default)]
+    pub disclosure_json: Option<String>,
 }
 
 impl From<model::Statement> for Structure {
@@ -52,12 +55,41 @@ impl From<model::Statement> for Structure {
             profit: validate_value(profit),
             equity: validate_value(equity),
             total_assets: validate_value(total_assets),
+            disclosure_json: None,
         }
     }
 }
 
-impl From<Structure> for model::RowStatement {
-    fn from(value: Structure) -> Self {
+impl TryFrom<model::RowStatement> for Structure {
+    type Error = anyhow::Error;
+
+    fn try_from(value: model::RowStatement) -> Result<Self> {
+        Ok(Self {
+            code: value.code,
+            disclosed_date: value.disclosed_date.context("missing disclosed date")?,
+            current_fiscal_year_end_date: value.current_fiscal_year_end_date,
+            bps: value.bps,
+            eps: value.eps,
+            annual_dividend_forecast: value.annual_dividend_forecast,
+            net_sales: value.net_sales,
+            opp: value.opp,
+            orp: value.orp,
+            profit: value.profit,
+            equity: value.equity,
+            total_assets: value.total_assets,
+            disclosure_json: value
+                .disclosure
+                .as_ref()
+                .map(serde_json::to_string)
+                .transpose()?,
+        })
+    }
+}
+
+impl TryFrom<Structure> for model::RowStatement {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Structure) -> Result<Self> {
         let Structure {
             code,
             disclosed_date,
@@ -71,9 +103,31 @@ impl From<Structure> for model::RowStatement {
             profit,
             equity,
             total_assets,
+            disclosure_json,
         } = value;
 
-        Self {
+        let disclosure: Option<model::FinancialDisclosure> = disclosure_json
+            .as_deref()
+            .filter(|value| !value.is_empty())
+            .map(serde_json::from_str)
+            .transpose()
+            .context("invalid disclosure_json")?;
+        if let Some(disclosure) = &disclosure {
+            ensure!(disclosure.matches_code(&code), "disclosure code mismatch");
+            ensure!(
+                disclosure.disclosed_date == disclosed_date,
+                "disclosure date mismatch"
+            );
+            ensure!(
+                disclosure.current_fiscal_year_end == current_fiscal_year_end_date,
+                "disclosure fiscal year end mismatch"
+            );
+            ensure!(
+                disclosure.operating_profit == opp,
+                "disclosure operating profit mismatch"
+            );
+        }
+        Ok(Self {
             code,
             disclosed_date: Some(disclosed_date),
             current_fiscal_year_end_date,
@@ -86,7 +140,8 @@ impl From<Structure> for model::RowStatement {
             profit,
             equity,
             total_assets,
-        }
+            disclosure,
+        })
     }
 }
 
