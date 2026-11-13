@@ -1,6 +1,6 @@
 [package]
 name = "quantitative-data-analysis-rs"
-version = "0.37.4"
+version = "0.38.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -24,7 +24,7 @@ tokio = { version = "1.48.0", features = ["full"] }
 async-trait = "0.1.89"
 tryhard = "0.5.2"
 reqwest = { version = "0.13.2", features = ["json"] }
-query-string-builder = "0.7.1"
+query-string-builder = "0.8.0"
 rayon = "1.11.0"
 deref-derive = "0.1.0"
 dirs = "7.0.0"

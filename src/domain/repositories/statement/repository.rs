@@ -12,8 +12,9 @@ pub trait Statement {
         let row_statements = self.get_row_statements(query).await?;
         let vec_statement = row_statements
             .into_iter()
-            .filter_map(|row_statement| TryFrom::try_from(row_statement).ok())
-            .collect();
+            .filter(model::RowStatement::is_usable_full_year)
+            .map(TryFrom::try_from)
+            .collect::<Result<Vec<_>>>()?;
         Ok(model::Statements(vec_statement))
     }
 

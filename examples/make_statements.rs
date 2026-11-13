@@ -1,3 +1,4 @@
+use anyhow::Context;
 use bytes::Bytes;
 use csv::WriterBuilder;
 use quantitative_data_analysis_rs::domain::repositories::company::repository::Company;
@@ -38,7 +39,6 @@ async fn main() -> anyhow::Result<()> {
     let started_at = Instant::now();
     let total = companies.len();
     let mut success_count = 0usize;
-    let mut failure_count = 0usize;
 
     for (index, company) in companies.0.into_iter().enumerate() {
         let code = company.code;
@@ -46,18 +46,14 @@ async fn main() -> anyhow::Result<()> {
             code: Some(code.as_str()),
         };
 
-        match jquants_api.get_statements(&query).await {
-            Ok(statements) => {
-                for statement in statements.0 {
-                    writer.serialize(statement_tsv::Structure::from(statement))?;
-                }
-                success_count += 1;
-            }
-            Err(error) => {
-                eprintln!("failed to fetch statements for code {}: {}", code, error);
-                failure_count += 1;
-            }
+        let statements = jquants_api
+            .get_row_statements(&query)
+            .await
+            .with_context(|| format!("failed to fetch statements for code {code}"))?;
+        for statement in statements {
+            writer.serialize(statement_tsv::Structure::try_from(statement)?)?;
         }
+        success_count += 1;
 
         if (index + 1) % PROGRESS_STEP == 0 || index + 1 == total {
             let elapsed = started_at.elapsed();
@@ -65,11 +61,10 @@ async fn main() -> anyhow::Result<()> {
             let remaining = total.saturating_sub(index + 1) as u32;
             let eta = average_per_item * remaining;
             eprintln!(
-                "progress: {}/{} success={} failed={} elapsed={:?} eta={:?}",
+                "progress: {}/{} success={} elapsed={:?} eta={:?}",
                 index + 1,
                 total,
                 success_count,
-                failure_count,
                 elapsed,
                 eta,
             );

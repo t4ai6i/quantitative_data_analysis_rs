@@ -181,6 +181,7 @@ mod tests {
                     net_sales: Some(100.0),
                 },
             ],
+            financial_disclosures: vec![],
         }
     }
 

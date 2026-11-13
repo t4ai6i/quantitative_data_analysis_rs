@@ -1,6 +1,53 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveTime};
 use deref_derive::{Deref, DerefMut};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+/// Period interpretation of the API's actual operating-profit value.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum OperatingProfitPeriod {
+    /// The API source does not establish a general cumulative or single-quarter meaning.
+    Unspecified,
+}
+
+/// An unmodified J-Quants disclosure. Times are Japan Standard Time.
+///
+/// The API does not explicitly establish whether every operating profit value
+/// is cumulative or for a single quarter. Period dates and source fields are
+/// retained without deriving or classifying quarterly amounts.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
+pub struct FinancialDisclosure {
+    pub code: String,
+    pub disclosed_date: NaiveDate,
+    pub disclosed_time: NaiveTime,
+    pub disclosure_number: String,
+    pub document_type: String,
+    pub current_period_type: Option<String>,
+    pub current_period_start: Option<NaiveDate>,
+    pub current_period_end: Option<NaiveDate>,
+    pub current_fiscal_year_start: Option<NaiveDate>,
+    pub current_fiscal_year_end: Option<NaiveDate>,
+    pub next_fiscal_year_start: Option<NaiveDate>,
+    pub next_fiscal_year_end: Option<NaiveDate>,
+    pub operating_profit: Option<f64>,
+    pub operating_profit_period: OperatingProfitPeriod,
+    pub forecast_operating_profit: Option<f64>,
+    pub next_forecast_operating_profit: Option<f64>,
+    pub forecast_operating_profit_2q: Option<f64>,
+    pub next_forecast_operating_profit_2q: Option<f64>,
+    pub non_consolidated_operating_profit: Option<f64>,
+    pub non_consolidated_forecast_operating_profit: Option<f64>,
+    pub non_consolidated_next_forecast_operating_profit: Option<f64>,
+    pub non_consolidated_forecast_operating_profit_2q: Option<f64>,
+    pub non_consolidated_next_forecast_operating_profit_2q: Option<f64>,
+}
+
+impl FinancialDisclosure {
+    /// J-Quants accepts a four-character code and returns its five-character form.
+    pub fn matches_code(&self, code: &str) -> bool {
+        self.code == code || (code.len() == 4 && self.code.strip_suffix('0') == Some(code))
+    }
+}
 
 #[derive(Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct RowStatement {
@@ -16,6 +63,17 @@ pub struct RowStatement {
     pub profit: Option<f64>,
     pub equity: Option<f64>,
     pub total_assets: Option<f64>,
+    pub disclosure: Option<FinancialDisclosure>,
+}
+
+impl RowStatement {
+    /// Retains the legacy FY projection for statement data without disclosure metadata.
+    pub fn is_usable_full_year(&self) -> bool {
+        self.disclosure.as_ref().is_none_or(|disclosure| {
+            disclosure.current_period_type.as_deref() == Some("FY")
+                && (self.net_sales.is_some() || self.eps.is_some())
+        })
+    }
 }
 
 /// Represents a financial statement with various financial metrics.
@@ -93,6 +151,7 @@ impl TryFrom<RowStatement> for Statement {
             profit,
             equity,
             total_assets,
+            disclosure: _,
         } = value;
 
         Ok(Self {

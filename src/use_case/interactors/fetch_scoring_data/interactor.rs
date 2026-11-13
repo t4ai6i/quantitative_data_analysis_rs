@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, ensure};
 use async_trait::async_trait;
 
 use crate::domain::models::company::model as company_model;
@@ -55,6 +55,7 @@ where
                 price: None,
                 latest_statement: None,
                 full_year_sales: vec![],
+                financial_disclosures: vec![],
             });
         };
 
@@ -74,17 +75,14 @@ where
                 price: None,
                 latest_statement: None,
                 full_year_sales: vec![],
+                financial_disclosures: vec![],
             });
         };
 
         let query = get_statements::Query {
             code: Some(input.code.as_str()),
         };
-        let mut row_statements = self
-            .statement_repository
-            .get_row_statements(&query)
-            .await
-            .unwrap_or_else(|_| vec![]);
+        let mut row_statements = self.statement_repository.get_row_statements(&query).await?;
 
         if row_statements.is_empty() {
             return Ok(output::FetchScoringData {
@@ -96,17 +94,33 @@ where
                 price: Some(output::FetchPrice::from(row_stock)),
                 latest_statement: None,
                 full_year_sales: vec![],
+                financial_disclosures: vec![],
             });
         }
+        ensure!(
+            row_statements.iter().all(|row| row.disclosure.is_some()),
+            "financial disclosure history is missing for code {}; regenerate the statement data",
+            input.code
+        );
 
-        row_statements.sort_by(|a, b| {
-            let a_date = a.disclosed_date.unwrap_or_default();
-            let b_date = b.disclosed_date.unwrap_or_default();
-            a_date.cmp(&b_date)
+        row_statements.sort_by_key(|row| {
+            (
+                row.disclosed_date,
+                row.disclosure
+                    .as_ref()
+                    .map(|disclosure| disclosure.disclosed_time),
+            )
         });
-        let latest_statement = row_statements.last().unwrap().clone();
-
-        let full_year_sales = row_statements
+        let financial_disclosures = row_statements
+            .iter()
+            .filter_map(|row| row.disclosure.clone())
+            .collect();
+        let full_year_statements = row_statements
+            .into_iter()
+            .filter(statement_model::RowStatement::is_usable_full_year)
+            .collect::<Vec<_>>();
+        let latest_statement = full_year_statements.last().cloned();
+        let full_year_sales = full_year_statements
             .into_iter()
             .map(output::FetchFullYearSales::from)
             .collect::<Vec<_>>();
@@ -118,8 +132,9 @@ where
             error_type: None,
             company: Some(output::FetchCompany::from(row_company)),
             price: Some(output::FetchPrice::from(row_stock)),
-            latest_statement: Some(output::FetchLatestStatement::from(latest_statement)),
+            latest_statement: latest_statement.map(output::FetchLatestStatement::from),
             full_year_sales,
+            financial_disclosures,
         })
     }
 }
@@ -160,5 +175,159 @@ impl From<statement_model::RowStatement> for output::FetchFullYearSales {
             disclosed_date: value.disclosed_date,
             net_sales: value.net_sales,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::infrastructure::repositories::statement::structures::jquants_api::Response;
+    use chrono::{NaiveDate, Utc};
+    use serde_json::json;
+
+    struct Company;
+    struct Stock;
+    struct Statements {
+        rows: Vec<statement_model::RowStatement>,
+        fail: bool,
+    }
+
+    #[async_trait]
+    impl repositories::company::repository::Company for Company {
+        async fn get_row_company<'a>(
+            &self,
+            _: &get_company::Query<'a>,
+        ) -> Result<company_model::RowCompany> {
+            Ok(company_model::RowCompany::default())
+        }
+
+        async fn get_vec_row_company(&self) -> Result<Vec<company_model::RowCompany>> {
+            Ok(vec![])
+        }
+    }
+
+    #[async_trait]
+    impl repositories::stock::repository::Stock for Stock {
+        async fn get_row_stock<'a>(
+            &self,
+            _: &get_stock::Query<'a>,
+        ) -> Result<stock_model::RowStock> {
+            Ok(stock_model::RowStock::default())
+        }
+
+        async fn get_vec_row_stock<'a>(
+            &self,
+            _: &repositories::stock::queries::get_stocks::Query<'a>,
+        ) -> Result<Vec<stock_model::RowStock>> {
+            Ok(vec![])
+        }
+
+        async fn get_vec_row_stock_by_date(
+            &self,
+            _: &repositories::stock::queries::get_stocks_by_date::Query,
+        ) -> Result<Vec<stock_model::RowStock>> {
+            Ok(vec![])
+        }
+    }
+
+    #[async_trait]
+    impl repositories::statement::repository::Statement for Statements {
+        async fn get_row_statements<'a>(
+            &self,
+            _: &get_statements::Query<'a>,
+        ) -> Result<Vec<statement_model::RowStatement>> {
+            if self.fail {
+                anyhow::bail!("page fetch failed");
+            }
+            Ok(self.rows.clone())
+        }
+    }
+
+    fn row(
+        date: &str,
+        time: &str,
+        number: &str,
+        period: &str,
+        sales: &str,
+    ) -> statement_model::RowStatement {
+        let value = json!({
+            "Code": "12340", "DiscDate": date, "DiscTime": time, "DiscNo": number,
+            "DocType": "FinancialStatements_Consolidated_JP", "CurPerType": period,
+            "CurFYEn": "2026-03-31", "Sales": sales, "OP": "90", "FOP": ""
+        });
+        statement_model::RowStatement::try_from(Response {
+            code: "1234".into(),
+            value: &value,
+        })
+        .unwrap()
+    }
+
+    fn input() -> input::FetchScoringData {
+        input::FetchScoringData::new(
+            "1234".into(),
+            NaiveDate::from_ymd_opt(2026, 8, 1).unwrap(),
+            Utc::now(),
+        )
+    }
+
+    #[tokio::test]
+    async fn history_is_sorted_but_annual_projections_exclude_quarters() {
+        use crate::use_case::interfaces::fetch_scoring_data::use_case::FetchScoringData as _;
+        let statements = Statements {
+            rows: vec![
+                row("2026-08-01", "15:00:00", "1", "1Q", "25"),
+                row("2026-05-01", "15:00:00", "2", "FY", "100"),
+                row("2026-08-01", "09:00:00", "9", "1Q", "20"),
+            ],
+            fail: false,
+        };
+        let result = FetchScoringData::new(&Company, &Stock, &statements)
+            .handle(input())
+            .await
+            .unwrap();
+        assert_eq!(
+            result
+                .financial_disclosures
+                .iter()
+                .map(|d| d.disclosure_number.as_str())
+                .collect::<Vec<_>>(),
+            ["2", "9", "1"]
+        );
+        assert_eq!(result.full_year_sales.len(), 1);
+        assert_eq!(result.full_year_sales[0].net_sales, Some(100.0));
+        assert_eq!(
+            result.latest_statement.unwrap().disclosed_date,
+            NaiveDate::from_ymd_opt(2026, 5, 1)
+        );
+        let json = serde_json::to_value(result.financial_disclosures).unwrap();
+        assert_eq!(
+            json[2]["forecast_operating_profit"],
+            serde_json::Value::Null
+        );
+    }
+
+    #[tokio::test]
+    async fn repository_failures_and_missing_history_are_errors() {
+        use crate::use_case::interfaces::fetch_scoring_data::use_case::FetchScoringData as _;
+        let failing = Statements {
+            rows: vec![],
+            fail: true,
+        };
+        assert!(
+            FetchScoringData::new(&Company, &Stock, &failing)
+                .handle(input())
+                .await
+                .is_err()
+        );
+        let missing = Statements {
+            rows: vec![statement_model::RowStatement::default()],
+            fail: false,
+        };
+        assert!(
+            FetchScoringData::new(&Company, &Stock, &missing)
+                .handle(input())
+                .await
+                .is_err()
+        );
     }
 }
