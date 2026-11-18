@@ -21,12 +21,7 @@ where
         &self,
         query: &queries::get_stock::Query<'a>,
     ) -> Result<model::RowStock> {
-        let vec_row_stock = self
-            .get_vec_row_stock(&queries::get_stocks::Query {
-                ..Default::default()
-            })
-            .await?;
-        vec_row_stock
+        self.items()?
             .par_iter()
             .find_first(|row_stock| {
                 row_stock
@@ -48,17 +43,15 @@ where
         &self,
         _: &queries::get_stocks::Query<'a>,
     ) -> Result<Vec<model::RowStock>> {
-        let processed = T::process_tabular_data(self.buffer.as_ref(), self.has_headers)?;
-        Ok(processed)
+        Ok(self.items()?.to_vec())
     }
 
     async fn get_vec_row_stock_by_date(&self, query: &Query) -> Result<Vec<model::RowStock>> {
-        let vec_row_stock = self
-            .get_vec_row_stock(&queries::get_stocks::Query::default())
-            .await?;
-        Ok(vec_row_stock
-            .into_iter()
+        Ok(self
+            .items()?
+            .iter()
             .filter(|row_stock| row_stock.date.is_some_and(|date| date.eq(&query.date)))
+            .cloned()
             .collect())
     }
 }
@@ -72,6 +65,7 @@ mod tests {
     use crate::domain::repositories::stock::queries;
     use crate::domain::repositories::stock::repository::Stock;
     use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::repositories::stock::structures::internal::csv;
 
     const CSV: &[u8] = include_bytes!("../../../../assets/8473.T.csv");
@@ -98,6 +92,26 @@ mod tests {
             adj_volume: Some(3142600.0),
         };
         assert_eq!(actual, expected,);
+        let all = csv::Structure::process_tabular_data(CSV, true)?;
+        assert_eq!(
+            repository
+                .get_vec_row_stock(&queries::get_stocks::Query::default())
+                .await?,
+            all
+        );
+        let by_date = repository
+            .get_vec_row_stock_by_date(&queries::get_stocks_by_date::Query {
+                date: query.target_date,
+            })
+            .await?;
+        assert_eq!(
+            by_date,
+            all.iter()
+                .filter(|row| row.date == Some(query.target_date))
+                .cloned()
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(repository.get_row_stock(&query).await?, expected);
         Ok(())
     }
 

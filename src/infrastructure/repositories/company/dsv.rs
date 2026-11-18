@@ -20,8 +20,7 @@ where
         &self,
         query: &queries::get_company::Query<'a>,
     ) -> Result<model::RowCompany> {
-        let vec_row_company = self.get_vec_row_company().await?;
-        vec_row_company
+        self.items()?
             .par_iter()
             .find_first(|company| company.code.iter().any(|code| code.eq(query.code)))
             .cloned()
@@ -35,8 +34,7 @@ where
     }
 
     async fn get_vec_row_company(&self) -> Result<Vec<model::RowCompany>> {
-        let processed = T::process_tabular_data(self.buffer.as_ref(), self.has_headers)?;
-        Ok(processed)
+        Ok(self.items()?.to_vec())
     }
 }
 
@@ -48,6 +46,7 @@ mod tests {
     use crate::domain::repositories::company::queries;
     use crate::domain::repositories::company::repository::Company;
     use crate::infrastructure::dsv::Dsv;
+    use crate::infrastructure::from_slice::FromSlice;
     use crate::infrastructure::repositories::company::structures::internal::tsv;
 
     const TSV: &[u8] = include_bytes!("../../../../assets/companies.tsv");
@@ -68,6 +67,10 @@ mod tests {
             symbol: Some("13080.0109".to_string()),
         };
         assert_eq!(actual, expected);
+        let all = tsv::Structure::process_tabular_data(TSV, false)?;
+        assert_eq!(repository.get_vec_row_company().await?, all);
+        assert_eq!(repository.get_row_company(&query).await?, expected);
+        assert_eq!(repository.get_vec_row_company().await?, all);
         Ok(())
     }
 }
