@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, bail, ensure};
 use chrono::{NaiveDate, NaiveTime};
 use serde_json::Value;
+use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use crate::domain::models::statement::model;
@@ -39,36 +40,54 @@ fn optional_number(value: &Value, key: &str) -> Result<Option<f64>> {
         .transpose()
 }
 
+fn source_fields(value: &Value) -> Result<BTreeMap<String, Option<String>>> {
+    let fields = value
+        .as_object()
+        .context("disclosure must be a JSON object")?;
+    fields
+        .iter()
+        .map(|(key, value)| {
+            value
+                .as_str()
+                .map(|text| (key.clone(), Some(text.to_owned())))
+                .or_else(|| value.is_null().then(|| (key.clone(), None)))
+                .with_context(|| format!("invalid source field {key}"))
+        })
+        .collect()
+}
+
 impl TryFrom<Response<'_>> for model::RowStatement {
     type Error = anyhow::Error;
 
     fn try_from(value: Response<'_>) -> Result<Self> {
-        let Response { code, value } = value;
-        let disclosed_date = required_string(value, "DiscDate")?
-            .parse::<NaiveDate>()
-            .context("invalid field DiscDate")?;
-        let disclosed_time = required_string(value, "DiscTime")?
-            .parse::<NaiveTime>()
-            .context("invalid field DiscTime")?;
+        let Response {
+            code: requested_code,
+            value,
+        } = value;
+        let source_fields = source_fields(value)?;
+        let disclosed_date = optional_parsed::<NaiveDate>(value, "DiscDate")?;
+        let disclosed_time = optional_parsed::<NaiveTime>(value, "DiscTime")?;
         let current_fiscal_year_end_date = optional_parsed(value, "CurFYEn")?;
         let eps = optional_number(value, "EPS")?;
         let bps = optional_number(value, "BPS")?;
-        // FY は DivAnn（実績配当）に入ることが多く、FDivAnn（予想配当）は空の場合がある。
-        let dividend = optional_number(value, "DivAnn")?;
-        let forecast_dividend = optional_number(value, "FDivAnn")?;
-        let annual_dividend_forecast = dividend.or(forecast_dividend);
+        let annual_dividend_forecast = optional_number(value, "FDivAnn")?;
         let net_sales = optional_number(value, "Sales")?;
         let opp = optional_number(value, "OP")?;
         let orp = optional_number(value, "OdP")?;
         let profit = optional_number(value, "NP")?;
         let equity = optional_number(value, "Eq")?;
         let total_assets = optional_number(value, "TA")?;
+        let code = required_string(value, "Code")?.to_owned();
+        let document_type = optional_string(value, "DocType")?
+            .unwrap_or_default()
+            .to_owned();
         let disclosure = model::FinancialDisclosure {
-            code: required_string(value, "Code")?.to_owned(),
+            code: code.clone(),
             disclosed_date,
             disclosed_time,
             disclosure_number: required_string(value, "DiscNo")?.to_owned(),
-            document_type: required_string(value, "DocType")?.to_owned(),
+            document_type: document_type.clone(),
+            accounting_scope: model::accounting_scope_from_document_type(&document_type),
             current_period_type: optional_string(value, "CurPerType")?.map(str::to_owned),
             current_period_start: optional_parsed(value, "CurPerSt")?,
             current_period_end: optional_parsed(value, "CurPerEn")?,
@@ -90,12 +109,16 @@ impl TryFrom<Response<'_>> for model::RowStatement {
                 value,
                 "NxFNCOP2Q",
             )?,
+            source_fields,
         };
 
-        ensure!(disclosure.matches_code(&code), "disclosure code mismatch");
+        ensure!(
+            disclosure.matches_code(&requested_code),
+            "disclosure code mismatch"
+        );
         Ok(Self {
-            code,
-            disclosed_date: Some(disclosed_date),
+            code: requested_code,
+            disclosed_date,
             current_fiscal_year_end_date,
             eps,
             bps,
@@ -119,7 +142,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn annual_dividend_forecast_uses_divann_first() {
+    fn blank_annual_dividend_forecast_does_not_fall_back_to_actual_dividend() {
         let value = json!({
             "DiscDate": "2026-05-09",
             "DiscTime": "15:00:00", "Code": "84730", "DiscNo": "1", "DocType": "FYFinancialStatements_Consolidated_JP",
@@ -137,7 +160,7 @@ mod tests {
             actual.current_fiscal_year_end_date,
             NaiveDate::from_ymd_opt(2026, 3, 31)
         );
-        assert_eq!(actual.annual_dividend_forecast, Some(170.0));
+        assert_eq!(actual.annual_dividend_forecast, None);
     }
 
     #[test]
@@ -147,7 +170,9 @@ mod tests {
             "DiscTime": "15:00:00", "Code": "84730", "DiscNo": "1", "DocType": "3QFinancialStatements_Consolidated_JP",
             "CurFYEn": "2024-03-31",
             "DivAnn": "",
-            "FDivAnn": "160.0"
+            "FDivAnn": "160.0",
+            "FOP": null,
+            "FNP": ""
         });
 
         let actual = model::RowStatement::try_from(Response {
@@ -160,5 +185,8 @@ mod tests {
             NaiveDate::from_ymd_opt(2024, 3, 31)
         );
         assert_eq!(actual.annual_dividend_forecast, Some(160.0));
+        let fields = &actual.disclosure.unwrap().source_fields;
+        assert_eq!(fields.get("FOP"), Some(&None));
+        assert_eq!(fields.get("FNP"), Some(&Some(String::new())));
     }
 }

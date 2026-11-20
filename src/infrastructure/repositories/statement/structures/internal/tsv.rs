@@ -9,7 +9,7 @@ use crate::shared::float::validate_value;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Structure {
     pub code: String,
-    pub disclosed_date: NaiveDate,
+    pub disclosed_date: Option<NaiveDate>,
     #[serde(default)]
     pub current_fiscal_year_end_date: Option<NaiveDate>,
     pub bps: Option<f64>,
@@ -44,7 +44,7 @@ impl From<model::Statement> for Structure {
 
         Self {
             code,
-            disclosed_date,
+            disclosed_date: Some(disclosed_date),
             current_fiscal_year_end_date,
             bps: validate_value(bps),
             eps: validate_value(eps),
@@ -66,7 +66,7 @@ impl TryFrom<model::RowStatement> for Structure {
     fn try_from(value: model::RowStatement) -> Result<Self> {
         Ok(Self {
             code: value.code,
-            disclosed_date: value.disclosed_date.context("missing disclosed date")?,
+            disclosed_date: value.disclosed_date,
             current_fiscal_year_end_date: value.current_fiscal_year_end_date,
             bps: value.bps,
             eps: value.eps,
@@ -129,7 +129,7 @@ impl TryFrom<Structure> for model::RowStatement {
         }
         Ok(Self {
             code,
-            disclosed_date: Some(disclosed_date),
+            disclosed_date,
             current_fiscal_year_end_date,
             bps,
             eps,

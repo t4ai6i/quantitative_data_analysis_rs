@@ -1,8 +1,18 @@
 use chrono::{NaiveDate, NaiveTime};
 use deref_derive::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 /// Period interpretation of the API's actual operating-profit value.
+/// Accounting scope established by the disclosure document type.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum AccountingScope {
+    Consolidated,
+    NonConsolidated,
+    Unknown,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum OperatingProfitPeriod {
@@ -10,18 +20,18 @@ pub enum OperatingProfitPeriod {
     Unspecified,
 }
 
-/// An unmodified J-Quants disclosure. Times are Japan Standard Time.
+/// An unmodified J-Quants disclosure with its complete source fields.
 ///
-/// The API does not explicitly establish whether every operating profit value
-/// is cumulative or for a single quarter. Period dates and source fields are
-/// retained without deriving or classifying quarterly amounts.
+/// Times are Japan Standard Time. Empty strings remain empty in `source_fields`; an unknown
+/// disclosure time cannot be used for point-in-time scoring.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct FinancialDisclosure {
     pub code: String,
-    pub disclosed_date: NaiveDate,
-    pub disclosed_time: NaiveTime,
+    pub disclosed_date: Option<NaiveDate>,
+    pub disclosed_time: Option<NaiveTime>,
     pub disclosure_number: String,
     pub document_type: String,
+    pub accounting_scope: AccountingScope,
     pub current_period_type: Option<String>,
     pub current_period_start: Option<NaiveDate>,
     pub current_period_end: Option<NaiveDate>,
@@ -40,12 +50,44 @@ pub struct FinancialDisclosure {
     pub non_consolidated_next_forecast_operating_profit: Option<f64>,
     pub non_consolidated_forecast_operating_profit_2q: Option<f64>,
     pub non_consolidated_next_forecast_operating_profit_2q: Option<f64>,
+    pub source_fields: BTreeMap<String, Option<String>>,
 }
 
 impl FinancialDisclosure {
     /// J-Quants accepts a four-character code and returns its five-character form.
     pub fn matches_code(&self, code: &str) -> bool {
         self.code == code || (code.len() == 4 && self.code.strip_suffix('0') == Some(code))
+    }
+
+    /// Returns a numeric source field, preserving blank fields as `None`.
+    ///
+    /// # Errors
+    /// Returns an error when a nonempty source field is not a finite number.
+    pub fn numeric_field(&self, field: &str) -> anyhow::Result<Option<f64>> {
+        let Some(Some(value)) = self.source_fields.get(field) else {
+            return Ok(None);
+        };
+        if value.is_empty() {
+            return Ok(None);
+        }
+        let parsed = value
+            .parse::<f64>()
+            .map_err(|error| anyhow::anyhow!("invalid numeric field {field}: {error}"))?;
+        crate::shared::float::validate_value(parsed)
+            .map(Some)
+            .ok_or_else(|| anyhow::anyhow!("non-finite numeric field {field}"))
+    }
+}
+
+/// Classifies a document only when its type explicitly identifies its accounting scope.
+pub fn accounting_scope_from_document_type(document_type: &str) -> AccountingScope {
+    match (
+        document_type.contains("_Consolidated_"),
+        document_type.contains("_NonConsolidated_"),
+    ) {
+        (true, false) => AccountingScope::Consolidated,
+        (false, true) => AccountingScope::NonConsolidated,
+        _ => AccountingScope::Unknown,
     }
 }
 

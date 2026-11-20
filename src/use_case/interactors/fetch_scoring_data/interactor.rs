@@ -1,4 +1,4 @@
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use async_trait::async_trait;
 
 use crate::domain::models::company::model as company_model;
@@ -48,9 +48,11 @@ where
         let Ok(row_company) = row_company else {
             return Ok(output::FetchScoringData {
                 code: input.code,
+                target_date: input.target_date,
                 fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyCompany),
+                history_error: None,
                 company: None,
                 price: None,
                 latest_statement: None,
@@ -68,9 +70,11 @@ where
         let Ok(row_stock) = row_stock else {
             return Ok(output::FetchScoringData {
                 code: input.code,
+                target_date: input.target_date,
                 fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyStock),
+                history_error: None,
                 company: Some(output::FetchCompany::from(row_company)),
                 price: None,
                 latest_statement: None,
@@ -82,14 +86,33 @@ where
         let query = get_statements::Query {
             code: Some(input.code.as_str()),
         };
-        let mut row_statements = self.statement_repository.get_row_statements(&query).await?;
+        let mut row_statements = match self.statement_repository.get_row_statements(&query).await {
+            Ok(statements) => statements,
+            Err(error) => {
+                return Ok(output::FetchScoringData {
+                    code: input.code,
+                    target_date: input.target_date,
+                    fetched_at: input.fetched_at,
+                    status: output::FetchStatus::IncompleteHistory,
+                    error_type: Some(output::FetchErrorType::IncompleteHistory),
+                    history_error: Some(error.to_string()),
+                    company: Some(output::FetchCompany::from(row_company)),
+                    price: Some(output::FetchPrice::from(row_stock)),
+                    latest_statement: None,
+                    full_year_sales: vec![],
+                    financial_disclosures: vec![],
+                });
+            }
+        };
 
         if row_statements.is_empty() {
             return Ok(output::FetchScoringData {
                 code: input.code,
+                target_date: input.target_date,
                 fetched_at: input.fetched_at,
                 status: output::FetchStatus::EmptyData,
                 error_type: Some(output::FetchErrorType::EmptyStatement),
+                history_error: None,
                 company: Some(output::FetchCompany::from(row_company)),
                 price: Some(output::FetchPrice::from(row_stock)),
                 latest_statement: None,
@@ -97,11 +120,27 @@ where
                 financial_disclosures: vec![],
             });
         }
-        ensure!(
-            row_statements.iter().all(|row| row.disclosure.is_some()),
-            "financial disclosure history is missing for code {}; regenerate the statement data",
-            input.code
-        );
+        if row_statements.iter().any(|row| row.disclosure.is_none()) {
+            return Ok(output::FetchScoringData {
+                code: input.code,
+                target_date: input.target_date,
+                fetched_at: input.fetched_at,
+                status: output::FetchStatus::IncompleteHistory,
+                error_type: Some(output::FetchErrorType::IncompleteHistory),
+                history_error: Some(
+                    "financial disclosure history is incomplete; regenerate the statement data"
+                        .to_string(),
+                ),
+                company: Some(output::FetchCompany::from(row_company)),
+                price: Some(output::FetchPrice::from(row_stock)),
+                latest_statement: None,
+                full_year_sales: vec![],
+                financial_disclosures: row_statements
+                    .into_iter()
+                    .filter_map(|row| row.disclosure)
+                    .collect(),
+            });
+        }
 
         row_statements.sort_by_key(|row| {
             (
@@ -127,9 +166,11 @@ where
 
         Ok(output::FetchScoringData {
             code: input.code,
+            target_date: input.target_date,
             fetched_at: input.fetched_at,
             status: output::FetchStatus::Ok,
             error_type: None,
+            history_error: None,
             company: Some(output::FetchCompany::from(row_company)),
             price: Some(output::FetchPrice::from(row_stock)),
             latest_statement: latest_statement.map(output::FetchLatestStatement::from),
@@ -307,27 +348,30 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn repository_failures_and_missing_history_are_errors() {
+    async fn repository_failures_and_missing_history_are_marked_incomplete() {
         use crate::use_case::interfaces::fetch_scoring_data::use_case::FetchScoringData as _;
         let failing = Statements {
             rows: vec![],
             fail: true,
         };
-        assert!(
-            FetchScoringData::new(&Company, &Stock, &failing)
-                .handle(input())
-                .await
-                .is_err()
+        let failed = FetchScoringData::new(&Company, &Stock, &failing)
+            .handle(input())
+            .await
+            .unwrap();
+        assert_eq!(failed.status, output::FetchStatus::IncompleteHistory);
+        assert_eq!(
+            failed.error_type,
+            Some(output::FetchErrorType::IncompleteHistory)
         );
+        assert_eq!(failed.history_error.as_deref(), Some("page fetch failed"));
         let missing = Statements {
             rows: vec![statement_model::RowStatement::default()],
             fail: false,
         };
-        assert!(
-            FetchScoringData::new(&Company, &Stock, &missing)
-                .handle(input())
-                .await
-                .is_err()
-        );
+        let missing = FetchScoringData::new(&Company, &Stock, &missing)
+            .handle(input())
+            .await
+            .unwrap();
+        assert_eq!(missing.status, output::FetchStatus::IncompleteHistory);
     }
 }

@@ -81,16 +81,34 @@ withdrawn. `FOP` refers to the current fiscal year, `NxFOP` to the next fiscal
 year. Compare both fiscal-year boundaries before associating forecasts.
 
 The API's `OP` is preserved with its original period dates and
-`operating_profit_period: "unspecified"`. Its interpretation as cumulative or
-single-quarter is not guaranteed here; no single-quarter
-differences are calculated. The `NC`-less fields may represent consolidated or
-individual values depending on document type; neither accounting basis nor
-consolidation status is inferred when the document does not establish it.
-J-Quants does not provide the time at which a disclosure became available through
-its API, and provider corrections can overwrite previously supplied values.
-These records therefore do not guarantee point-in-time reconstruction.
-J-Quants also does not guarantee snapshot consistency if data changes during
-pagination.
+`operating_profit_period: "unspecified"`. `ScoreStock.quarterly_actuals` derives
+single-quarter sales, operating profit, ordinary profit, and net income from
+adjacent cumulative periods only when fiscal-year boundaries, period dates,
+document basis, accounting scope, and disclosure-time order match. Q1 uses its
+first-quarter cumulative value; Q2 and Q3 subtract the preceding cumulative
+actual; Q4 subtracts 3Q cumulative actual from FY actual. Each value includes
+both inputs, the result, source disclosures, and any reason it is undetermined.
+Tied disclosures at the same timestamp are ambiguous; disclosure numbers are
+never used to break ties. Missing prior periods, values, or compatible metadata
+remain undetermined. This deliberately does not infer a general cumulative
+meaning for disclosures whose periods or document basis do not meet these
+checks. The `NC`-less fields may represent consolidated or individual values
+depending on document type; neither accounting basis nor consolidation status
+is inferred when the document does not establish it.
+The `source_fields` map preserves a source JSON `null` as `null` and a blank
+string as `""`; neither implies an unchanged value, company-wide non-disclosure,
+or withdrawal. The API does not include range forecasts, so their absence is
+not evidence that a forecast had no range.
+
+Scoring selects disclosure rows whose JST disclosure timestamp is less than or
+equal to the target date's close: 15:00 before 2024-11-05, and 15:30 from
+2024-11-05 onward. Rows after this cutoff are excluded. This is timestamp
+filtering only: J-Quants does not guarantee when a value became available to
+clients or preserve values before later corrections. The output also does not
+guarantee that the provider exposed every historical disclosure; detected fetch,
+conversion, or serialization failures mark the history incomplete, while
+undetected provider omissions cannot be ruled out. J-Quants also does not
+guarantee snapshot consistency if data changes during pagination.
 
 `latest_statement` and `full_year_sales` remain FY projections, separate from the
 full history. `get_row_statements` returns the full disclosure rows, whereas
@@ -99,9 +117,31 @@ include a `disclosure_json` column;
 `examples/make_statements.rs` writes every disclosure and stops on fetch failure.
 Existing TSV data lacks the history and must be regenerated before using it with
 `FetchScoringData`; it is rejected rather than silently producing incomplete
-history. The JSON contract adds `financial_disclosures` and old JSON must be
-regenerated. The example uses `assets/statements.tsv`, so regeneration and
-deployment of that input must be handled separately.
+history. The JSON contract adds `financial_disclosures` and source fields; old
+JSON must be regenerated. The example uses `assets/statements.tsv`, so
+regeneration and deployment of that input must be handled separately.
+`ScoreStock` adds `quarterly_actuals` and reason codes including
+`no_prior_quarter`, `incompatible_fiscal_periods`,
+`incompatible_disclosure_basis`, `unknown_fiscal_period`,
+`unknown_accounting_scope`, `missing_value`, and `ambiguous_disclosure`. Score
+inputs retain their individual audit reasons and the top-level score remains
+absent unless all required score metrics are determined.
+
+```rust,ignore
+use chrono::Utc;
+use quantitative_data_analysis_rs::domain::models::scoring::model::ValueScorePolicy;
+use quantitative_data_analysis_rs::use_case::interactors::score_stock::interactor::ScoreStock;
+use quantitative_data_analysis_rs::use_case::interfaces::score_stock::input::ScoreStock as ScoreInput;
+
+// `fetch_data` is a FetchScoringData value from the fetch-scoring stage.
+let result = ScoreStock::new()
+    .handle(ScoreInput::new(fetch_data, ValueScorePolicy::standard(), Utc::now()))
+    .await?;
+for quarter in &result.quarterly_actuals {
+    let sales = &quarter.values["sales"];
+    println!("{:?}: {:?} ({:?})", quarter.quarter, sales.result, sales.reasons);
+}
+```
 
 ### Stock price and CSV input contract
 
@@ -177,9 +217,9 @@ source fields are unchanged.
 Run formatting and the full test suite locally:
 
 ```bash
-cargo fmt --all
-cargo clippy --all-targets --all-features
-cargo test
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-features
 ```
 
 Examples double as integration tests; compare their outputs with the JSON/SVG fixtures in `assets/` when modifying

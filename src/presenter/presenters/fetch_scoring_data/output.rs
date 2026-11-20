@@ -5,9 +5,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FetchScoringData {
     pub code: String,
+    pub target_date: NaiveDate,
     pub fetched_at: DateTime<Utc>,
     pub status: FetchStatus,
     pub error_type: Option<FetchErrorType>,
+    pub history_error: Option<String>,
     pub company: Option<FetchCompany>,
     pub price: Option<FetchPrice>,
     pub latest_statement: Option<FetchLatestStatement>,
@@ -21,6 +23,7 @@ pub enum FetchStatus {
     Ok,
     RateLimited,
     EmptyData,
+    IncompleteHistory,
     Failed,
     Skipped,
 }
@@ -32,6 +35,7 @@ pub enum FetchErrorType {
     EmptyCompany,
     EmptyStock,
     EmptyStatement,
+    IncompleteHistory,
     InvalidCode,
     RepositoryError,
 }
