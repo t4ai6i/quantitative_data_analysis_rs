@@ -100,7 +100,7 @@ mod tests {
         ] {
             writer.serialize(tsv::Structure {
                 code: code.into(),
-                disclosed_date: NaiveDate::parse_from_str(date, "%Y-%m-%d")?,
+                disclosed_date: Some(NaiveDate::parse_from_str(date, "%Y-%m-%d")?),
                 current_fiscal_year_end_date: Some(NaiveDate::parse_from_str(
                     fiscal_end, "%Y-%m-%d",
                 )?),
@@ -117,8 +117,21 @@ mod tests {
                         "current_period_end": end,
                         "current_fiscal_year_start": start,
                         "current_fiscal_year_end": fiscal_end,
+                        "next_fiscal_year_start": null,
+                        "next_fiscal_year_end": null,
+                        "accounting_scope": "consolidated",
                         "operating_profit": profit,
-                        "operating_profit_period": "unspecified"
+                        "operating_profit_period": "unspecified",
+                        "forecast_operating_profit": null,
+                        "next_forecast_operating_profit": null,
+                        "forecast_operating_profit_2q": null,
+                        "next_forecast_operating_profit_2q": null,
+                        "non_consolidated_operating_profit": null,
+                        "non_consolidated_forecast_operating_profit": null,
+                        "non_consolidated_next_forecast_operating_profit": null,
+                        "non_consolidated_forecast_operating_profit_2q": null,
+                        "non_consolidated_next_forecast_operating_profit_2q": null,
+                        "source_fields": {}
                     })
                     .to_string(),
                 ),
@@ -261,7 +274,7 @@ mod tests {
             let code = &codes[index % codes.len()];
             writer.serialize(tsv::Structure {
                 code: code.clone(),
-                disclosed_date: NaiveDate::from_ymd_opt(2026, 5, 8).unwrap(),
+                disclosed_date: Some(NaiveDate::from_ymd_opt(2026, 5, 8).unwrap()),
                 opp: Some(index as f64),
                 disclosure_json: Some(
                     json!({
