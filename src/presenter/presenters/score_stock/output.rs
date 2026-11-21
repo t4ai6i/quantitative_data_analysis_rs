@@ -225,6 +225,8 @@ pub enum ForecastReasonCode {
     IncompatibleFiscalPeriod,
     UnknownAccountingScope,
     MissingValue,
+    MissingSourceField,
+    NullSourceField,
     InvalidValue,
     AmbiguousDisclosure,
     FiscalPeriodEnded,
