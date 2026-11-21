@@ -100,6 +100,38 @@ string as `""`; neither implies an unchanged value, company-wide non-disclosure,
 or withdrawal. The API does not include range forecasts, so their absence is
 not evidence that a forecast had no range.
 
+`ScoreStock.financial_forecasts` provides the full-year and second-quarter
+forecast audit for sales, operating profit, ordinary profit, and net income,
+using the same inclusive JST close cutoff as the score. Each record contains
+its fiscal-year boundaries, horizon, accounting scope, source field and
+disclosure reference, raw and parsed values, status, reasons, and the retained
+as-of history. Current/next-year labels are associated by exact fiscal-year
+start and end dates; incompatible or missing dates are not guessed. Scope is
+resolved from the document type together with the field family. Unknown scope
+is never replaced by consolidated or individual values. A blank latest field
+remains missing rather than falling back to an older forecast; same-time rows
+are ambiguous and are not ordered by disclosure number. A second-quarter
+forecast is marked historical once a compatible second-quarter actual
+statement is disclosed. The same `financial_forecasts` object is part of the
+serialized `ScoreStock` result, so callers can reuse it for prompts and saved
+reports:
+
+```rust,ignore
+for forecast in &result.financial_forecasts.forecasts {
+    println!("{:?}: {:?} ({:?})", forecast.metric, forecast.value, forecast.status);
+}
+```
+
+Forecast reasons include `incomplete_history`, `unknown_disclosure_time`,
+`unknown_fiscal_period`, `incompatible_fiscal_period`,
+`unknown_accounting_scope`, `missing_value`, `invalid_value`,
+`ambiguous_disclosure`, `fiscal_period_ended`, `interim_actual_reported`, and
+`no_matching_disclosure`. An incomplete disclosure history prevents a selected
+forecast and a candidate score. This is still only filtering by disclosed
+JST timestamps: it does not prove J-Quants had the value available at that
+historical instant, rule out later corrections or undetected provider
+omissions, or provide forecast ranges.
+
 Scoring selects disclosure rows whose JST disclosure timestamp is less than or
 equal to the target date's close: 15:00 before 2024-11-05, and 15:30 from
 2024-11-05 onward. Rows after this cutoff are excluded. This is timestamp
