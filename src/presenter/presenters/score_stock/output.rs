@@ -1,3 +1,4 @@
+use crate::domain::models::statement::model::AccountingScope;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -13,6 +14,7 @@ pub struct ScoreStock {
     pub reasons: Vec<ScoreReason>,
     pub metrics: BTreeMap<String, MetricAudit>,
     pub quarterly_actuals: Vec<SingleQuarterActual>,
+    pub financial_forecasts: FinancialForecastAudit,
     pub score: Option<Score>,
 }
 
@@ -122,6 +124,112 @@ pub struct SingleQuarterValue {
     pub result: Option<f64>,
     pub source_disclosures: Vec<DisclosureReference>,
     pub reasons: Vec<ScoreReasonCode>,
+}
+
+/// Forecast records selected using the same as-of cutoff as the stock score.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FinancialForecastAudit {
+    pub target_date: NaiveDate,
+    pub cutoff_at: NaiveDateTime,
+    pub history_status: ForecastHistoryStatus,
+    pub reasons: Vec<ForecastReasonCode>,
+    pub forecasts: Vec<FinancialForecast>,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForecastHistoryStatus {
+    Available,
+    Incomplete,
+    Skipped,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FinancialForecast {
+    pub fiscal_year_start: Option<NaiveDate>,
+    pub fiscal_year_end: Option<NaiveDate>,
+    pub year_reference: Option<ForecastYearReference>,
+    pub horizon: ForecastHorizon,
+    pub accounting_scope: AccountingScope,
+    pub source_field_family: Option<ForecastFieldFamily>,
+    pub metric: ForecastMetric,
+    pub status: ForecastStatus,
+    pub value: Option<f64>,
+    pub raw_value: Option<String>,
+    pub source_field: Option<String>,
+    pub source_disclosure: Option<DisclosureReference>,
+    pub reasons: Vec<ForecastReasonCode>,
+    pub history: Vec<ForecastObservation>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ForecastObservation {
+    pub fiscal_year_start: Option<NaiveDate>,
+    pub fiscal_year_end: Option<NaiveDate>,
+    pub year_reference: Option<ForecastYearReference>,
+    pub value: Option<f64>,
+    pub raw_value: Option<String>,
+    pub source_field: String,
+    pub source_disclosure: DisclosureReference,
+    pub status: ForecastStatus,
+    pub reasons: Vec<ForecastReasonCode>,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForecastYearReference {
+    Current,
+    Next,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForecastHorizon {
+    FullYear,
+    SecondQuarter,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForecastMetric {
+    Sales,
+    OperatingProfit,
+    OrdinaryProfit,
+    NetIncome,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForecastFieldFamily {
+    Unprefixed,
+    NonConsolidatedPrefix,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForecastStatus {
+    Selected,
+    Historical,
+    Undetermined,
+    Ambiguous,
+    IncompleteHistory,
+    Skipped,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForecastReasonCode {
+    IncompleteHistory,
+    UnknownDisclosureTime,
+    UnknownFiscalPeriod,
+    IncompatibleFiscalPeriod,
+    UnknownAccountingScope,
+    MissingValue,
+    InvalidValue,
+    AmbiguousDisclosure,
+    FiscalPeriodEnded,
+    InterimActualReported,
+    NoMatchingDisclosure,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -618,6 +618,444 @@ fn attach_global_reasons(
     }
 }
 
+fn build_financial_forecast_audit(
+    data: &FetchScoringData,
+    cutoff_at: NaiveDateTime,
+) -> output::FinancialForecastAudit {
+    let mut history_incomplete = data.status != FetchStatus::Ok
+        || data.financial_disclosures.is_empty()
+        || data
+            .financial_disclosures
+            .iter()
+            .any(|disclosure| !disclosure.matches_code(&data.code));
+    let mut reasons = Vec::new();
+    if history_incomplete {
+        push_forecast_reason(&mut reasons, output::ForecastReasonCode::IncompleteHistory);
+    }
+    if data.financial_disclosures.iter().any(|disclosure| {
+        disclosure.disclosed_date.is_none() || disclosure.disclosed_time.is_none()
+    }) {
+        history_incomplete = true;
+        push_forecast_reason(
+            &mut reasons,
+            output::ForecastReasonCode::UnknownDisclosureTime,
+        );
+        push_forecast_reason(&mut reasons, output::ForecastReasonCode::IncompleteHistory);
+    }
+
+    let mut candidates = Vec::new();
+    for disclosure in &data.financial_disclosures {
+        if !disclosure.matches_code(&data.code)
+            || !disclosure.document_type.contains("FinancialStatements")
+                && !disclosure.document_type.contains("EarnForecastRevision")
+        {
+            continue;
+        }
+        let timestamp = disclosure_timestamp(disclosure);
+        if timestamp.is_some_and(|time| time > cutoff_at) {
+            continue;
+        }
+
+        let mut scope_by_prefix = BTreeMap::<String, AccountingScope>::new();
+        for scope in [
+            AccountingScope::Consolidated,
+            AccountingScope::NonConsolidated,
+        ] {
+            if let Some(prefix) = forecast_prefix(disclosure, scope) {
+                scope_by_prefix.insert(prefix.to_string(), scope);
+            }
+        }
+
+        for prefix in ["F", "FNC"] {
+            let scope = scope_by_prefix
+                .get(prefix)
+                .copied()
+                .unwrap_or(AccountingScope::Unknown);
+            for metric in [
+                output::ForecastMetric::Sales,
+                output::ForecastMetric::OperatingProfit,
+                output::ForecastMetric::OrdinaryProfit,
+                output::ForecastMetric::NetIncome,
+            ] {
+                let suffix = forecast_metric_suffix(metric);
+                for year_reference in [
+                    output::ForecastYearReference::Current,
+                    output::ForecastYearReference::Next,
+                ] {
+                    for horizon in [
+                        output::ForecastHorizon::FullYear,
+                        output::ForecastHorizon::SecondQuarter,
+                    ] {
+                        let field = forecast_field_name(prefix, suffix, year_reference, horizon);
+                        let Some(source_value) = disclosure.source_fields.get(&field) else {
+                            continue;
+                        };
+                        let period = forecast_period(disclosure, year_reference);
+                        let mut candidate_reasons = Vec::new();
+                        if scope == AccountingScope::Unknown {
+                            push_forecast_reason(
+                                &mut candidate_reasons,
+                                output::ForecastReasonCode::UnknownAccountingScope,
+                            );
+                        }
+                        match period {
+                            None => push_forecast_reason(
+                                &mut candidate_reasons,
+                                output::ForecastReasonCode::UnknownFiscalPeriod,
+                            ),
+                            Some((start, end)) if start > end => push_forecast_reason(
+                                &mut candidate_reasons,
+                                output::ForecastReasonCode::IncompatibleFiscalPeriod,
+                            ),
+                            _ => {}
+                        }
+                        if timestamp.is_none() {
+                            push_forecast_reason(
+                                &mut candidate_reasons,
+                                output::ForecastReasonCode::UnknownDisclosureTime,
+                            );
+                            push_forecast_reason(
+                                &mut candidate_reasons,
+                                output::ForecastReasonCode::IncompleteHistory,
+                            );
+                        }
+
+                        let raw_value = source_value.clone();
+                        let value = match disclosure.numeric_field(&field) {
+                            Ok(value) => value,
+                            Err(_) => {
+                                history_incomplete = true;
+                                push_forecast_reason(
+                                    &mut reasons,
+                                    output::ForecastReasonCode::IncompleteHistory,
+                                );
+                                push_forecast_reason(
+                                    &mut candidate_reasons,
+                                    output::ForecastReasonCode::InvalidValue,
+                                );
+                                push_forecast_reason(
+                                    &mut candidate_reasons,
+                                    output::ForecastReasonCode::IncompleteHistory,
+                                );
+                                None
+                            }
+                        };
+                        if value.is_none()
+                            && !candidate_reasons
+                                .contains(&output::ForecastReasonCode::InvalidValue)
+                        {
+                            push_forecast_reason(
+                                &mut candidate_reasons,
+                                output::ForecastReasonCode::MissingValue,
+                            );
+                        }
+
+                        candidates.push(ForecastCandidate {
+                            fiscal_year_start: period.map(|value| value.0),
+                            fiscal_year_end: period.map(|value| value.1),
+                            year_reference: Some(year_reference),
+                            horizon,
+                            accounting_scope: scope,
+                            source_field_family: Some(if prefix == "FNC" {
+                                output::ForecastFieldFamily::NonConsolidatedPrefix
+                            } else {
+                                output::ForecastFieldFamily::Unprefixed
+                            }),
+                            metric,
+                            source_field: field,
+                            disclosure,
+                            timestamp,
+                            value,
+                            raw_value,
+                            reasons: candidate_reasons,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    let interim_actual_periods = data
+        .financial_disclosures
+        .iter()
+        .filter(|disclosure| {
+            disclosure.matches_code(&data.code)
+                && disclosure.document_type.contains("FinancialStatements")
+                && disclosure.current_period_type.as_deref() == Some("2Q")
+                && disclosure
+                    .current_fiscal_year_start
+                    .is_some_and(|start| disclosure.current_period_start == Some(start))
+                && disclosure.current_fiscal_year_end.is_some_and(|end| {
+                    disclosure
+                        .current_period_end
+                        .is_some_and(|period_end| period_end < end)
+                })
+                && disclosure_timestamp(disclosure).is_some_and(|time| time <= cutoff_at)
+                && disclosure.accounting_scope != AccountingScope::Unknown
+        })
+        .filter_map(|disclosure| {
+            Some((
+                disclosure.current_fiscal_year_start?,
+                disclosure.current_fiscal_year_end?,
+                disclosure.accounting_scope,
+            ))
+        })
+        .collect::<BTreeSet<_>>();
+
+    let mut grouped = BTreeMap::<
+        (
+            NaiveDate,
+            NaiveDate,
+            AccountingScope,
+            output::ForecastHorizon,
+            output::ForecastMetric,
+        ),
+        Vec<ForecastCandidate<'_>>,
+    >::new();
+    let mut forecasts = Vec::new();
+    for candidate in candidates {
+        match (
+            candidate.fiscal_year_start,
+            candidate.fiscal_year_end,
+            candidate.accounting_scope,
+        ) {
+            (Some(start), Some(end), scope)
+                if start <= end && scope != AccountingScope::Unknown =>
+            {
+                grouped
+                    .entry((start, end, scope, candidate.horizon, candidate.metric))
+                    .or_default()
+                    .push(candidate);
+            }
+            _ => forecasts.push(undetermined_forecast(candidate, history_incomplete)),
+        }
+    }
+
+    for ((start, end, scope, horizon, metric), mut observations) in grouped {
+        observations.sort_by_key(|candidate| candidate.timestamp);
+        let unknown_timestamp = observations
+            .iter()
+            .any(|candidate| candidate.timestamp.is_none());
+        let latest_time = observations
+            .iter()
+            .filter_map(|candidate| candidate.timestamp)
+            .max();
+        let latest = latest_time.map(|time| {
+            observations
+                .iter()
+                .enumerate()
+                .filter_map(|(index, candidate)| {
+                    (candidate.timestamp == Some(time)).then_some(index)
+                })
+                .collect::<Vec<_>>()
+        });
+        let ambiguous = latest.as_ref().is_some_and(|indices| indices.len() > 1);
+        let selected_index = latest
+            .as_ref()
+            .and_then(|indices| (indices.len() == 1).then_some(indices[0]));
+        let selected = selected_index.map(|index| &observations[index]);
+        let period_ended = end < data.target_date;
+        let interim_reported = horizon == output::ForecastHorizon::SecondQuarter
+            && interim_actual_periods.contains(&(start, end, scope));
+        let mut forecast_reasons = Vec::new();
+        if history_incomplete || unknown_timestamp {
+            push_forecast_reason(
+                &mut forecast_reasons,
+                output::ForecastReasonCode::IncompleteHistory,
+            );
+        }
+        if ambiguous {
+            push_forecast_reason(
+                &mut forecast_reasons,
+                output::ForecastReasonCode::AmbiguousDisclosure,
+            );
+        }
+        if period_ended {
+            push_forecast_reason(
+                &mut forecast_reasons,
+                output::ForecastReasonCode::FiscalPeriodEnded,
+            );
+        }
+        if interim_reported {
+            push_forecast_reason(
+                &mut forecast_reasons,
+                output::ForecastReasonCode::InterimActualReported,
+            );
+        }
+        if let Some(candidate) = selected {
+            for reason in &candidate.reasons {
+                push_forecast_reason(&mut forecast_reasons, reason.clone());
+            }
+        }
+
+        let status = if history_incomplete || unknown_timestamp {
+            output::ForecastStatus::IncompleteHistory
+        } else if ambiguous {
+            output::ForecastStatus::Ambiguous
+        } else if period_ended || interim_reported {
+            output::ForecastStatus::Historical
+        } else if selected.is_some_and(|candidate| candidate.value.is_some()) {
+            output::ForecastStatus::Selected
+        } else {
+            output::ForecastStatus::Undetermined
+        };
+        if status == output::ForecastStatus::Undetermined && selected.is_none() {
+            push_forecast_reason(
+                &mut forecast_reasons,
+                output::ForecastReasonCode::NoMatchingDisclosure,
+            );
+        }
+
+        let history = observations
+            .iter()
+            .enumerate()
+            .map(|(index, candidate)| {
+                let observation_status = if history_incomplete || unknown_timestamp {
+                    output::ForecastStatus::IncompleteHistory
+                } else if ambiguous
+                    && latest
+                        .as_ref()
+                        .is_some_and(|indices| indices.contains(&index))
+                {
+                    output::ForecastStatus::Ambiguous
+                } else if Some(index) == selected_index {
+                    status
+                } else {
+                    output::ForecastStatus::Historical
+                };
+                let extra_reason = if observation_status == output::ForecastStatus::Ambiguous {
+                    Some(output::ForecastReasonCode::AmbiguousDisclosure)
+                } else if observation_status == output::ForecastStatus::IncompleteHistory {
+                    Some(output::ForecastReasonCode::IncompleteHistory)
+                } else if Some(index) == selected_index && period_ended {
+                    Some(output::ForecastReasonCode::FiscalPeriodEnded)
+                } else if Some(index) == selected_index && interim_reported {
+                    Some(output::ForecastReasonCode::InterimActualReported)
+                } else {
+                    None
+                };
+                forecast_observation(candidate, observation_status, extra_reason)
+            })
+            .collect();
+        let chosen = if status == output::ForecastStatus::Selected
+            || status == output::ForecastStatus::Historical
+            || status == output::ForecastStatus::Undetermined
+        {
+            selected
+        } else {
+            None
+        };
+        forecasts.push(output::FinancialForecast {
+            fiscal_year_start: Some(start),
+            fiscal_year_end: Some(end),
+            year_reference: chosen.and_then(|candidate| candidate.year_reference),
+            horizon,
+            accounting_scope: scope,
+            source_field_family: chosen.and_then(|candidate| candidate.source_field_family),
+            metric,
+            status,
+            value: chosen.and_then(|candidate| candidate.value),
+            raw_value: chosen.and_then(|candidate| candidate.raw_value.clone()),
+            source_field: chosen.map(|candidate| candidate.source_field.clone()),
+            source_disclosure: chosen.map(|candidate| {
+                disclosure_reference(candidate.disclosure, candidate.accounting_scope)
+            }),
+            reasons: forecast_reasons,
+            history,
+        });
+    }
+
+    forecasts.sort_by_key(|forecast| {
+        (
+            forecast.fiscal_year_start,
+            forecast.accounting_scope,
+            forecast.horizon,
+            forecast.metric,
+        )
+    });
+    for forecast in &forecasts {
+        for reason in &forecast.reasons {
+            push_forecast_reason(&mut reasons, reason.clone());
+        }
+    }
+    if forecasts.is_empty() {
+        push_forecast_reason(
+            &mut reasons,
+            output::ForecastReasonCode::NoMatchingDisclosure,
+        );
+    }
+    let history_status = if history_incomplete {
+        output::ForecastHistoryStatus::Incomplete
+    } else {
+        output::ForecastHistoryStatus::Available
+    };
+    output::FinancialForecastAudit {
+        target_date: data.target_date,
+        cutoff_at,
+        history_status,
+        reasons,
+        forecasts,
+    }
+}
+
+fn forecast_observation(
+    candidate: &ForecastCandidate<'_>,
+    status: output::ForecastStatus,
+    extra_reason: Option<output::ForecastReasonCode>,
+) -> output::ForecastObservation {
+    let mut reasons = candidate.reasons.clone();
+    if let Some(reason) = extra_reason {
+        push_forecast_reason(&mut reasons, reason);
+    }
+    output::ForecastObservation {
+        fiscal_year_start: candidate.fiscal_year_start,
+        fiscal_year_end: candidate.fiscal_year_end,
+        year_reference: candidate.year_reference,
+        value: candidate.value,
+        raw_value: candidate.raw_value.clone(),
+        source_field: candidate.source_field.clone(),
+        source_disclosure: disclosure_reference(candidate.disclosure, candidate.accounting_scope),
+        status,
+        reasons,
+    }
+}
+
+fn undetermined_forecast(
+    candidate: ForecastCandidate<'_>,
+    history_incomplete: bool,
+) -> output::FinancialForecast {
+    let mut reasons = candidate.reasons.clone();
+    let status = if history_incomplete || candidate.timestamp.is_none() {
+        push_forecast_reason(&mut reasons, output::ForecastReasonCode::IncompleteHistory);
+        output::ForecastStatus::IncompleteHistory
+    } else {
+        output::ForecastStatus::Undetermined
+    };
+    output::FinancialForecast {
+        fiscal_year_start: candidate.fiscal_year_start,
+        fiscal_year_end: candidate.fiscal_year_end,
+        year_reference: candidate.year_reference,
+        horizon: candidate.horizon,
+        accounting_scope: candidate.accounting_scope,
+        source_field_family: candidate.source_field_family,
+        metric: candidate.metric,
+        status,
+        value: if status == output::ForecastStatus::IncompleteHistory {
+            None
+        } else {
+            candidate.value
+        },
+        raw_value: candidate.raw_value.clone(),
+        source_field: Some(candidate.source_field.clone()),
+        source_disclosure: Some(disclosure_reference(
+            candidate.disclosure,
+            candidate.accounting_scope,
+        )),
+        reasons: reasons.clone(),
+        history: vec![forecast_observation(&candidate, status, None)],
+    }
+}
+
 fn build_result(
     data: &FetchScoringData,
     scored_at: DateTime<Utc>,
@@ -627,9 +1065,23 @@ fn build_result(
     policy: ValueScorePolicy,
     error_type: Option<output::ScoreErrorType>,
 ) -> output::ScoreStock {
-    let complete = metrics
-        .values()
-        .all(|metric| metric.reasons.is_empty() && metric.result.is_some());
+    let financial_forecasts = build_financial_forecast_audit(data, cutoff_at);
+    if financial_forecasts.history_status == output::ForecastHistoryStatus::Incomplete {
+        for metric in metrics.values_mut() {
+            if !metric
+                .reasons
+                .contains(&output::ScoreReasonCode::IncompleteHistory)
+            {
+                metric
+                    .reasons
+                    .push(output::ScoreReasonCode::IncompleteHistory);
+            }
+        }
+    }
+    let complete = financial_forecasts.history_status != output::ForecastHistoryStatus::Incomplete
+        && metrics
+            .values()
+            .all(|metric| metric.reasons.is_empty() && metric.result.is_some());
     let definitions = [
         ("per", policy.per, ScoreDirection::LowerIsBetter),
         ("pbr", policy.pbr, ScoreDirection::LowerIsBetter),
@@ -702,6 +1154,7 @@ fn build_result(
         reasons,
         metrics,
         quarterly_actuals,
+        financial_forecasts,
         score,
     }
 }
@@ -865,6 +1318,80 @@ fn forecast_prefix(
     }
 }
 
+#[derive(Debug, Clone)]
+struct ForecastCandidate<'a> {
+    fiscal_year_start: Option<NaiveDate>,
+    fiscal_year_end: Option<NaiveDate>,
+    year_reference: Option<output::ForecastYearReference>,
+    horizon: output::ForecastHorizon,
+    accounting_scope: AccountingScope,
+    source_field_family: Option<output::ForecastFieldFamily>,
+    metric: output::ForecastMetric,
+    source_field: String,
+    disclosure: &'a FinancialDisclosure,
+    timestamp: Option<NaiveDateTime>,
+    value: Option<f64>,
+    raw_value: Option<String>,
+    reasons: Vec<output::ForecastReasonCode>,
+}
+
+fn forecast_field_name(
+    prefix: &str,
+    metric_suffix: &str,
+    year_reference: output::ForecastYearReference,
+    horizon: output::ForecastHorizon,
+) -> String {
+    let next_year = year_reference == output::ForecastYearReference::Next;
+    let suffix = if next_year && prefix == "F" && metric_suffix == "NP" {
+        "Np"
+    } else {
+        metric_suffix
+    };
+    format!(
+        "{}{}{}{}",
+        if next_year { "Nx" } else { "" },
+        prefix,
+        suffix,
+        if horizon == output::ForecastHorizon::SecondQuarter {
+            "2Q"
+        } else {
+            ""
+        }
+    )
+}
+
+fn forecast_period(
+    disclosure: &FinancialDisclosure,
+    year_reference: output::ForecastYearReference,
+) -> Option<(NaiveDate, NaiveDate)> {
+    match year_reference {
+        output::ForecastYearReference::Current => disclosure
+            .current_fiscal_year_start
+            .zip(disclosure.current_fiscal_year_end),
+        output::ForecastYearReference::Next => disclosure
+            .next_fiscal_year_start
+            .zip(disclosure.next_fiscal_year_end),
+    }
+}
+
+fn forecast_metric_suffix(metric: output::ForecastMetric) -> &'static str {
+    match metric {
+        output::ForecastMetric::Sales => "Sales",
+        output::ForecastMetric::OperatingProfit => "OP",
+        output::ForecastMetric::OrdinaryProfit => "OdP",
+        output::ForecastMetric::NetIncome => "NP",
+    }
+}
+
+fn push_forecast_reason(
+    reasons: &mut Vec<output::ForecastReasonCode>,
+    reason: output::ForecastReasonCode,
+) {
+    if !reasons.contains(&reason) {
+        reasons.push(reason);
+    }
+}
+
 fn forecast_fields(
     disclosure: &FinancialDisclosure,
     scope: AccountingScope,
@@ -873,20 +1400,22 @@ fn forecast_fields(
     let Some(prefix) = forecast_prefix(disclosure, scope) else {
         return Vec::new();
     };
-    let mut fields = Vec::new();
-    if let Some(period) = disclosure
-        .current_fiscal_year_start
-        .zip(disclosure.current_fiscal_year_end)
-    {
-        fields.push((format!("{prefix}{metric_suffix}"), period));
-    }
-    if let Some(period) = disclosure
-        .next_fiscal_year_start
-        .zip(disclosure.next_fiscal_year_end)
-    {
-        fields.push((format!("Nx{prefix}{metric_suffix}"), period));
-    }
-    fields
+    [
+        output::ForecastYearReference::Current,
+        output::ForecastYearReference::Next,
+    ]
+    .into_iter()
+    .filter_map(|year_reference| {
+        let period = forecast_period(disclosure, year_reference)?;
+        let field = forecast_field_name(
+            prefix,
+            metric_suffix,
+            year_reference,
+            output::ForecastHorizon::FullYear,
+        );
+        Some((field, period))
+    })
+    .collect()
 }
 
 fn select_forecast<'a>(
@@ -1130,6 +1659,13 @@ fn skipped_result(
         )],
         metrics: BTreeMap::new(),
         quarterly_actuals: Vec::new(),
+        financial_forecasts: output::FinancialForecastAudit {
+            target_date,
+            cutoff_at,
+            history_status: output::ForecastHistoryStatus::Skipped,
+            reasons: vec![output::ForecastReasonCode::IncompleteHistory],
+            forecasts: Vec::new(),
+        },
         score: None,
     }
 }
@@ -1137,7 +1673,7 @@ fn skipped_result(
 #[cfg(test)]
 mod tests {
     use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use crate::domain::models::scoring::model::ValueScorePolicy;
     use crate::domain::models::statement::model::{
@@ -1147,7 +1683,9 @@ mod tests {
         FetchCompany, FetchPrice, FetchScoringData, FetchStatus,
     };
     use crate::presenter::presenters::score_stock::output::{
-        ComponentDetail, FiscalQuarter, ScoreErrorType, ScoreReasonCode, ScoreStatus,
+        ComponentDetail, FiscalQuarter, ForecastHistoryStatus, ForecastHorizon, ForecastMetric,
+        ForecastReasonCode, ForecastStatus, ForecastYearReference, ScoreErrorType, ScoreReasonCode,
+        ScoreStatus,
     };
     use crate::use_case::interfaces::score_stock::input;
     use crate::use_case::interfaces::score_stock::use_case::ScoreStock as _;
@@ -1331,6 +1869,13 @@ mod tests {
         assert_eq!(actual.code, "1301");
         assert_eq!(actual.status, ScoreStatus::Ok);
         assert_eq!(actual.error_type, None);
+        assert_eq!(
+            actual.financial_forecasts.history_status,
+            ForecastHistoryStatus::Available
+        );
+        let json = serde_json::to_value(&actual).unwrap();
+        assert_eq!(json["financial_forecasts"]["history_status"], "available");
+        assert!(json["financial_forecasts"]["forecasts"].is_array());
 
         let score = actual.score.expect("score should exist");
         assert_eq!(score.total, 100.0);
@@ -1457,6 +2002,16 @@ mod tests {
 
         assert_eq!(actual.status, ScoreStatus::Undetermined);
         assert!(actual.score.is_none());
+        assert_eq!(
+            actual.financial_forecasts.history_status,
+            ForecastHistoryStatus::Incomplete
+        );
+        assert!(
+            actual
+                .financial_forecasts
+                .reasons
+                .contains(&ForecastReasonCode::UnknownDisclosureTime)
+        );
         assert!(
             actual
                 .reasons
@@ -1638,6 +2193,324 @@ mod tests {
             operating_profit
                 .reasons
                 .contains(&ScoreReasonCode::UnknownAccountingScope)
+        );
+    }
+
+    #[test]
+    fn financial_forecast_audit_uses_period_and_cutoff_and_retains_revisions() {
+        let mut data = build_ok_data();
+        let mut before_cutoff = forecast_disclosure("2025-02-10", "15:00:00", "10", "20", "5");
+        before_cutoff
+            .source_fields
+            .insert("FSales".to_string(), Some("100".to_string()));
+        before_cutoff
+            .source_fields
+            .insert("NxFSales".to_string(), Some("200".to_string()));
+        before_cutoff.next_fiscal_year_start = Some(date("2025-04-01"));
+        before_cutoff.next_fiscal_year_end = Some(date("2026-03-31"));
+        let mut at_cutoff = forecast_disclosure("2025-03-31", "15:30:00", "11", "20", "5");
+        at_cutoff
+            .source_fields
+            .insert("FSales".to_string(), Some("110".to_string()));
+        at_cutoff
+            .source_fields
+            .insert("NxFSales".to_string(), Some("210".to_string()));
+        at_cutoff.next_fiscal_year_start = Some(date("2025-04-01"));
+        at_cutoff.next_fiscal_year_end = Some(date("2026-03-31"));
+        let mut after_cutoff = forecast_disclosure("2025-03-31", "15:30:01", "12", "20", "5");
+        after_cutoff
+            .source_fields
+            .insert("FSales".to_string(), Some("999".to_string()));
+        after_cutoff
+            .source_fields
+            .insert("NxFSales".to_string(), Some("999".to_string()));
+        after_cutoff.next_fiscal_year_start = Some(date("2025-04-01"));
+        after_cutoff.next_fiscal_year_end = Some(date("2026-03-31"));
+        data.financial_disclosures
+            .extend([before_cutoff, at_cutoff, after_cutoff]);
+
+        let audit =
+            super::build_financial_forecast_audit(&data, super::analysis_cutoff(data.target_date));
+        let current = audit
+            .forecasts
+            .iter()
+            .find(|forecast| {
+                forecast.fiscal_year_start == Some(date("2024-04-01"))
+                    && forecast.metric == ForecastMetric::Sales
+                    && forecast.horizon == ForecastHorizon::FullYear
+            })
+            .unwrap();
+        let next = audit
+            .forecasts
+            .iter()
+            .find(|forecast| {
+                forecast.fiscal_year_start == Some(date("2025-04-01"))
+                    && forecast.metric == ForecastMetric::Sales
+                    && forecast.horizon == ForecastHorizon::FullYear
+            })
+            .unwrap();
+
+        assert_eq!(current.status, ForecastStatus::Selected);
+        assert_eq!(current.value, Some(110.0));
+        assert_eq!(current.history.len(), 2);
+        assert_eq!(current.source_field.as_deref(), Some("FSales"));
+        assert!(current.history.iter().all(|item| item.value != Some(999.0)));
+        assert_eq!(next.year_reference, Some(ForecastYearReference::Next));
+        assert_eq!(next.value, Some(210.0));
+        assert_eq!(audit.cutoff_at.to_string(), "2025-03-31 15:30:00");
+        let json = serde_json::to_value(&audit).unwrap();
+        assert_eq!(json["history_status"], "available");
+        assert_eq!(json["forecasts"][0]["status"], "selected");
+        assert!(json["forecasts"][0]["history"].is_array());
+    }
+
+    #[test]
+    fn financial_forecast_audit_does_not_fallback_from_blank_and_marks_ties() {
+        let mut data = build_ok_data();
+        let mut earlier = forecast_disclosure("2025-02-10", "15:00:00", "1", "20", "5");
+        earlier
+            .source_fields
+            .insert("FSales".to_string(), Some("100".to_string()));
+        let mut blank = forecast_disclosure("2025-03-31", "15:30:00", "2", "20", "5");
+        blank
+            .source_fields
+            .insert("FSales".to_string(), Some(String::new()));
+        data.financial_disclosures.extend([earlier, blank]);
+        let cutoff = super::analysis_cutoff(data.target_date);
+
+        let audit = super::build_financial_forecast_audit(&data, cutoff);
+        let forecast = audit
+            .forecasts
+            .iter()
+            .find(|forecast| {
+                forecast.metric == ForecastMetric::Sales
+                    && forecast.horizon == ForecastHorizon::FullYear
+                    && forecast.fiscal_year_start == Some(date("2024-04-01"))
+            })
+            .unwrap();
+        assert_eq!(forecast.status, ForecastStatus::Undetermined);
+        assert_eq!(forecast.value, None);
+        assert_eq!(forecast.raw_value.as_deref(), Some(""));
+        assert!(forecast.reasons.contains(&ForecastReasonCode::MissingValue));
+        assert_eq!(forecast.history.len(), 2);
+
+        let mut tied = forecast_disclosure("2025-03-31", "15:30:00", "3", "20", "5");
+        tied.source_fields
+            .insert("FSales".to_string(), Some("120".to_string()));
+        data.financial_disclosures.push(tied);
+        let tied_audit = super::build_financial_forecast_audit(&data, cutoff);
+        let tied_forecast = tied_audit
+            .forecasts
+            .iter()
+            .find(|forecast| {
+                forecast.metric == ForecastMetric::Sales
+                    && forecast.horizon == ForecastHorizon::FullYear
+                    && forecast.fiscal_year_start == Some(date("2024-04-01"))
+            })
+            .unwrap();
+        assert_eq!(tied_forecast.status, ForecastStatus::Ambiguous);
+        assert_eq!(tied_forecast.value, None);
+        assert!(
+            tied_forecast
+                .reasons
+                .contains(&ForecastReasonCode::AmbiguousDisclosure)
+        );
+    }
+
+    #[test]
+    fn financial_forecast_audit_reports_unknown_basis_period_and_incomplete_history() {
+        let mut data = build_ok_data();
+        data.financial_disclosures.clear();
+        let mut unknown_scope = make_disclosure(
+            Some("2025-02-10"),
+            Some("15:00:00"),
+            "1",
+            "3QFinancialStatements_Unknown_IFRS",
+            Some("3Q"),
+            Some(("2024-04-01", "2025-03-31")),
+            Some(("2024-04-01", "2024-12-31")),
+            &[("FSales", "100")],
+        );
+        unknown_scope.accounting_scope = AccountingScope::Unknown;
+        data.financial_disclosures.push(unknown_scope);
+        let cutoff = super::analysis_cutoff(data.target_date);
+        let audit = super::build_financial_forecast_audit(&data, cutoff);
+        let forecast = audit
+            .forecasts
+            .iter()
+            .find(|forecast| forecast.metric == ForecastMetric::Sales)
+            .unwrap();
+        assert_eq!(forecast.accounting_scope, AccountingScope::Unknown);
+        assert_eq!(forecast.status, ForecastStatus::Undetermined);
+        assert!(
+            forecast
+                .reasons
+                .contains(&ForecastReasonCode::UnknownAccountingScope)
+        );
+
+        let mut unknown_period = make_disclosure(
+            Some("2025-02-10"),
+            Some("15:00:00"),
+            "2",
+            "3QFinancialStatements_Consolidated_JP",
+            Some("3Q"),
+            None,
+            Some(("2024-04-01", "2024-12-31")),
+            &[("FSales", "100")],
+        );
+        unknown_period.accounting_scope = AccountingScope::Consolidated;
+        data.financial_disclosures = vec![unknown_period];
+        let period_audit = super::build_financial_forecast_audit(&data, cutoff);
+        let forecast = period_audit
+            .forecasts
+            .iter()
+            .find(|forecast| forecast.metric == ForecastMetric::Sales)
+            .unwrap();
+        assert_eq!(forecast.status, ForecastStatus::Undetermined);
+        assert!(
+            forecast
+                .reasons
+                .contains(&ForecastReasonCode::UnknownFiscalPeriod)
+        );
+
+        data.status = FetchStatus::IncompleteHistory;
+        let incomplete_audit = super::build_financial_forecast_audit(&data, cutoff);
+        assert_eq!(
+            incomplete_audit.history_status,
+            ForecastHistoryStatus::Incomplete
+        );
+        let forecast = incomplete_audit
+            .forecasts
+            .iter()
+            .find(|forecast| forecast.metric == ForecastMetric::Sales)
+            .unwrap();
+        assert_eq!(forecast.status, ForecastStatus::IncompleteHistory);
+        assert_eq!(forecast.value, None);
+        assert!(
+            incomplete_audit
+                .reasons
+                .contains(&ForecastReasonCode::IncompleteHistory)
+        );
+    }
+
+    #[test]
+    fn financial_forecast_audit_uses_document_and_field_family_for_scope() {
+        let fiscal_year = Some(("2025-04-01", "2026-03-31"));
+        let period = Some(("2025-04-01", "2025-12-31"));
+        let scenarios = [
+            (
+                "3QFinancialStatements_Consolidated_JP",
+                AccountingScope::Consolidated,
+                vec![("FSales", "10"), ("FNCSales", "11")],
+            ),
+            (
+                "3QFinancialStatements_NonConsolidated_JP",
+                AccountingScope::NonConsolidated,
+                vec![("FSales", "20")],
+            ),
+            (
+                "EarnForecastRevision_JP",
+                AccountingScope::Unknown,
+                vec![("FSales", "30"), ("FNCSales", "31")],
+            ),
+        ];
+        for (index, (document_type, document_scope, fields)) in scenarios.into_iter().enumerate() {
+            let mut data = build_ok_data();
+            data.target_date = date("2025-12-31");
+            data.price.as_mut().unwrap().date = Some(data.target_date);
+            let values = fields
+                .iter()
+                .map(|(field, value)| (*field, *value))
+                .collect::<Vec<_>>();
+            let mut disclosure = make_disclosure(
+                Some("2025-12-30"),
+                Some("14:00:00"),
+                &index.to_string(),
+                document_type,
+                Some("3Q"),
+                fiscal_year,
+                period,
+                &values,
+            );
+            disclosure.accounting_scope = document_scope;
+            data.financial_disclosures = vec![disclosure];
+            let audit = super::build_financial_forecast_audit(
+                &data,
+                super::analysis_cutoff(data.target_date),
+            );
+            let found_scopes = audit
+                .forecasts
+                .iter()
+                .filter(|forecast| forecast.metric == ForecastMetric::Sales)
+                .map(|forecast| forecast.accounting_scope)
+                .collect::<BTreeSet<_>>();
+            match index {
+                0 => assert_eq!(
+                    found_scopes,
+                    BTreeSet::from([
+                        AccountingScope::Consolidated,
+                        AccountingScope::NonConsolidated
+                    ])
+                ),
+                1 => assert_eq!(
+                    found_scopes,
+                    BTreeSet::from([AccountingScope::NonConsolidated])
+                ),
+                _ => assert_eq!(
+                    found_scopes,
+                    BTreeSet::from([
+                        AccountingScope::Consolidated,
+                        AccountingScope::NonConsolidated
+                    ])
+                ),
+            }
+        }
+    }
+
+    #[test]
+    fn second_quarter_forecast_becomes_historical_after_actual_disclosure() {
+        let mut data = build_ok_data();
+        data.target_date = date("2024-11-08");
+        data.price.as_mut().unwrap().date = Some(data.target_date);
+        let mut forecast = make_disclosure(
+            Some("2024-07-01"),
+            Some("10:00:00"),
+            "1",
+            "1QFinancialStatements_Consolidated_JP",
+            Some("1Q"),
+            Some(("2024-04-01", "2025-03-31")),
+            Some(("2024-04-01", "2024-06-30")),
+            &[("FSales2Q", "50")],
+        );
+        forecast.accounting_scope = AccountingScope::Consolidated;
+        let actual = make_disclosure(
+            Some("2024-11-08"),
+            Some("14:00:00"),
+            "2",
+            "2QFinancialStatements_Consolidated_JP",
+            Some("2Q"),
+            Some(("2024-04-01", "2025-03-31")),
+            Some(("2024-04-01", "2024-09-30")),
+            &[("Sales", "100")],
+        );
+        data.financial_disclosures = vec![forecast, actual];
+
+        let audit =
+            super::build_financial_forecast_audit(&data, super::analysis_cutoff(data.target_date));
+        let forecast = audit
+            .forecasts
+            .iter()
+            .find(|forecast| {
+                forecast.metric == ForecastMetric::Sales
+                    && forecast.horizon == ForecastHorizon::SecondQuarter
+            })
+            .unwrap();
+        assert_eq!(forecast.status, ForecastStatus::Historical);
+        assert_eq!(forecast.value, Some(50.0));
+        assert!(
+            forecast
+                .reasons
+                .contains(&ForecastReasonCode::InterimActualReported)
         );
     }
 }
