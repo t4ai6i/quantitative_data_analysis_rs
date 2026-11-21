@@ -164,6 +164,41 @@ mod tests {
     }
 
     #[test]
+    fn source_fields_distinguish_absent_null_and_empty_values() {
+        let absent = json!({
+            "DiscDate": "2026-05-09",
+            "DiscTime": "15:00:00",
+            "Code": "84730",
+            "DiscNo": "1",
+            "DocType": "FYFinancialStatements_Consolidated_JP"
+        });
+        let mut null = absent.clone();
+        null["FSales"] = serde_json::Value::Null;
+        let mut blank = absent.clone();
+        blank["FSales"] = serde_json::Value::String(String::new());
+
+        let read_disclosure = |value: &serde_json::Value| {
+            model::RowStatement::try_from(Response {
+                code: "8473".to_string(),
+                value,
+            })
+            .unwrap()
+            .disclosure
+            .unwrap()
+        };
+        let absent_disclosure = read_disclosure(&absent);
+        let null_disclosure = read_disclosure(&null);
+        let blank_disclosure = read_disclosure(&blank);
+
+        assert!(!absent_disclosure.source_fields.contains_key("FSales"));
+        assert_eq!(null_disclosure.source_fields.get("FSales"), Some(&None));
+        assert_eq!(
+            blank_disclosure.source_fields.get("FSales"),
+            Some(&Some(String::new()))
+        );
+    }
+
+    #[test]
     fn annual_dividend_forecast_falls_back_to_fdivann() {
         let value = json!({
             "DiscDate": "2024-02-07",

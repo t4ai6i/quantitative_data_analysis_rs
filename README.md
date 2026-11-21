@@ -95,10 +95,13 @@ meaning for disclosures whose periods or document basis do not meet these
 checks. The `NC`-less fields may represent consolidated or individual values
 depending on document type; neither accounting basis nor consolidation status
 is inferred when the document does not establish it.
-The `source_fields` map preserves a source JSON `null` as `null` and a blank
-string as `""`; neither implies an unchanged value, company-wide non-disclosure,
-or withdrawal. The API does not include range forecasts, so their absence is
-not evidence that a forecast had no range.
+The `source_fields` map preserves a source JSON `null` as `None`, a blank string
+as `Some("")`, and an absent key as no map entry. J-Quants documents string
+fields with empty strings for missing values; it does not define the meaning of
+an absent key or `null` in this response, and neither is interpreted as an
+unchanged value, company-wide non-disclosure, or withdrawal. The API does not
+include range forecasts, so their absence is not evidence that a forecast had
+no range.
 
 `ScoreStock.financial_forecasts` provides the full-year and second-quarter
 forecast audit for sales, operating profit, ordinary profit, and net income,
@@ -108,9 +111,16 @@ disclosure reference, raw and parsed values, status, reasons, and the retained
 as-of history. Current/next-year labels are associated by exact fiscal-year
 start and end dates; incompatible or missing dates are not guessed. Scope is
 resolved from the document type together with the field family. Unknown scope
-is never replaced by consolidated or individual values. A blank latest field
-remains missing rather than falling back to an older forecast; same-time rows
-are ambiguous and are not ordered by disclosure number. A second-quarter
+is never replaced by consolidated or individual values. A blank or `null`
+latest field remains undetermined rather than falling back to an older forecast.
+An absent JSON key is not documented by the endpoint; it is retained as a
+`missing_source_field` observation only when a later disclosure matches an
+earlier numeric forecast on the exact field, fiscal period, scope, year reference,
+and horizon. Otherwise the audit does not manufacture a forecast candidate from
+that absence. A qualifying 2Q actual disclosure makes the 2Q forecast historical
+instead of treating its inapplicable forecast field as a revision. None of these
+states means company-wide non-disclosure or withdrawal. Same-time rows are
+ambiguous and are not ordered by disclosure number. A second-quarter
 forecast is marked historical once a compatible second-quarter actual
 statement is disclosed. The same `financial_forecasts` object is part of the
 serialized `ScoreStock` result, so callers can reuse it for prompts and saved
@@ -124,7 +134,8 @@ for forecast in &result.financial_forecasts.forecasts {
 
 Forecast reasons include `incomplete_history`, `unknown_disclosure_time`,
 `unknown_fiscal_period`, `incompatible_fiscal_period`,
-`unknown_accounting_scope`, `missing_value`, `invalid_value`,
+`unknown_accounting_scope`, `missing_value`, `missing_source_field`,
+`null_source_field`, `invalid_value`,
 `ambiguous_disclosure`, `fiscal_period_ended`, `interim_actual_reported`, and
 `no_matching_disclosure`. An incomplete disclosure history prevents a selected
 forecast and a candidate score. This is still only filtering by disclosed
