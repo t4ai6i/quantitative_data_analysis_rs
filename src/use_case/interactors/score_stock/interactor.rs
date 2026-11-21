@@ -59,6 +59,27 @@ fn analysis_cutoff(target_date: NaiveDate) -> NaiveDateTime {
     target_date.and_time(cutoff_time)
 }
 
+fn disclosures_as_of(
+    disclosures: &[FinancialDisclosure],
+    cutoff_at: NaiveDateTime,
+) -> Vec<&FinancialDisclosure> {
+    disclosures
+        .iter()
+        .filter(|disclosure| !disclosure_is_after_cutoff(disclosure, cutoff_at))
+        .collect()
+}
+
+fn disclosure_is_after_cutoff(disclosure: &FinancialDisclosure, cutoff_at: NaiveDateTime) -> bool {
+    match disclosure.disclosed_date {
+        Some(date) if date > cutoff_at.date() => true,
+        Some(date) if date < cutoff_at.date() => false,
+        Some(date) => disclosure
+            .disclosed_time
+            .is_some_and(|time| date.and_time(time) > cutoff_at),
+        None => false,
+    }
+}
+
 fn derive_single_quarter_actuals(
     disclosures: &[&FinancialDisclosure],
 ) -> Result<Vec<output::SingleQuarterActual>> {
@@ -344,9 +365,10 @@ fn evaluate(
     let cutoff_at = analysis_cutoff(data.target_date);
     let mut metrics = empty_metrics();
     let mut global_reasons = Vec::new();
+    let eligible = disclosures_as_of(&data.financial_disclosures, cutoff_at);
 
     if data.financial_disclosures.is_empty()
-        || data.financial_disclosures.iter().any(|disclosure| {
+        || eligible.iter().any(|disclosure| {
             !disclosure.matches_code(&data.code)
                 || disclosure.disclosed_date.is_none()
                 || disclosure.disclosed_time.is_none()
@@ -354,7 +376,7 @@ fn evaluate(
     {
         global_reasons.push(output::ScoreReasonCode::IncompleteHistory);
     }
-    if data.financial_disclosures.iter().any(|disclosure| {
+    if eligible.iter().any(|disclosure| {
         disclosure.disclosed_date.is_none() || disclosure.disclosed_time.is_none()
     }) {
         global_reasons.push(output::ScoreReasonCode::UnknownDisclosureTime);
@@ -372,12 +394,6 @@ fn evaluate(
             Some(output::ScoreErrorType::IncompleteHistory),
         ));
     }
-
-    let eligible = data
-        .financial_disclosures
-        .iter()
-        .filter(|disclosure| disclosure_timestamp(disclosure).is_some_and(|time| time <= cutoff_at))
-        .collect::<Vec<_>>();
 
     if eligible.is_empty() {
         attach_global_reasons(
@@ -622,17 +638,17 @@ fn build_financial_forecast_audit(
     data: &FetchScoringData,
     cutoff_at: NaiveDateTime,
 ) -> output::FinancialForecastAudit {
+    let disclosures = disclosures_as_of(&data.financial_disclosures, cutoff_at);
     let mut history_incomplete = data.status != FetchStatus::Ok
         || data.financial_disclosures.is_empty()
-        || data
-            .financial_disclosures
+        || disclosures
             .iter()
             .any(|disclosure| !disclosure.matches_code(&data.code));
     let mut reasons = Vec::new();
     if history_incomplete {
         push_forecast_reason(&mut reasons, output::ForecastReasonCode::IncompleteHistory);
     }
-    if data.financial_disclosures.iter().any(|disclosure| {
+    if disclosures.iter().any(|disclosure| {
         disclosure.disclosed_date.is_none() || disclosure.disclosed_time.is_none()
     }) {
         history_incomplete = true;
@@ -644,7 +660,7 @@ fn build_financial_forecast_audit(
     }
 
     let mut candidates = Vec::new();
-    for disclosure in &data.financial_disclosures {
+    for disclosure in &disclosures {
         if !disclosure.matches_code(&data.code)
             || !disclosure.document_type.contains("FinancialStatements")
                 && !disclosure.document_type.contains("EarnForecastRevision")
@@ -652,9 +668,6 @@ fn build_financial_forecast_audit(
             continue;
         }
         let timestamp = disclosure_timestamp(disclosure);
-        if timestamp.is_some_and(|time| time > cutoff_at) {
-            continue;
-        }
 
         let mut scope_by_prefix = BTreeMap::<String, AccountingScope>::new();
         for scope in [
@@ -829,8 +842,7 @@ fn build_financial_forecast_audit(
         )
     });
 
-    let interim_actual_periods = data
-        .financial_disclosures
+    let interim_actual_periods = disclosures
         .iter()
         .filter(|disclosure| {
             disclosure.matches_code(&data.code)
@@ -1850,6 +1862,24 @@ mod tests {
         )
     }
 
+    fn operating_forecast_disclosure(
+        disclosed_date: Option<&str>,
+        disclosed_time: Option<&str>,
+        disclosure_number: &str,
+        value: &str,
+    ) -> FinancialDisclosure {
+        make_disclosure(
+            disclosed_date,
+            disclosed_time,
+            disclosure_number,
+            "FYFinancialStatements_Consolidated_JP",
+            Some("FY"),
+            Some(("2024-04-01", "2025-03-31")),
+            Some(("2024-04-01", "2025-03-31")),
+            &[("FOP", value)],
+        )
+    }
+
     fn build_ok_data() -> FetchScoringData {
         FetchScoringData {
             code: "1301".to_string(),
@@ -2010,6 +2040,110 @@ mod tests {
             actual.metrics["per"].source_disclosures[0].disclosure_number,
             "3"
         );
+    }
+
+    #[tokio::test]
+    async fn future_disclosure_with_unknown_time_does_not_change_as_of_result() {
+        let mut baseline = build_ok_data();
+        baseline.financial_disclosures[2]
+            .source_fields
+            .insert("FOP".to_string(), Some("100".to_string()));
+        let expected = ScoreStock::new()
+            .handle(build_input(baseline.clone(), ValueScorePolicy::standard()))
+            .await
+            .unwrap();
+
+        baseline
+            .financial_disclosures
+            .push(operating_forecast_disclosure(
+                Some("2025-04-01"),
+                None,
+                "7",
+                "999",
+            ));
+        let actual = ScoreStock::new()
+            .handle(build_input(baseline, ValueScorePolicy::standard()))
+            .await
+            .unwrap();
+
+        assert_eq!(actual, expected);
+        assert_eq!(actual.status, ScoreStatus::Ok);
+        let forecast = actual
+            .financial_forecasts
+            .forecasts
+            .iter()
+            .find(|forecast| {
+                forecast.metric == ForecastMetric::OperatingProfit
+                    && forecast.horizon == ForecastHorizon::FullYear
+                    && forecast.source_field.as_deref() == Some("FOP")
+            })
+            .unwrap();
+        assert_eq!(forecast.status, ForecastStatus::Selected);
+        assert_eq!(forecast.value, Some(100.0));
+    }
+
+    #[tokio::test]
+    async fn same_day_or_unknown_date_with_unknown_time_keeps_history_incomplete() {
+        for (disclosed_date, disclosed_time) in
+            [(Some("2025-03-31"), None), (None, Some("15:00:00"))]
+        {
+            let mut data = build_ok_data();
+            data.financial_disclosures
+                .push(operating_forecast_disclosure(
+                    disclosed_date,
+                    disclosed_time,
+                    "7",
+                    "999",
+                ));
+
+            let actual = ScoreStock::new()
+                .handle(build_input(data, ValueScorePolicy::standard()))
+                .await
+                .unwrap();
+
+            assert_eq!(actual.status, ScoreStatus::Undetermined);
+            assert!(actual.score.is_none());
+            assert_eq!(
+                actual.financial_forecasts.history_status,
+                ForecastHistoryStatus::Incomplete
+            );
+            assert!(
+                actual
+                    .reasons
+                    .iter()
+                    .any(|reason| { reason.code == ScoreReasonCode::UnknownDisclosureTime })
+            );
+        }
+    }
+
+    #[test]
+    fn disclosure_cutoff_includes_boundary_for_both_schedules() {
+        for (target_date, disclosed_time, is_after) in [
+            ("2024-11-04", "14:59:59", false),
+            ("2024-11-04", "15:00:00", false),
+            ("2024-11-04", "15:00:01", true),
+            ("2024-11-05", "15:29:59", false),
+            ("2024-11-05", "15:30:00", false),
+            ("2024-11-05", "15:30:01", true),
+        ] {
+            let target_date = date(target_date);
+            let cutoff_at = super::analysis_cutoff(target_date);
+            let disclosure = make_disclosure(
+                Some(&target_date.to_string()),
+                Some(disclosed_time),
+                "1",
+                "FYFinancialStatements_Consolidated_JP",
+                Some("FY"),
+                Some(("2024-04-01", "2025-03-31")),
+                Some(("2024-04-01", "2025-03-31")),
+                &[],
+            );
+
+            assert_eq!(
+                super::disclosures_as_of(&[disclosure], cutoff_at).len(),
+                usize::from(!is_after)
+            );
+        }
     }
 
     #[tokio::test]
