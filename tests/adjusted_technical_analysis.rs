@@ -213,10 +213,10 @@ fn atr_uses_intraday_range_and_previous_adjusted_close() {
         bar(2, 10.0, 12.0, 8.0, 9.0, 100.0),
     ];
     stocks[0].close = 30.0;
-    // TR = 2, 4, 5; EMA(period=2, alpha=2/3) = 2, 10/3, 40/9.
+    // TR = 2, 4, 5; TA-Lib seed skips the first bar and averages the next 2 TRs: (4 + 5) / 2 = 4.5.
     let atrs = ATRs::<2>::from(stocks.as_slice());
     assert_eq!(atrs.len(), 1);
-    assert!((atrs[0].value - 40.0 / 9.0).abs() < 1e-10);
+    assert!((atrs[0].value - (4.0 + 5.0) / 2.0).abs() < 1e-10);
     assert_eq!(atrs[0].date, stocks[2].date);
 
     let unchanged_close: Vec<_> = (0..3)
