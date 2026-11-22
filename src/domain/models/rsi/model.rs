@@ -2,8 +2,7 @@ use crate::domain::models::stock::model::Stock;
 use crate::domain::models::technical_analysis::model::{DerivedFact, MetricKind};
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
-use ta::Next;
-use ta::indicators::RelativeStrengthIndex;
+use fin_primitives::signals::batch_f64::rsi;
 
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Default)]
 pub struct RSI {
@@ -24,21 +23,17 @@ impl<const PERIOD: usize> From<&[Stock]> for RSIs<PERIOD> {
             return Self(vec![]);
         }
 
-        // use unwrap because we have already checked that PERIOD > 0
-        let mut rsi = RelativeStrengthIndex::new(PERIOD).unwrap();
-        let mut rsis = Vec::with_capacity(value.len() - PERIOD);
-        for (index, stock) in value.iter().enumerate() {
-            let rsi_value = rsi.next(stock.adj_close);
-            if index < PERIOD {
-                continue;
-            }
-
-            rsis.push(RSI {
+        let closes: Vec<f64> = value.iter().map(|stock| stock.adj_close).collect();
+        let rsis = rsi(&closes, PERIOD)
+            .into_iter()
+            .zip(value)
+            .skip(PERIOD)
+            .map(|(rsi_value, stock)| RSI {
                 date: stock.date,
                 period: PERIOD as u32,
                 value: rsi_value,
-            });
-        }
+            })
+            .collect();
         Self(rsis)
     }
 }
@@ -148,5 +143,30 @@ mod tests {
 
         assert_eq!(rsis.len(), 6);
         assert!(rsis.iter().all(|rsi| (0.0..=100.0).contains(&rsi.value)));
+    }
+
+    #[test]
+    fn matches_wilder_reference_values() {
+        // Wilder RSI(14) on the StockCharts reference series: 70.464, then 66.250.
+        let closes = [
+            44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84, 46.08, 45.89, 46.03,
+            45.61, 46.28, 46.28, 46.00,
+        ];
+        let stocks = closes
+            .iter()
+            .enumerate()
+            .map(|(i, close)| {
+                stock(
+                    NaiveDate::from_ymd_opt(2024, 1, 1 + i as u32).unwrap(),
+                    *close,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let rsis = RSIs::<14>::from(stocks.as_slice());
+
+        assert_eq!(rsis.len(), 2);
+        assert!((rsis[0].value - 70.464).abs() < 0.001, "{}", rsis[0].value);
+        assert!((rsis[1].value - 66.250).abs() < 0.001, "{}", rsis[1].value);
     }
 }
