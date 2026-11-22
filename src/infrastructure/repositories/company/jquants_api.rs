@@ -61,6 +61,7 @@ mod tests {
     use crate::shared::jquants_api::setup::Setup;
 
     #[tokio::test]
+    #[ignore = "requires JQUANTS_API_KEY and live J-Quants API"]
     async fn get_row_company_test() -> Result<()> {
         let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
@@ -81,6 +82,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires JQUANTS_API_KEY and live J-Quants API"]
     async fn get_vec_row_company_test() -> Result<()> {
         let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
