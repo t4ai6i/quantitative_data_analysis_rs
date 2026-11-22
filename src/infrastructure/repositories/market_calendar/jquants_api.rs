@@ -173,6 +173,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires JQUANTS_API_KEY and live J-Quants API"]
     async fn dbg_live_markets_calendar_response() -> Result<()> {
         let token = setup::Setup::run()?;
         let jquants_api = JQuantsAPI::new(token)?;

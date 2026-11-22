@@ -428,19 +428,12 @@ fn evaluate(
             ));
         }
     };
-    let target_period = match target_fiscal_period(&eligible, data.target_date) {
-        Ok(period) => Some(period),
-        Err(reason) => {
-            add_reason(&mut metrics, "per", reason.clone());
-            add_reason(&mut metrics, "dividend_yield", reason);
-            None
-        }
-    };
+    let target_period = target_fiscal_period(&eligible, data.target_date);
 
     let (price, price_reasons) = price_input(data);
     let mut per = metric_audit(price, data.price.as_ref().and_then(|price| price.date));
     per.reasons.extend(price_reasons.clone());
-    if let Some(period) = target_period {
+    if let Ok(period) = target_period.as_ref().copied() {
         per.period_start = Some(period.0);
         per.period_end = Some(period.1);
         match select_forecast(&eligible, scope, period, "EPS")? {
@@ -513,7 +506,7 @@ fn evaluate(
 
     let mut dividend = metric_audit(price, data.price.as_ref().and_then(|price| price.date));
     dividend.reasons.extend(price_reasons);
-    if let Some(period) = target_period {
+    if let Ok(period) = target_period.as_ref().copied() {
         dividend.period_start = Some(period.0);
         dividend.period_end = Some(period.1);
         match select_forecast(&eligible, scope, period, "DivAnn")? {
@@ -541,6 +534,10 @@ fn evaluate(
         }
     }
     metrics.insert("dividend_yield".to_string(), dividend);
+    if let Err(reason) = target_period {
+        add_reason(&mut metrics, "per", reason.clone());
+        add_reason(&mut metrics, "dividend_yield", reason);
+    }
 
     let mut sales_growth = metric_audit(None, None);
     match sales_growth_from_annual(&annual, scope)? {
@@ -2007,6 +2004,146 @@ mod tests {
                 points: 20.0,
             })
         );
+    }
+
+    #[test]
+    fn fiscal_year_errors_are_preserved_in_audits_and_output() {
+        let baseline =
+            super::evaluate(&build_ok_data(), ValueScorePolicy::standard(), fixed_now()).unwrap();
+        for (case, expected, json_code) in [
+            (
+                "overlap",
+                ScoreReasonCode::AmbiguousTargetFiscalYear,
+                "ambiguous_target_fiscal_year",
+            ),
+            (
+                "missing",
+                ScoreReasonCode::NoTargetFiscalYear,
+                "no_target_fiscal_year",
+            ),
+            (
+                "future_tie",
+                ScoreReasonCode::AmbiguousTargetFiscalYear,
+                "ambiguous_target_fiscal_year",
+            ),
+        ] {
+            let mut data = build_ok_data();
+            let forecast = data.financial_disclosures.last_mut().unwrap();
+            match case {
+                "overlap" => {
+                    forecast.next_fiscal_year_start = Some(date("2024-01-01"));
+                    forecast.next_fiscal_year_end = Some(date("2025-12-31"));
+                }
+                "missing" => {
+                    forecast.current_fiscal_year_start = None;
+                    forecast.current_fiscal_year_end = None;
+                }
+                "future_tie" => {
+                    forecast.current_fiscal_year_start = Some(date("2025-04-01"));
+                    forecast.current_fiscal_year_end = Some(date("2026-03-31"));
+                    forecast.next_fiscal_year_start = Some(date("2025-04-01"));
+                    forecast.next_fiscal_year_end = Some(date("2026-06-30"));
+                }
+                _ => unreachable!(),
+            }
+            let actual = super::evaluate(&data, ValueScorePolicy::standard(), fixed_now()).unwrap();
+            assert_eq!(actual.status, ScoreStatus::Undetermined, "{case}");
+            assert!(actual.score.is_none(), "{case}");
+            assert_eq!(actual.error_type, None, "{case}");
+            for name in ["per", "dividend_yield"] {
+                let audit = &actual.metrics[name];
+                assert_eq!(audit.reasons, vec![expected.clone()], "{case}: {name}");
+                assert!(audit.result.is_none(), "{case}: {name}");
+                assert!(audit.score_component.is_none(), "{case}: {name}");
+                assert!(
+                    actual
+                        .reasons
+                        .iter()
+                        .any(|reason| reason.metric == name && reason.code == expected)
+                );
+            }
+            assert_eq!(actual.reasons.len(), 2, "{case}");
+            for name in ["pbr", "roe", "sales_growth"] {
+                assert_eq!(
+                    actual.metrics[name], baseline.metrics[name],
+                    "{case}: {name}"
+                );
+            }
+            let json = serde_json::to_value(&actual).unwrap();
+            assert_eq!(json["status"], "undetermined");
+            assert!(json["score"].is_null());
+            for name in ["per", "dividend_yield"] {
+                assert_eq!(
+                    json["metrics"][name]["reasons"],
+                    serde_json::json!([json_code])
+                );
+                assert!(
+                    json["reasons"]
+                        .as_array()
+                        .unwrap()
+                        .contains(&serde_json::json!({"metric": name, "code": json_code}))
+                );
+            }
+            let decoded: crate::presenter::presenters::score_stock::output::ScoreStock =
+                serde_json::from_value(json).unwrap();
+            assert_eq!(decoded, actual);
+        }
+    }
+
+    #[test]
+    fn fiscal_year_error_does_not_replace_price_reason() {
+        let mut data = build_ok_data();
+        data.price = None;
+        let baseline = super::evaluate(&data, ValueScorePolicy::standard(), fixed_now()).unwrap();
+        let forecast = data.financial_disclosures.last_mut().unwrap();
+        forecast.next_fiscal_year_start = Some(date("2024-01-01"));
+        forecast.next_fiscal_year_end = Some(date("2025-12-31"));
+
+        let actual = super::evaluate(&data, ValueScorePolicy::standard(), fixed_now()).unwrap();
+        assert_eq!(actual.status, ScoreStatus::Undetermined);
+        assert!(actual.score.is_none());
+        for name in ["per", "dividend_yield"] {
+            assert_eq!(
+                actual.metrics[name].reasons,
+                vec![
+                    ScoreReasonCode::MissingPrice,
+                    ScoreReasonCode::AmbiguousTargetFiscalYear
+                ]
+            );
+            for code in [
+                ScoreReasonCode::MissingPrice,
+                ScoreReasonCode::AmbiguousTargetFiscalYear,
+            ] {
+                assert!(
+                    actual
+                        .reasons
+                        .iter()
+                        .any(|reason| reason.metric == name && reason.code == code)
+                );
+            }
+        }
+        for name in ["pbr", "roe", "sales_growth"] {
+            assert_eq!(actual.metrics[name], baseline.metrics[name]);
+        }
+    }
+
+    #[test]
+    fn future_fiscal_year_fallback_remains_available() {
+        let mut data = build_ok_data();
+        let forecast = data.financial_disclosures.last_mut().unwrap();
+        forecast.current_fiscal_year_start = Some(date("2025-04-01"));
+        forecast.current_fiscal_year_end = Some(date("2026-03-31"));
+
+        let actual = super::evaluate(&data, ValueScorePolicy::standard(), fixed_now()).unwrap();
+        assert_eq!(actual.status, ScoreStatus::Ok);
+        assert!(actual.reasons.is_empty());
+        assert_eq!(actual.score.as_ref().unwrap().total, 100.0);
+        for name in ["per", "dividend_yield"] {
+            assert!(actual.metrics[name].reasons.is_empty());
+            assert_eq!(actual.metrics[name].period_start, Some(date("2025-04-01")));
+            assert_eq!(actual.metrics[name].period_end, Some(date("2026-03-31")));
+            assert_eq!(actual.metrics[name].result, Some(5.0));
+        }
     }
 
     #[tokio::test]

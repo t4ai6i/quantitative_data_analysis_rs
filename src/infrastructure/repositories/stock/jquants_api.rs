@@ -209,6 +209,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[tokio::test]
+    #[ignore = "requires JQUANTS_API_KEY and live J-Quants API"]
     async fn get_row_stock_test() -> anyhow::Result<()> {
         let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
@@ -236,6 +237,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires JQUANTS_API_KEY and live J-Quants API"]
     async fn get_vec_row_stock_test() -> anyhow::Result<()> {
         let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;
@@ -251,6 +253,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "requires JQUANTS_API_KEY and live J-Quants API"]
     async fn get_base_date_prices_test() -> anyhow::Result<()> {
         let token = Setup::run()?;
         let repository = JQuantsAPI::new(token)?;

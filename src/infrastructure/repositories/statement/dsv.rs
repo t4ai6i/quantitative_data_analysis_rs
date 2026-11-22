@@ -283,13 +283,14 @@ mod tests {
                         "disclosed_time": "15:00:00",
                         "disclosure_number": format!("{index:016}"),
                         "document_type": "FYFinancialStatements_Consolidated_JP",
+                        "accounting_scope": "consolidated",
                         "current_period_type": "FY",
                         "current_period_start": "2025-04-01",
                         "current_period_end": "2026-03-31",
                         "current_fiscal_year_start": "2025-04-01",
                         "operating_profit": index as f64,
                         "operating_profit_period": "unspecified",
-                        "source_note": "x".repeat(512)
+                        "source_fields": { "source_note": "x".repeat(512) }
                     })
                     .to_string(),
                 ),
