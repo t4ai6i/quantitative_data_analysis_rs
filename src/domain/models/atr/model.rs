@@ -2,32 +2,7 @@ use crate::domain::models::stock::model::Stock;
 use crate::domain::models::technical_analysis::model::{DerivedFact, MetricKind};
 use chrono::NaiveDate;
 use deref_derive::{Deref, DerefMut};
-use ta::Next;
-use ta::indicators::AverageTrueRange;
-
-struct AdjustedBar {
-    high: f64,
-    low: f64,
-    close: f64,
-}
-
-impl ta::High for AdjustedBar {
-    fn high(&self) -> f64 {
-        self.high
-    }
-}
-
-impl ta::Low for AdjustedBar {
-    fn low(&self) -> f64 {
-        self.low
-    }
-}
-
-impl ta::Close for AdjustedBar {
-    fn close(&self) -> f64 {
-        self.close
-    }
-}
+use fin_primitives::signals::batch_f64::{AtrSeed, atr};
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Default)]
 pub struct ATR {
@@ -48,28 +23,19 @@ impl<const PERIOD: usize> From<&[Stock]> for ATRs<PERIOD> {
             return Self(vec![]);
         }
 
-        // use unwrap because PERIOD > 0 is asserted at compile time
-        let mut atr = AverageTrueRange::new(PERIOD).unwrap();
-        let mut atrs = Vec::with_capacity(value.len() - PERIOD);
-
-        for (index, stock) in value.iter().enumerate() {
-            let bar = AdjustedBar {
-                high: stock.adj_high,
-                low: stock.adj_low,
-                close: stock.adj_close,
-            };
-            let atr_value = atr.next(&bar);
-
-            if index < PERIOD {
-                continue;
-            }
-
-            atrs.push(ATR {
+        let high: Vec<f64> = value.iter().map(|stock| stock.adj_high).collect();
+        let low: Vec<f64> = value.iter().map(|stock| stock.adj_low).collect();
+        let close: Vec<f64> = value.iter().map(|stock| stock.adj_close).collect();
+        let atrs = atr(&high, &low, &close, PERIOD, AtrSeed::TaLib)
+            .into_iter()
+            .zip(value)
+            .skip(PERIOD)
+            .map(|(atr_value, stock)| ATR {
                 date: stock.date,
                 period: PERIOD as u32,
                 value: atr_value,
-            });
-        }
+            })
+            .collect();
 
         Self(atrs)
     }
@@ -173,6 +139,34 @@ mod tests {
             facts
                 .iter()
                 .all(|fact| (0.0..=f64::MAX).contains(&fact.value))
+        );
+    }
+
+    #[test]
+    fn uses_wilder_smoothing() {
+        // 15 bars with a true range of 1.0, then one bar with a true range of 3.0.
+        let mut stocks = (0..16)
+            .map(|i| {
+                stock(
+                    NaiveDate::from_ymd_opt(2024, 1, 1 + i as u32).unwrap(),
+                    100.5,
+                    99.5,
+                    100.0,
+                )
+            })
+            .collect::<Vec<_>>();
+        stocks[15].adj_high = 101.5;
+        stocks[15].adj_low = 98.5;
+
+        let atrs = ATRs::<14>::from(stocks.as_slice());
+
+        assert_eq!(atrs.len(), 2);
+        assert!((atrs[0].value - 1.0).abs() < 1e-9);
+        // Wilder: (13 * 1.0 + 3.0) / 14
+        assert!(
+            (atrs[1].value - 16.0 / 14.0).abs() < 1e-9,
+            "{}",
+            atrs[1].value
         );
     }
 }
